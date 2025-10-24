@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace SourceDev.API.Model
+namespace SourceDev.API.Models.Entities
 {
     public class Post
     {
@@ -13,11 +13,11 @@ namespace SourceDev.API.Model
 
         [Required]
         [MaxLength(100)]
-        public string slug { get; set; } = String.Empty;
+        public string slug { get; set; } = string.Empty;
 
         [Required]
-        [MaxLength(3000)]
-        public string content_markdown { get; set; } = String.Empty;
+        [MaxLength(30000)] // character limit expanded
+        public string content_markdown { get; set; } = string.Empty;
 
         public string? cover_img_url { get; set; }
 
@@ -25,8 +25,8 @@ namespace SourceDev.API.Model
         public bool status { get; set; } = true; // true = published, false = draft
 
 
-        public Int64 view_count { get; set; } = 0;
-        public Int64 reading_time_minutes { get; set; } = 0;
+        public long view_count { get; set; } = 0;
+        public long reading_time_minutes { get; set; } = 0;
         public int likes_count { get; set; } = 0;
         public int bookmarks_count { get; set; } = 0;
 

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace SourceDev.API.Model
+namespace SourceDev.API.Models.Entities
 {
     public class UserFollow
     {

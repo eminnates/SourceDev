@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 
-namespace SourceDev.API.Model
+namespace SourceDev.API.Models.Entities
 {
     public class Comment
     {
@@ -19,7 +19,7 @@ namespace SourceDev.API.Model
 
         [Required]
         [MaxLength(3000)]
-        public string content {  get; set; } = String.Empty;
+        public string content {  get; set; } = string.Empty;
         public DateTime created_at {  get; set; } = DateTime.UtcNow;
 
         public Post Post { get; set; }

@@ -1,0 +1,47 @@
+using SourceDev.API.Data.Context;
+using SourceDev.API.Models.Entities;
+
+namespace SourceDev.API.Repositories
+{
+    public class UnitOfWork : IUnitOfWork
+    {
+        private readonly AppDbContext _context;
+
+        public UnitOfWork(AppDbContext context)
+        {
+            _context = context;
+            
+            // Initialize generic repositories
+            Posts = new Repository<Post>(_context);
+            Comments = new Repository<Comment>(_context);
+            Bookmarks = new Repository<Bookmark>(_context);
+            Reactions = new Repository<Reaction>(_context);
+            Tags = new Repository<Tag>(_context);
+            PostTags = new Repository<PostTag>(_context);
+            UserFollows = new Repository<UserFollow>(_context);
+            
+            // Initialize custom repositories
+            Users = new UserRepository(_context);
+        }
+
+        public IRepository<Post> Posts { get; private set; }
+        public IRepository<Comment> Comments { get; private set; }
+        public IRepository<Bookmark> Bookmarks { get; private set; }
+        public IRepository<Reaction> Reactions { get; private set; }
+        public IRepository<Tag> Tags { get; private set; }
+        public IRepository<PostTag> PostTags { get; private set; }
+        public IRepository<UserFollow> UserFollows { get; private set; }
+        
+        public IUserRepository Users { get; private set; }
+
+        public async Task<int> SaveChangesAsync()
+        {
+            return await _context.SaveChangesAsync();
+        }
+
+        public void Dispose()
+        {
+            _context.Dispose();
+        }
+    }
+}
