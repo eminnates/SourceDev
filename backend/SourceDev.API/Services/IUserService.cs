@@ -1,3 +1,4 @@
+using SourceDev.API.DTOs.User;
 using SourceDev.API.Models.Entities;
 
 namespace SourceDev.API.Services
@@ -5,6 +6,7 @@ namespace SourceDev.API.Services
     public interface IUserService
     {
         Task<User?> GetUserByIdAsync(int id);
+        Task<UserDto?> GetUserDtoByIdAsync(int id);
         Task<User?> GetUserByEmailAsync(string email);
         Task<User?> GetUserByUsernameAsync(string username);
         Task<IEnumerable<User>> GetAllUsersAsync();

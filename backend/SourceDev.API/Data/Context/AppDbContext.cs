@@ -66,6 +66,20 @@ namespace SourceDev.API.Data.Context
             modelBuilder.Entity<UserFollow>()
                 .HasKey(uf => new { uf.follower_id, uf.following_id });
 
+            // UserFollow - Follower ilişkisi (Takip eden)
+            modelBuilder.Entity<UserFollow>()
+                .HasOne<User>()
+                .WithMany(u => u.Following)
+                .HasForeignKey(uf => uf.follower_id)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // UserFollow - Following ilişkisi (Takip edilen)
+            modelBuilder.Entity<UserFollow>()
+                .HasOne<User>()
+                .WithMany(u => u.Followers)
+                .HasForeignKey(uf => uf.following_id)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // Post - User ilişkisi
             modelBuilder.Entity<Post>()
                 .HasOne(p => p.User)

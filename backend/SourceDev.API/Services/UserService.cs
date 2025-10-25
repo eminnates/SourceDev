@@ -1,3 +1,4 @@
+using SourceDev.API.DTOs.User;
 using SourceDev.API.Models.Entities;
 using SourceDev.API.Repositories;
 
@@ -15,6 +16,31 @@ namespace SourceDev.API.Services
         public async Task<User?> GetUserByIdAsync(int id)
         {
             return await _unitOfWork.Users.GetByIdAsync(id);
+        }
+
+        public async Task<UserDto?> GetUserDtoByIdAsync(int id)
+        {
+            var user = await _unitOfWork.Users.GetByIdAsync(id);
+            if (user == null || user.on_deleted)
+                return null;
+
+            // Manuel count - sadece sayıları getir
+            var followersCount = await _unitOfWork.Users.GetFollowersCountAsync(id);
+            var followingCount = await _unitOfWork.Users.GetFollowingCountAsync(id);
+
+            // Manuel DTO mapping
+            return new UserDto
+            {
+                Id = user.Id,
+                Username = user.UserName ?? string.Empty,
+                Email = user.Email ?? string.Empty,
+                DisplayName = user.display_name,
+                Bio = user.bio,
+                ProfileImageUrl = user.profile_img_url,
+                CreatedAt = user.created_at,
+                FollowersCount = followersCount,
+                FollowingCount = followingCount
+            };
         }
 
         public async Task<User?> GetUserByEmailAsync(string email)

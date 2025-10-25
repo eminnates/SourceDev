@@ -19,5 +19,9 @@ namespace SourceDev.API.Models.Entities
         public DateTime updated_at { get; set; } = DateTime.UtcNow;
         
         public bool on_deleted { get; set; } = false;
+
+        // Navigation Properties
+        public ICollection<UserFollow> Followers { get; set; } = new List<UserFollow>();  // Beni takip edenler
+        public ICollection<UserFollow> Following { get; set; } = new List<UserFollow>();  // Benim takip ettiklerim
     }
 }

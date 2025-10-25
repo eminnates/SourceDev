@@ -113,11 +113,11 @@ namespace SourceDev.API.Controllers
         }
 
         /// <summary>
-        /// Get current user info (requires authentication)
+        /// Get current user profile (requires authentication)
         /// </summary>
         [Authorize]
-        [HttpGet("me")]
-        public ActionResult GetCurrentUser()
+        [HttpGet("profile")]
+        public ActionResult GetCurrentUserProfile()
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             var username = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
@@ -131,6 +131,29 @@ namespace SourceDev.API.Controllers
                 email,
                 displayName
             });
+        }
+
+        /// <summary>
+        /// Update current user profile (requires authentication)
+        /// </summary>
+        [Authorize]
+        [HttpPut("profile")]
+        public async Task<ActionResult<AuthResponseDto>> UpdateProfile([FromBody] UpdateProfileDto updateProfileDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+
+            if (userId == 0)
+                return Unauthorized(new { message = "Invalid token" });
+
+            var result = await _authService.UpdateProfileAsync(userId, updateProfileDto);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
         }
     }
 }

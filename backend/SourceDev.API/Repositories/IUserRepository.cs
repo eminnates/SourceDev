@@ -10,5 +10,7 @@ namespace SourceDev.API.Repositories
         Task<bool> IsUsernameExistsAsync(string username);
         Task<IEnumerable<User>> GetActiveUsersAsync();
         Task<IEnumerable<User>> SearchUsersByDisplayNameAsync(string searchTerm);
+        Task<int> GetFollowersCountAsync(int userId);
+        Task<int> GetFollowingCountAsync(int userId);
     }
 }

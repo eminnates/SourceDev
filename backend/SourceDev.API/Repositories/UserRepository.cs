@@ -41,5 +41,17 @@ namespace SourceDev.API.Repositories
                 .Where(u => !u.on_deleted && u.display_name.Contains(searchTerm))
                 .ToListAsync();
         }
+
+        public async Task<int> GetFollowersCountAsync(int userId)
+        {
+            return await _context.UserFollows
+                .CountAsync(uf => uf.following_id == userId);
+        }
+
+        public async Task<int> GetFollowingCountAsync(int userId)
+        {
+            return await _context.UserFollows
+                .CountAsync(uf => uf.follower_id == userId);
+        }
     }
 }

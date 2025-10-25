@@ -174,6 +174,43 @@ namespace SourceDev.API.Services
             };
         }
 
+        public async Task<AuthResponseDto> UpdateProfileAsync(int userId, UpdateProfileDto updateProfileDto)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null)
+            {
+                return new AuthResponseDto
+                {
+                    Success = false,
+                    Message = "User not found"
+                };
+            }
+
+            // Update user profile
+            user.display_name = updateProfileDto.DisplayName;
+            user.bio = updateProfileDto.Bio ?? string.Empty;
+            user.profile_img_url = updateProfileDto.ProfileImageUrl;
+            user.updated_at = DateTime.UtcNow;
+
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+            {
+                return new AuthResponseDto
+                {
+                    Success = false,
+                    Message = string.Join(", ", result.Errors.Select(e => e.Description))
+                };
+            }
+
+            return new AuthResponseDto
+            {
+                Success = true,
+                Message = "Profile updated successfully",
+                User = _mapper.Map<UserInfoDto>(user)
+            };
+        }
+
         public Task<bool> ValidateTokenAsync(string token)
         {
             try
