@@ -10,10 +10,12 @@ namespace SourceDev.API.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
+        private readonly ITokenBlacklistService _tokenBlacklistService;
 
-        public AuthController(IAuthService authService)
+        public AuthController(IAuthService authService, ITokenBlacklistService tokenBlacklistService)
         {
             _authService = authService;
+            _tokenBlacklistService = tokenBlacklistService;
         }
 
         /// <summary>
@@ -85,6 +87,29 @@ namespace SourceDev.API.Controllers
                 return Unauthorized(new { message = "Invalid token" });
 
             return Ok(new { message = "Token is valid" });
+        }
+
+        /// <summary>
+        /// Logout (adds token to blacklist)
+        /// </summary>
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<ActionResult> Logout()
+        {
+            // Token'ı Authorization header'ından al
+            var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+            
+            // Token'ı blacklist'e ekle
+            await _tokenBlacklistService.AddToBlacklistAsync(token);
+            
+            var username = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
+            
+            return Ok(new 
+            { 
+                success = true,
+                message = $"User {username} logged out successfully. Token is now blacklisted.",
+                timestamp = DateTime.UtcNow
+            });
         }
 
         /// <summary>

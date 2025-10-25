@@ -33,6 +33,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 // Services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();
 
 // Identity Configuration
 builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
@@ -72,6 +73,21 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings?.Audience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings?.SecretKey ?? "")),
         ClockSkew = TimeSpan.Zero
+    };
+    
+    // Token blacklist kontrolü
+    options.Events = new JwtBearerEvents
+    {
+        OnTokenValidated = async context =>
+        {
+            var tokenBlacklistService = context.HttpContext.RequestServices.GetRequiredService<ITokenBlacklistService>();
+            var token = context.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+            
+            if (await tokenBlacklistService.IsBlacklistedAsync(token))
+            {
+                context.Fail("This token has been revoked (logged out).");
+            }
+        }
     };
 });
 
