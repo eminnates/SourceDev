@@ -26,22 +26,27 @@ body {
   letter-spacing: -0.003em;
 }
 
-/* Custom scrollbar styling */
+/* Global scrollbar styling */
 ::-webkit-scrollbar {
-  width: 12px;
+  width: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #f5f5f5;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 6px;
+  background: #cbd5e0;
+  border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #a0aec0;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2D3748 #f5f5f5;
 }
 
 /* Custom Font Classes */
@@ -53,3 +58,36 @@ body {
   font-family: var(--font-serif-article-body);
 }
 
+/* Scrollbar utilities for specific elements */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-default {
+  -ms-overflow-style: auto;
+  scrollbar-width: thin;
+}
+
+.scrollbar-default::-webkit-scrollbar {
+  width: 8px;
+  display: block;
+}
+
+.scrollbar-default::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.scrollbar-default::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.scrollbar-default::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
