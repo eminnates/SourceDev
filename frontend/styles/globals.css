@@ -11,6 +11,7 @@
   --color-brand-primary-dark: #047857; /* Koyu yeşil - Hover states */
   --color-brand-dark: #2D3748;         /* Koyu gri - Text, headings */
   --color-brand-muted: #9CA3AF;        /* Açık gri - Secondary text, borders */
+  --color-brand-background: #f5f5f5;   /* Çok açık gri - Backgrounds */
 }
 
 html {
