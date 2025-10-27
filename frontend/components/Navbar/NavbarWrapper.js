@@ -6,10 +6,8 @@ import Navbar from './Navbar';
 export default function NavbarWrapper() {
   const pathname = usePathname();
   
-  // Navbar'ın gözükmeyeceği sayfalar
-  const hideNavbarRoutes = ['/login', '/register'];
+  const hideNavbarRoutes = ['/login', '/register', '/forgot-password'];
   
-  // Eğer current path hideNavbarRoutes'ta varsa, navbar'ı gösterme
   if (hideNavbarRoutes.includes(pathname)) {
     return null;
   }
