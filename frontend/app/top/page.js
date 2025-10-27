@@ -1,6 +1,6 @@
 import PostFeed from '@/components/PostFeed/PostFeed';
 import LeftSidebar from '@/components/Sidebar/LeftSidebar';
-import RightSidebar from '@/components/Sidebar/RightSidebar';
+import DiscussSection from '@/components/Sidebar/DiscussSection';
 
 export const metadata = {
   title: "Top Posts - SourceDev",
@@ -12,19 +12,15 @@ export default function TopPage() {
     <div className="min-h-screen bg-brand-background flex justify-center">
       <main className="mx-16 px-4 py-4 w-full">
         <div className="flex gap-4">
-          {/* Left Sidebar */}
-          <div className="hidden lg:block">
+          {/* Left Sidebar with Discuss Section */}
+          <div className="hidden lg:block w-80 flex-shrink-0 space-y-4">
+            <DiscussSection />
             <LeftSidebar />
           </div>
 
           {/* Main Content - Post Feed */}
-          <div className="flex-1 w-full">
+          <div className="flex-1 max-w-4xl">
             <PostFeed defaultTab="top" />
-          </div>
-
-          {/* Right Sidebar */}
-          <div className="hidden xl:block">
-            <RightSidebar />
           </div>
         </div>
       </main>

@@ -24,13 +24,7 @@ export default function LeftSidebar() {
     ];
 
     return (
-        <aside className="w-64 flex-shrink-0">
-
-            <div className="bg-white rounded-lg border border-brand-muted/20 p-4 mb-4">
-                <h3 className="font-bold text-brand-dark mb-3">Left Sidebar</h3>
-                <p className="text-sm text-brand-muted">Content coming soon...</p>
-            </div>
-
+        <aside className="w-full">
             <div className="sticky top-16">
                 {/* Main Menu */}
                 <nav className="space-y-1">
