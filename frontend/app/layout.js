@@ -1,5 +1,5 @@
 import "@/styles/globals.css";
-import Navbar from "@/components/Navbar/Navbar";
+import NavbarWrapper from "@/components/Navbar/NavbarWrapper";
 
 export const metadata = {
   title: "SourceDev - Developer Community",
@@ -10,7 +10,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`antialiased`}>
-        <Navbar />
+        <NavbarWrapper />
         {children}
       </body>
     </html>
