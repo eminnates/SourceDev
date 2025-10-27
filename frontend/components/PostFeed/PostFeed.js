@@ -1,10 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import PostCard from '../Post/PostCard';
 
-export default function PostFeed() {
-    const [activeTab, setActiveTab] = useState('relevant');
+export default function PostFeed({ defaultTab = 'relevant' }) {
+    const [activeTab, setActiveTab] = useState(defaultTab);
+    const router = useRouter();
+
+    useEffect(() => {
+        setActiveTab(defaultTab);
+    }, [defaultTab]);
 
     const posts = [
         {
@@ -70,10 +76,41 @@ export default function PostFeed() {
     ];
 
     const tabs = [
-        { id: 'relevant', label: 'Relevant' },
-        { id: 'latest', label: 'Latest' },
-        { id: 'top', label: 'Top' },
+        { id: 'relevant', label: 'Relevant', path: '/' },
+        { id: 'latest', label: 'Latest', path: '/latest' },
+        { id: 'top', label: 'Top', path: '/top' },
     ];
+
+    const handleTabClick = (tab) => {
+        setActiveTab(tab.id);
+        router.push(tab.path);
+    };
+
+    // Sort posts based on active tab
+    const getSortedPosts = () => {
+        const sortedPosts = [...posts];
+        
+        if (activeTab === 'latest') {
+            // Sort by date (most recent first)
+            return sortedPosts.sort((a, b) => {
+                const dateA = new Date(a.date);
+                const dateB = new Date(b.date);
+                return dateB - dateA;
+            });
+        } else if (activeTab === 'top') {
+            // Sort by total reactions (most popular first)
+            return sortedPosts.sort((a, b) => {
+                const reactionsA = Object.values(a.reactionTypes).reduce((sum, count) => sum + count, 0);
+                const reactionsB = Object.values(b.reactionTypes).reduce((sum, count) => sum + count, 0);
+                return reactionsB - reactionsA;
+            });
+        }
+        
+        // Default: relevant (no sorting)
+        return sortedPosts;
+    };
+
+    const displayPosts = getSortedPosts();
 
     return (
         <div className="w-full">
@@ -82,7 +119,7 @@ export default function PostFeed() {
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
+                        onClick={() => handleTabClick(tab)}
                         className={`px-3 py-1 rounded-md text-lg transition-colors cursor-pointer hover:bg-white ${
                             activeTab === tab.id
                                 ? 'text-black font-bold'
@@ -96,7 +133,7 @@ export default function PostFeed() {
 
             {/* Posts List */}
             <div className="space-y-2">
-                {posts.map((post, index) => (
+                {displayPosts.map((post, index) => (
                     <PostCard key={post.id} post={post} showCover={index === 0} />
                 ))}
             </div>
