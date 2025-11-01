@@ -15,13 +15,21 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddOpenApi();
 
-// JWT Settings Configuration
-var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
-builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+DotNetEnv.Env.Load();
+
+// Read sensitive config from environment variables
+var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
+var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET");
+
+// JWT Settings (Issuer, Audience, Expiration from config, Secret from env)
+var jwtSettingsSection = builder.Configuration.GetSection("JwtSettings");
+var jwtIssuer = jwtSettingsSection["Issuer"];
+var jwtAudience = jwtSettingsSection["Audience"];
+var jwtExpiration = int.TryParse(jwtSettingsSection["ExpirationInMinutes"], out var exp) ? exp : 1440;
 
 // DbContext Configuration
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(connectionString));
 
 // AutoMapper Configuration
 builder.Services.AddAutoMapper(typeof(Program));
@@ -69,9 +77,9 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtSettings?.Issuer,
-        ValidAudience = jwtSettings?.Audience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings?.SecretKey ?? "")),
+    ValidIssuer = jwtIssuer,
+    ValidAudience = jwtAudience,
+    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret ?? "")),
         ClockSkew = TimeSpan.Zero
     };
     
@@ -91,21 +99,12 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// CORS Configuration (React için)
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowReactApp", policy =>
-    {
-        policy.WithOrigins("http://localhost:3000", "http://localhost:5173")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
-    });
-});
 
 // Add Controllers
 builder.Services.AddControllers();
 
+
+// AFTER THAT IS DYNAMIC
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -118,7 +117,7 @@ if (app.Environment.IsDevelopment())
 app.UseLoggingMiddleware();
 app.UseExceptionMiddleware();
 app.UseHttpsRedirection();
-app.UseCors("AllowReactApp");
+app.UseDynamicCorsMiddleware();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

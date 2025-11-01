@@ -8,9 +8,13 @@ namespace SourceDev.API.Extensions
         {
             return app.UseMiddleware<ExceptionMiddleware>();
         }
-        public static IApplicationBuilder UseLoggingMiddleware(this IApplicationBuilder app) 
+        public static IApplicationBuilder UseLoggingMiddleware(this IApplicationBuilder app)
         {
             return app.UseMiddleware<LoggingMiddleware>();
+        }
+        public static IApplicationBuilder UseDynamicCorsMiddleware(this IApplicationBuilder app)
+        {
+            return app.UseMiddleware<DynamicCorsMiddleware>();
         }
     }
 }

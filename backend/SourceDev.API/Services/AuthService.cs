@@ -15,7 +15,8 @@ namespace SourceDev.API.Services
     {
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
-        private readonly JwtSettings _jwtSettings;
+    private readonly JwtSettings _jwtSettings;
+    private readonly string _jwtSecret;
         private readonly IMapper _mapper;
 
         public AuthService(
@@ -27,6 +28,7 @@ namespace SourceDev.API.Services
             _userManager = userManager;
             _signInManager = signInManager;
             _jwtSettings = jwtSettings.Value;
+            _jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") ?? string.Empty;
             _mapper = mapper;
         }
 
@@ -216,7 +218,7 @@ namespace SourceDev.API.Services
             try
             {
                 var tokenHandler = new JwtSecurityTokenHandler();
-                var key = Encoding.UTF8.GetBytes(_jwtSettings.SecretKey);
+                var key = Encoding.UTF8.GetBytes(_jwtSecret);
 
                 tokenHandler.ValidateToken(token, new TokenValidationParameters
                 {
@@ -250,7 +252,7 @@ namespace SourceDev.API.Services
                 new Claim("DisplayName", user.display_name)
             };
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSecret));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var expiration = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationInMinutes);
 
