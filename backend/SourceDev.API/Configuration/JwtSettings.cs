@@ -1,4 +1,5 @@
-namespace SourceDev.API.Models
+namespace SourceDev.API.Configuration
+
 {
     public class JwtSettings
     {

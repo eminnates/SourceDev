@@ -2,8 +2,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using SourceDev.API.Configuration;
 using SourceDev.API.Data.Context;
-using SourceDev.API.Models;
+using SourceDev.API.Extensions;
 using SourceDev.API.Models.Entities;
 using SourceDev.API.Repositories;
 using SourceDev.API.Services;
@@ -12,7 +13,6 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
 // JWT Settings Configuration
@@ -114,16 +114,12 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+// MIDDLEWARE
+app.UseExceptionMiddleware();
 app.UseHttpsRedirection();
-
-// CORS
 app.UseCors("AllowReactApp");
-
-// Authentication & Authorization
 app.UseAuthentication();
 app.UseAuthorization();
-
-// Map Controllers
 app.MapControllers();
 
 
