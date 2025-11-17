@@ -10,7 +10,7 @@ namespace SourceDev.API.Models.Entities
         [ForeignKey("Post")]
         public int post_id { get; set; }
 
-        public Post Post { get; set; }
-        public Tag Tag { get; set; }
+        public Post? Post { get; set; }
+        public Tag? Tag { get; set; }
     }
 }

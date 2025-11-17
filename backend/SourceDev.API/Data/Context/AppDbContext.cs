@@ -22,6 +22,7 @@ namespace SourceDev.API.Data.Context
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<Post>().HasQueryFilter(p => p.deleted_at == null);
             base.OnModelCreating(modelBuilder);
 
             // Cascade Delete Ayarları - Döngüyü engellemek için

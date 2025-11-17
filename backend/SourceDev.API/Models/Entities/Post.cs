@@ -33,6 +33,7 @@ namespace SourceDev.API.Models.Entities
         public DateTime published_at { get; set; } = DateTime.UtcNow;
         public DateTime created_at { get; set; } = DateTime.UtcNow;
         public DateTime updated_at { get; set; } = DateTime.UtcNow;
+        public DateTime? deleted_at { get; set; }
 
         public User? User { get; set; }
     }

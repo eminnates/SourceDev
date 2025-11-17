@@ -5,7 +5,7 @@ namespace SourceDev.API.Repositories
     public interface IUnitOfWork : IDisposable
     {
         // Entity Repositories
-        IRepository<Post> Posts { get; }
+        IPostRepository Posts { get; }
         IRepository<Comment> Comments { get; }
         IRepository<Bookmark> Bookmarks { get; }
         IRepository<Reaction> Reactions { get; }

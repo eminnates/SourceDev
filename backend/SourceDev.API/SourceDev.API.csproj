@@ -24,7 +24,6 @@
   <ItemGroup>
     <Folder Include="DTOs\Auth\" />
     <Folder Include="DTOs\User\" />
-    <Folder Include="Repositories\" />
   </ItemGroup>
 
 </Project>

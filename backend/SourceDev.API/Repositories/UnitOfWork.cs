@@ -11,8 +11,8 @@ namespace SourceDev.API.Repositories
         {
             _context = context;
             
-            // Initialize generic repositories
-            Posts = new Repository<Post>(_context);
+            // Initialize repositories
+            Posts = new PostRepository(_context);
             Comments = new Repository<Comment>(_context);
             Bookmarks = new Repository<Bookmark>(_context);
             Reactions = new Repository<Reaction>(_context);
@@ -24,7 +24,7 @@ namespace SourceDev.API.Repositories
             Users = new UserRepository(_context);
         }
 
-        public IRepository<Post> Posts { get; private set; }
+        public IPostRepository Posts { get; private set; }
         public IRepository<Comment> Comments { get; private set; }
         public IRepository<Bookmark> Bookmarks { get; private set; }
         public IRepository<Reaction> Reactions { get; private set; }

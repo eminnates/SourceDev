@@ -18,9 +18,9 @@ namespace SourceDev.API.Models.Entities
         public string reaction_type { get; set; } = string.Empty;
         public DateTime created_at { get; set; } = DateTime.Now;
 
-        public User User { get; set; }
+        public User? User { get; set; }
 
-        public Post Post { get; set; }
+        public Post? Post { get; set; }
 
     }
 }
