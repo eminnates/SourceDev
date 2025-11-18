@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SourceDev.API.Services;
 
@@ -14,8 +15,35 @@ namespace SourceDev.API.Controllers
             _userService = userService;
         }
 
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            var users = await _userService.GetAllUsersAsync();
+            return Ok(users);
+        }
+
+        [HttpGet("active")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetActiveUsers()
+        {
+            var users = await _userService.GetActiveUsersAsync();
+            return Ok(users);
+        }
+
+        [HttpGet("search")]
+        [AllowAnonymous]
+        public async Task<IActionResult> SearchUsers([FromQuery] string q)
+        {
+            if (string.IsNullOrWhiteSpace(q))
+                return BadRequest(new { message = "Search term is required" });
+
+            var users = await _userService.SearchUsersAsync(q);
+            return Ok(users);
+        }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetUserById(int id)
         {
             var user = await _userService.GetUserDtoByIdAsync(id);

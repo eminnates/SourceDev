@@ -51,19 +51,86 @@ namespace SourceDev.API.Services
             return await _unitOfWork.Users.GetByUsernameAsync(username);
         }
 
-        public async Task<IEnumerable<User>> GetAllUsersAsync()
+        public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
         {
-            return await _unitOfWork.Users.GetAllAsync();
+            var users = await _unitOfWork.Users.GetAllAsync();
+            var userDtos = new List<UserDto>();
+            
+            foreach (var user in users)
+            {
+                if (user.on_deleted) continue;
+                
+                var followersCount = await _unitOfWork.Users.GetFollowersCountAsync(user.Id);
+                var followingCount = await _unitOfWork.Users.GetFollowingCountAsync(user.Id);
+                
+                userDtos.Add(new UserDto
+                {
+                    Id = user.Id,
+                    Username = user.UserName ?? string.Empty,
+                    DisplayName = user.display_name,
+                    Bio = user.bio,
+                    ProfileImageUrl = user.profile_img_url,
+                    CreatedAt = user.created_at,
+                    FollowersCount = followersCount,
+                    FollowingCount = followingCount
+                });
+            }
+            
+            return userDtos;
         }
 
-        public async Task<IEnumerable<User>> GetActiveUsersAsync()
+        public async Task<IEnumerable<UserDto>> GetActiveUsersAsync()
         {
-            return await _unitOfWork.Users.GetActiveUsersAsync();
+            var users = await _unitOfWork.Users.GetActiveUsersAsync();
+            var userDtos = new List<UserDto>();
+            
+            foreach (var user in users)
+            {
+                var followersCount = await _unitOfWork.Users.GetFollowersCountAsync(user.Id);
+                var followingCount = await _unitOfWork.Users.GetFollowingCountAsync(user.Id);
+                
+                userDtos.Add(new UserDto
+                {
+                    Id = user.Id,
+                    Username = user.UserName ?? string.Empty,
+                    DisplayName = user.display_name,
+                    Bio = user.bio,
+                    ProfileImageUrl = user.profile_img_url,
+                    CreatedAt = user.created_at,
+                    FollowersCount = followersCount,
+                    FollowingCount = followingCount
+                });
+            }
+            
+            return userDtos;
         }
 
-        public async Task<IEnumerable<User>> SearchUsersAsync(string searchTerm)
+        public async Task<IEnumerable<UserDto>> SearchUsersAsync(string searchTerm)
         {
-            return await _unitOfWork.Users.SearchUsersByDisplayNameAsync(searchTerm);
+            var users = await _unitOfWork.Users.SearchUsersByDisplayNameAsync(searchTerm);
+            var userDtos = new List<UserDto>();
+            
+            foreach (var user in users)
+            {
+                if (user.on_deleted) continue;
+                
+                var followersCount = await _unitOfWork.Users.GetFollowersCountAsync(user.Id);
+                var followingCount = await _unitOfWork.Users.GetFollowingCountAsync(user.Id);
+                
+                userDtos.Add(new UserDto
+                {
+                    Id = user.Id,
+                    Username = user.UserName ?? string.Empty,
+                    DisplayName = user.display_name,
+                    Bio = user.bio,
+                    ProfileImageUrl = user.profile_img_url,
+                    CreatedAt = user.created_at,
+                    FollowersCount = followersCount,
+                    FollowingCount = followingCount
+                });
+            }
+            
+            return userDtos;
         }
 
         public async Task<User> UpdateUserAsync(User user)

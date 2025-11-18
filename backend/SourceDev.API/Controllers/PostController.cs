@@ -116,7 +116,7 @@ namespace SourceDev.API.Controllers
                 return Forbid();
             }
         }
-        [HttpPost("{id:int}/publish")]
+        [HttpPut("{id:int}/publish")]
         [Authorize]
         public async Task<IActionResult> Publish(int id)
         {
@@ -134,7 +134,7 @@ namespace SourceDev.API.Controllers
                 return Forbid();
             }
         }
-        [HttpPost("{id:int}/unpublish")]
+        [HttpPut("{id:int}/unpublish")]
         [Authorize]
         public async Task<IActionResult> Unpublish(int id)
         {
