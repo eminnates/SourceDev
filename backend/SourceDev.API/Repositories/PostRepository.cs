@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SourceDev.API.Data.Context;
 using SourceDev.API.Models.Entities;
 using SourceDev.API.DTOs.Post;
@@ -32,7 +32,6 @@ namespace SourceDev.API.Repositories
         public async Task<PostDto?> GetDtoByIdAsync(int id)
         {
             return await _dbSet
-                .Include(p => p.User)
                 .Where(p => p.post_id == id)
                 .Select(p => new PostDto
                 {
@@ -42,12 +41,14 @@ namespace SourceDev.API.Repositories
                     CoverImageUrl = p.cover_img_url,
                     AuthorId = p.user_id,
                     AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
+                    Status = p.status,
                     PublishedAt = p.published_at,
                     CreatedAt = p.created_at,
                     UpdatedAt = p.updated_at,
                     LikesCount = p.likes_count,
                     ViewCount = p.view_count,
-                    BookmarksCount = p.bookmarks_count
+                    BookmarksCount = p.bookmarks_count,
+                    Tags = p.PostTags.Select(pt => pt.Tag.name).ToList()
                 })
                 .FirstOrDefaultAsync();
         }
@@ -70,7 +71,8 @@ namespace SourceDev.API.Repositories
                     UpdatedAt = p.updated_at,
                     LikesCount = p.likes_count,
                     ViewCount = p.view_count,
-                    BookmarksCount = p.bookmarks_count
+                    BookmarksCount = p.bookmarks_count,
+                    Tags = p.PostTags.Select(pt => pt.Tag.name).ToList()
                 })
                 .FirstOrDefaultAsync();
         }
@@ -100,7 +102,8 @@ namespace SourceDev.API.Repositories
                     Views = p.view_count,
                     Bookmarks = p.bookmarks_count,
                     PublishedAt = p.published_at,
-                    AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty
+                    AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
+                    Tags = p.PostTags.Select(pt => pt.Tag.name).ToList()
                 })
                 .ToListAsync();
         }
@@ -129,7 +132,8 @@ namespace SourceDev.API.Repositories
                     Views = p.view_count,
                     Bookmarks = p.bookmarks_count,
                     PublishedAt = p.published_at,
-                    AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty
+                    AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
+                    Tags = p.PostTags.Select(pt => pt.Tag.name).ToList()
                 })
                 .ToListAsync();
         }
@@ -160,7 +164,8 @@ namespace SourceDev.API.Repositories
                     Views = p.view_count,
                     Bookmarks = p.bookmarks_count,
                     PublishedAt = p.published_at,
-                    AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty
+                    AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
+                    Tags = p.PostTags.Select(pt => pt.Tag.name).ToList()
                 })
                 .ToListAsync();
         }
@@ -184,6 +189,10 @@ namespace SourceDev.API.Repositories
         {
             return await _context.PostTags
                 .Include(pt => pt.Post)
+                    .ThenInclude(p => p.User)
+                .Include(pt => pt.Post)
+                    .ThenInclude(p => p.PostTags)
+                        .ThenInclude(pt2 => pt2.Tag)
                 .Include(pt => pt.Tag)
                 .Where(pt => pt.Tag != null && pt.Post != null && pt.Tag.name == tagSlug && pt.Post.status)
                 .Select(pt => pt.Post!)
@@ -199,7 +208,8 @@ namespace SourceDev.API.Repositories
                     Views = p.view_count,
                     Bookmarks = p.bookmarks_count,
                     PublishedAt = p.published_at,
-                    AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty
+                    AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
+                    Tags = p.PostTags.Select(pt => pt.Tag.name).ToList()
                 })
                 .ToListAsync();
         }
@@ -263,7 +273,8 @@ namespace SourceDev.API.Repositories
                         Views = p.view_count,
                         Bookmarks = p.bookmarks_count,
                         PublishedAt = p.published_at,
-                        AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty
+                        AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
+                        Tags = p.PostTags.Select(pt => pt.Tag.name).ToList()
                     })
                     .ToListAsync();
             }
@@ -287,7 +298,8 @@ namespace SourceDev.API.Repositories
                     Views = p.view_count,
                     Bookmarks = p.bookmarks_count,
                     PublishedAt = p.published_at,
-                    AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty
+                    AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
+                    Tags = p.PostTags.Select(pt => pt.Tag.name).ToList()
                 })
                 .ToListAsync();
 
@@ -307,7 +319,8 @@ namespace SourceDev.API.Repositories
                         Views = p.view_count,
                         Bookmarks = p.bookmarks_count,
                         PublishedAt = p.published_at,
-                        AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty
+                        AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
+                        Tags = p.PostTags.Select(pt => pt.Tag.name).ToList()
                     })
                     .ToListAsync();
 
@@ -318,3 +331,4 @@ namespace SourceDev.API.Repositories
         }
     }
 }
+

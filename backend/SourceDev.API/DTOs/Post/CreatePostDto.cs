@@ -6,5 +6,6 @@ namespace SourceDev.API.DTOs.Post
         public string Content { get; set; } = string.Empty;
         public string? CoverImageUrl { get; set; }
         public bool PublishNow { get; set; } = true;
+        public List<string> Tags { get; set; } = new List<string>();
     }
 }

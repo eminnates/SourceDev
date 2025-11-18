@@ -171,5 +171,71 @@ namespace SourceDev.API.Controllers
                 return Forbid();
             }
         }
+
+        // INTERACTIONS
+        [HttpPost("{id:int}/like")]
+        [Authorize]
+        public async Task<IActionResult> ToggleLike(int id)
+        {
+            var currentUserId = User.GetUserId();
+            if (!currentUserId.HasValue) return Unauthorized();
+
+            var ok = await _postService.ToggleLikeAsync(id, currentUserId.Value);
+            if (!ok) return NotFound();
+            return NoContent();
+        }
+
+        [HttpPost("{id:int}/save")]
+        [Authorize]
+        public async Task<IActionResult> ToggleBookmark(int id)
+        {
+            var currentUserId = User.GetUserId();
+            if (!currentUserId.HasValue) return Unauthorized();
+
+            var ok = await _postService.ToggleBookmarkAsync(id, currentUserId.Value);
+            if (!ok) return NotFound();
+            return NoContent();
+        }
+
+        [HttpPost("{id:int}/tags")]
+        [Authorize]
+        public async Task<IActionResult> AddTag(int id, [FromBody] string tagName)
+        {
+            var currentUserId = User.GetUserId();
+            if (!currentUserId.HasValue) return Unauthorized();
+
+            if (string.IsNullOrWhiteSpace(tagName))
+                return BadRequest(new { message = "Tag name is required" });
+
+            try
+            {
+                var ok = await _postService.AddTagToPostAsync(id, tagName, currentUserId.Value);
+                if (!ok) return NotFound();
+                return NoContent();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
+        [HttpDelete("{id:int}/tags/{tagId:int}")]
+        [Authorize]
+        public async Task<IActionResult> RemoveTag(int id, int tagId)
+        {
+            var currentUserId = User.GetUserId();
+            if (!currentUserId.HasValue) return Unauthorized();
+
+            try
+            {
+                var ok = await _postService.RemoveTagFromPostAsync(id, tagId, currentUserId.Value);
+                if (!ok) return NotFound();
+                return NoContent();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
     }
 }

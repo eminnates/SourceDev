@@ -35,6 +35,8 @@ namespace SourceDev.API.Models.Entities
         public DateTime updated_at { get; set; } = DateTime.UtcNow;
         public DateTime? deleted_at { get; set; }
 
+        // Navigation properties
         public User? User { get; set; }
+        public ICollection<PostTag> PostTags { get; set; } = new List<PostTag>();
     }
 }

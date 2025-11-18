@@ -10,5 +10,6 @@ namespace SourceDev.API.DTOs.Post
         public int Bookmarks { get; set; }
         public DateTime PublishedAt { get; set; }
         public string AuthorDisplayName { get; set; } = string.Empty;
+        public List<string> Tags { get; set; } = new();
     }
 }

@@ -17,5 +17,6 @@ namespace SourceDev.API.DTOs.Post
         public int BookmarksCount { get; set; }
         public bool LikedByCurrentUser { get; set; }
         public bool BookmarkedByCurrentUser { get; set; }
+        public List<string> Tags { get; set; } = new();
     }
 }

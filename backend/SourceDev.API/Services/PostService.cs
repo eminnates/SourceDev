@@ -81,6 +81,16 @@ namespace SourceDev.API.Services
             };
             await _unitOfWork.Posts.AddAsync(post);
             await _unitOfWork.SaveChangesAsync();
+
+            // Add tags if provided
+            if (dto.Tags != null && dto.Tags.Any())
+            {
+                foreach (var tagName in dto.Tags)
+                {
+                    await AddTagToPostInternalAsync(post.post_id, tagName);
+                }
+            }
+
             var createdPostDto = await _unitOfWork.Posts.GetDtoByIdAsync(post.post_id);
             if (createdPostDto == null)
             {
@@ -320,6 +330,142 @@ namespace SourceDev.API.Services
             slug = slug.Trim('-');
 
             return slug;
+        }
+
+        public async Task<bool> ToggleLikeAsync(int postId, int userId)
+        {
+            var post = await _unitOfWork.Posts.GetByIdAsync(postId);
+            if (post == null) return false;
+
+            var existingLike = await _unitOfWork.Reactions
+                .FirstOrDefaultAsync(r => r.post_id == postId && r.user_id == userId && r.reaction_type == "like");
+
+            if (existingLike != null)
+            {
+                // Unlike - remove reaction
+                _unitOfWork.Reactions.Delete(existingLike);
+                post.likes_count = Math.Max(0, post.likes_count - 1);
+                _logger.LogInformation("Post unliked. PostId: {PostId}, UserId: {UserId}", postId, userId);
+            }
+            else
+            {
+                // Like - add reaction
+                var reaction = new Models.Entities.Reaction
+                {
+                    post_id = postId,
+                    user_id = userId,
+                    reaction_type = "like",
+                    created_at = DateTime.UtcNow
+                };
+                await _unitOfWork.Reactions.AddAsync(reaction);
+                post.likes_count++;
+                _logger.LogInformation("Post liked. PostId: {PostId}, UserId: {UserId}", postId, userId);
+            }
+
+            _unitOfWork.Posts.Update(post);
+            await _unitOfWork.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> ToggleBookmarkAsync(int postId, int userId)
+        {
+            var post = await _unitOfWork.Posts.GetByIdAsync(postId);
+            if (post == null) return false;
+
+            var existingBookmark = await _unitOfWork.Bookmarks
+                .FirstOrDefaultAsync(b => b.post_id == postId && b.user_id == userId);
+
+            if (existingBookmark != null)
+            {
+                // Remove bookmark
+                _unitOfWork.Bookmarks.Delete(existingBookmark);
+                post.bookmarks_count = Math.Max(0, post.bookmarks_count - 1);
+                _logger.LogInformation("Post unbookmarked. PostId: {PostId}, UserId: {UserId}", postId, userId);
+            }
+            else
+            {
+                // Add bookmark
+                var bookmark = new Models.Entities.Bookmark
+                {
+                    post_id = postId,
+                    user_id = userId,
+                    created_at = DateTime.UtcNow
+                };
+                await _unitOfWork.Bookmarks.AddAsync(bookmark);
+                post.bookmarks_count++;
+                _logger.LogInformation("Post bookmarked. PostId: {PostId}, UserId: {UserId}", postId, userId);
+            }
+
+            _unitOfWork.Posts.Update(post);
+            await _unitOfWork.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> AddTagToPostAsync(int postId, string tagName, int userId)
+        {
+            var post = await _unitOfWork.Posts.GetByIdAsync(postId);
+            if (post == null) return false;
+
+            if (post.user_id != userId)
+                throw new UnauthorizedAccessException("You can only add tags to your own posts");
+
+            return await AddTagToPostInternalAsync(postId, tagName);
+        }
+
+        private async Task<bool> AddTagToPostInternalAsync(int postId, string tagName)
+        {
+            tagName = tagName.Trim().ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(tagName)) return false;
+
+            // Find or create tag
+            var tag = await _unitOfWork.Tags.FirstOrDefaultAsync(t => t.name == tagName);
+            if (tag == null)
+            {
+                tag = new Models.Entities.Tag
+                {
+                    name = tagName
+                };
+                await _unitOfWork.Tags.AddAsync(tag);
+                await _unitOfWork.SaveChangesAsync();
+            }
+
+            // Check if already linked
+            var existingLink = await _unitOfWork.PostTags
+                .FirstOrDefaultAsync(pt => pt.post_id == postId && pt.tag_id == tag.tag_id);
+
+            if (existingLink != null) return true; // Already exists
+
+            // Create link
+            var postTag = new Models.Entities.PostTag
+            {
+                post_id = postId,
+                tag_id = tag.tag_id
+            };
+            await _unitOfWork.PostTags.AddAsync(postTag);
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation("Tag added to post. PostId: {PostId}, Tag: {TagName}", postId, tagName);
+            return true;
+        }
+
+        public async Task<bool> RemoveTagFromPostAsync(int postId, int tagId, int userId)
+        {
+            var post = await _unitOfWork.Posts.GetByIdAsync(postId);
+            if (post == null) return false;
+
+            if (post.user_id != userId)
+                throw new UnauthorizedAccessException("You can only remove tags from your own posts");
+
+            var postTag = await _unitOfWork.PostTags
+                .FirstOrDefaultAsync(pt => pt.post_id == postId && pt.tag_id == tagId);
+
+            if (postTag == null) return false;
+
+            _unitOfWork.PostTags.Delete(postTag);
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation("Tag removed from post. PostId: {PostId}, TagId: {TagId}", postId, tagId);
+            return true;
         }
         
     }

@@ -52,13 +52,13 @@ namespace SourceDev.API.Data.Context
 
             modelBuilder.Entity<PostTag>()
                 .HasOne(pt => pt.Post)
-                .WithMany()
+                .WithMany(p => p.PostTags)
                 .HasForeignKey(pt => pt.post_id)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<PostTag>()
                 .HasOne(pt => pt.Tag)
-                .WithMany()
+                .WithMany(t => t.PostTags)
                 .HasForeignKey(pt => pt.tag_id)
                 .OnDelete(DeleteBehavior.Restrict);
 

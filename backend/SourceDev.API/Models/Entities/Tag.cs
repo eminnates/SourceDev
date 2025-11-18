@@ -11,6 +11,7 @@ namespace SourceDev.API.Models.Entities
         [MaxLength(50)]
         public string name { get; set; } = string.Empty;
 
-
+        // Navigation property
+        public ICollection<PostTag> PostTags { get; set; } = new List<PostTag>();
     }
 }
