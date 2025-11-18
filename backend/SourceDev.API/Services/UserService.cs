@@ -24,11 +24,9 @@ namespace SourceDev.API.Services
             if (user == null || user.on_deleted)
                 return null;
 
-            // Manuel count - sadece sayıları getir
             var followersCount = await _unitOfWork.Users.GetFollowersCountAsync(id);
             var followingCount = await _unitOfWork.Users.GetFollowingCountAsync(id);
 
-            // Manuel DTO mapping
             return new UserDto
             {
                 Id = user.Id,

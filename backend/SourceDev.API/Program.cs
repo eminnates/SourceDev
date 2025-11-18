@@ -12,22 +12,33 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddOpenApi();
 
 DotNetEnv.Env.Load();
 
-// Read sensitive config from environment variables
 var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
-var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET");
+var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET_KEY");
+var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
+var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
+var jwtExpiration = int.TryParse(Environment.GetEnvironmentVariable("JWT_EXPIRATION_MINUTES"), out var exp) ? exp : 60;
 
-// JWT Settings (Issuer, Audience, Expiration from config, Secret from env)
-var jwtSettingsSection = builder.Configuration.GetSection("JwtSettings");
-var jwtIssuer = jwtSettingsSection["Issuer"];
-var jwtAudience = jwtSettingsSection["Audience"];
-var jwtExpiration = int.TryParse(jwtSettingsSection["ExpirationInMinutes"], out var exp) ? exp : 1440;
+if (string.IsNullOrWhiteSpace(connectionString))
+    throw new InvalidOperationException("CONNECTION_STRING not found in .env file!");
+if (string.IsNullOrWhiteSpace(jwtSecret))
+    throw new InvalidOperationException("JWT_SECRET_KEY not found in .env file!");
+if (string.IsNullOrWhiteSpace(jwtIssuer))
+    throw new InvalidOperationException("JWT_ISSUER not found in .env file!");
+if (string.IsNullOrWhiteSpace(jwtAudience))
+    throw new InvalidOperationException("JWT_AUDIENCE not found in .env file!");
 
-// DbContext Configuration
+Console.WriteLine("=== CONFIGURATION LOADED ===");
+Console.WriteLine($"JWT Issuer: {jwtIssuer}");
+Console.WriteLine($"JWT Audience: {jwtAudience}");
+Console.WriteLine($"JWT Expiration: {jwtExpiration} minutes");
+Console.WriteLine($"Connection String: {connectionString?.Substring(0, Math.Min(50, connectionString.Length))}...");
+Console.WriteLine("============================");
+
+// Database Context Configuration
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 
@@ -37,10 +48,12 @@ builder.Services.AddAutoMapper(typeof(Program));
 // Repository Pattern - Unit of Work
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IPostRepository, PostRepository>();
 
 // Services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IPostService, PostService>();
 builder.Services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();
 
 // Identity Configuration
@@ -77,20 +90,20 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-    ValidIssuer = jwtIssuer,
-    ValidAudience = jwtAudience,
-    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret ?? "")),
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
         ClockSkew = TimeSpan.Zero
     };
-    
-    // Token blacklist kontrolü
+
+    // Token blacklist
     options.Events = new JwtBearerEvents
     {
         OnTokenValidated = async context =>
         {
             var tokenBlacklistService = context.HttpContext.RequestServices.GetRequiredService<ITokenBlacklistService>();
             var token = context.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
-            
+
             if (await tokenBlacklistService.IsBlacklistedAsync(token))
             {
                 context.Fail("This token has been revoked (logged out).");
@@ -99,10 +112,8 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-
 // Add Controllers
 builder.Services.AddControllers();
-
 
 // AFTER THAT IS DYNAMIC
 var app = builder.Build();
@@ -122,8 +133,4 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-
-
 app.Run();
-
-

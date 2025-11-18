@@ -14,11 +14,7 @@ namespace SourceDev.API.Controllers
             _userService = userService;
         }
 
-        /// <summary>
-        /// Kullanıcı bilgilerini ID ile getirir (Public endpoint)
-        /// </summary>
-        /// <param name="id">Kullanıcı ID</param>
-        /// <returns>UserDto</returns>
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUserById(int id)
         {

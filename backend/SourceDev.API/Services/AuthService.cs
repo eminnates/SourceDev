@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using SourceDev.API.Configuration;
 using SourceDev.API.DTOs.Auth;
 using SourceDev.API.Models.Entities;
+using SourceDev.API.Repositories;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -15,22 +16,34 @@ namespace SourceDev.API.Services
     {
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
-    private readonly JwtSettings _jwtSettings;
-    private readonly string _jwtSecret;
+        private readonly IConfiguration _configuration;
         private readonly IMapper _mapper;
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly ITokenBlacklistService _tokenBlacklistService;
+        private readonly string _jwtSecret;
+        private readonly string _jwtIssuer;
+        private readonly string _jwtAudience;
+        private readonly int _jwtExpiration;
 
-        public AuthService(
-            UserManager<User> userManager,
-            SignInManager<User> signInManager,
-            IOptions<JwtSettings> jwtSettings,
-            IMapper mapper)
+        public AuthService(UserManager<User> userManager, IConfiguration configuration, SignInManager<User> signInManager, IMapper mapper, IUnitOfWork unitOfWork, ITokenBlacklistService tokenBlacklistService)
         {
             _userManager = userManager;
+            _configuration = configuration;
             _signInManager = signInManager;
-            _jwtSettings = jwtSettings.Value;
-            _jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") ?? string.Empty;
             _mapper = mapper;
+            _unitOfWork = unitOfWork;
+            _tokenBlacklistService = tokenBlacklistService;
+            _jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
+            ?? throw new InvalidOperationException("JWT_SECRET_KEY not found!");
+            _jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER")
+                ?? throw new InvalidOperationException("JWT_ISSUER not found!");
+            _jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE")
+                ?? throw new InvalidOperationException("JWT_AUDIENCE not found!");
+            _jwtExpiration = int.TryParse(Environment.GetEnvironmentVariable("JWT_EXPIRATION_MINUTES"), out var exp)
+                ? exp : 60;
         }
+
+
 
         public async Task<AuthResponseDto> RegisterAsync(RegisterDto registerDto)
         {
@@ -80,7 +93,7 @@ namespace SourceDev.API.Services
 
             // Generate token
             var token = GenerateJwtToken(user);
-            var expiration = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationInMinutes);
+            var expiration = DateTime.UtcNow.AddMinutes(_jwtExpiration);
 
             return new AuthResponseDto
             {
@@ -131,7 +144,7 @@ namespace SourceDev.API.Services
 
             // Generate token
             var token = GenerateJwtToken(user);
-            var expiration = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationInMinutes);
+            var expiration = DateTime.UtcNow.AddMinutes(_jwtExpiration);
 
             return new AuthResponseDto
             {
@@ -188,7 +201,7 @@ namespace SourceDev.API.Services
                 };
             }
 
-            // Update user profile
+
             user.display_name = updateProfileDto.DisplayName;
             user.bio = updateProfileDto.Bio ?? string.Empty;
             user.profile_img_url = updateProfileDto.ProfileImageUrl;
@@ -214,7 +227,7 @@ namespace SourceDev.API.Services
         }
 
         public Task<bool> ValidateTokenAsync(string token)
-        {
+            {
             try
             {
                 var tokenHandler = new JwtSecurityTokenHandler();
@@ -225,9 +238,9 @@ namespace SourceDev.API.Services
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
                     ValidateIssuer = true,
-                    ValidIssuer = _jwtSettings.Issuer,
+                    ValidIssuer = _jwtIssuer,
                     ValidateAudience = true,
-                    ValidAudience = _jwtSettings.Audience,
+                    ValidAudience = _jwtAudience,
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero
                 }, out _);
@@ -254,13 +267,12 @@ namespace SourceDev.API.Services
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSecret));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var expiration = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationInMinutes);
 
             var token = new JwtSecurityToken(
-                issuer: _jwtSettings.Issuer,
-                audience: _jwtSettings.Audience,
+                issuer: _jwtIssuer,
+                audience: _jwtAudience,
                 claims: claims,
-                expires: expiration,
+                expires: DateTime.UtcNow.AddMinutes(_jwtExpiration),
                 signingCredentials: creds
             );
 

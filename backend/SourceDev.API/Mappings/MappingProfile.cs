@@ -59,7 +59,7 @@ namespace SourceDev.API.Mappings
 
             CreateMap<CreatePostDto, Post>()
                 .ForMember(d => d.content_markdown, o => o.MapFrom(s => s.Content))
-                .ForMember(d => d.slug, o => o.MapFrom(s => s.Slug))
+                .ForMember(d => d.slug, o => o.MapFrom(s => s.Title))
                 .ForMember(d => d.cover_img_url, o => o.MapFrom(s => s.CoverImageUrl))
                 .ForMember(d => d.status, o => o.MapFrom(s => s.PublishNow));
         }

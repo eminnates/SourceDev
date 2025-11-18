@@ -4,13 +4,12 @@ namespace SourceDev.API.Services
 {
     public class TokenBlacklistService : ITokenBlacklistService
     {
-        // In-memory blacklist (production'da Redis kullan!)
+        // In-memory blacklist
         private static readonly ConcurrentDictionary<string, DateTime> _blacklistedTokens = new();
 
         public Task AddToBlacklistAsync(string token)
         {
-            // Token'ı expire süresiyle birlikte ekle
-            _blacklistedTokens.TryAdd(token, DateTime.UtcNow.AddDays(1)); // Token expire süresi
+            _blacklistedTokens.TryAdd(token, DateTime.UtcNow.AddDays(1));
             return Task.CompletedTask;
         }
 

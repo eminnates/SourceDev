@@ -32,7 +32,8 @@ namespace SourceDev.API.Repositories
         public async Task<PostDto?> GetDtoByIdAsync(int id)
         {
             return await _dbSet
-                .Where(p => p.post_id == id && p.status)
+                .Include(p => p.User)
+                .Where(p => p.post_id == id)
                 .Select(p => new PostDto
                 {
                     Id = p.post_id,
@@ -63,6 +64,7 @@ namespace SourceDev.API.Repositories
                     CoverImageUrl = p.cover_img_url,
                     AuthorId = p.user_id,
                     AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
+                    Status = p.status,
                     PublishedAt = p.published_at,
                     CreatedAt = p.created_at,
                     UpdatedAt = p.updated_at,

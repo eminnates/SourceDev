@@ -11,7 +11,6 @@ namespace SourceDev.API.Data.Context
         {
         }
 
-        // DbSet tanımlamaları - Her biri veritabanında bir tablo olacak
         public DbSet<Post> Posts { get; set; }
         public DbSet<Comment> Comments { get; set; }
         public DbSet<Bookmark> Bookmarks { get; set; }
@@ -25,7 +24,7 @@ namespace SourceDev.API.Data.Context
             modelBuilder.Entity<Post>().HasQueryFilter(p => p.deleted_at == null);
             base.OnModelCreating(modelBuilder);
 
-            // Cascade Delete Ayarları - Döngüyü engellemek için
+            // Cascade Delete Ayarları
             foreach (var relationship in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
             {
                 relationship.DeleteBehavior = DeleteBehavior.Restrict;
@@ -116,12 +115,12 @@ namespace SourceDev.API.Data.Context
                 .HasForeignKey(r => r.post_id)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // User.Id -> user_id mapping için
+            // User.Id - user_id mapping için
             modelBuilder.Entity<User>()
                 .Property(u => u.Id)
                 .HasColumnName("user_id");
 
-            // Identity tablolarının isimlerini özelleştirme (opsiyonel)
+            // Identity tablolarının isimlerini özelleştirme
             modelBuilder.Entity<User>().ToTable("Users");
             modelBuilder.Entity<IdentityRole<int>>().ToTable("Roles");
             modelBuilder.Entity<IdentityUserRole<int>>().ToTable("UserRoles");

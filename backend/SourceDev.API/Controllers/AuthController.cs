@@ -96,10 +96,7 @@ namespace SourceDev.API.Controllers
         [HttpPost("logout")]
         public async Task<ActionResult> Logout()
         {
-            // Token'ı Authorization header'ından al
             var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
-            
-            // Token'ı blacklist'e ekle
             await _tokenBlacklistService.AddToBlacklistAsync(token);
             
             var username = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
