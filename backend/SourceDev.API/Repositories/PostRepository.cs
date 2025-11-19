@@ -333,8 +333,22 @@ namespace SourceDev.API.Repositories
 
         public async Task<IEnumerable<PostListDto>> SearchInDbAsync(string query, int? userId, int page = 1, int pageSize = 20)
         {
-            var postsQuery = _dbSet.AsQueryable().Where(p => p.status);
+            // Boþ query kontrolü
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return new List<PostListDto>();
+            }
 
+            // Query'yi normalize et (küçük harfe çevir, trim yap)
+            var normalizedQuery = query.Trim().ToLower();
+
+            var postsQuery = _dbSet
+                .AsQueryable()
+                .Where(p => p.status)
+                .Where(p => p.slug.ToLower().Contains(normalizedQuery) ||
+                            p.content_markdown.ToLower().Contains(normalizedQuery));
+
+            // Eðer kullanýcý giriþ yaptýysa, takip ettiklerini öne çýkar
             if (userId.HasValue)
             {
                 var followingIds = await _context.UserFollows
@@ -342,16 +356,16 @@ namespace SourceDev.API.Repositories
                     .Select(uf => uf.following_id)
                     .ToListAsync();
 
-                postsQuery = postsQuery.OrderByDescending(p => followingIds.Contains(p.user_id))
-                                       .ThenByDescending(p => p.published_at);
+                // Takip edilenleri önce göster, sonra tarihe göre sýrala
+                postsQuery = postsQuery
+                    .OrderByDescending(p => followingIds.Contains(p.user_id))
+                    .ThenByDescending(p => p.published_at);
             }
             else
             {
+                // Giriþ yapmamýþsa sadece tarihe göre sýrala
                 postsQuery = postsQuery.OrderByDescending(p => p.published_at);
             }
-
-            postsQuery = postsQuery
-                .Where(p => p.slug.Contains(query) || p.content_markdown.Contains(query));
 
             return await postsQuery
                 .Skip((page - 1) * pageSize)
@@ -360,7 +374,9 @@ namespace SourceDev.API.Repositories
                 {
                     Id = p.post_id,
                     Slug = p.slug,
-                    Excerpt = p.content_markdown.Length > 200 ? p.content_markdown.Substring(0, 200) : p.content_markdown,
+                    Excerpt = p.content_markdown.Length > 200
+                        ? p.content_markdown.Substring(0, 200)
+                        : p.content_markdown,
                     Likes = p.likes_count,
                     Views = p.view_count,
                     Bookmarks = p.bookmarks_count,

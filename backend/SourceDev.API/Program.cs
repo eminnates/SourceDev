@@ -49,11 +49,13 @@ builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPostRepository, PostRepository>();
+builder.Services.AddScoped<IAdminRepository, AdminRepository>();
 
 // Services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPostService, PostService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();
 
 // Identity Configuration

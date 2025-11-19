@@ -1,0 +1,10 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace SourceDev.API.DTOs.Admin
+{
+    public class UpdateUserRoleDto
+    {
+        [Required]
+        public string Role { get; set; } = string.Empty; // "Admin", "User", "Moderator"
+    }
+}

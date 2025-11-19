@@ -242,8 +242,19 @@ namespace SourceDev.API.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Search([FromQuery] string query, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
+            // Validation
+            if (string.IsNullOrWhiteSpace(query))
+                return BadRequest(new { message = "Search query cannot be empty." });
+
+            if (page < 1 || pageSize < 1)
+                return BadRequest(new { message = "Invalid paging parameters." });
+
+            if (pageSize > 100)
+                return BadRequest(new { message = "Page size cannot exceed 100." });
+
             var currentUserId = User.GetUserId();
             var results = await _postService.SearchAsync(query, currentUserId, page, pageSize);
+
             return Ok(results);
         }
 
