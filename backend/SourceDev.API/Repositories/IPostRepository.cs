@@ -1,4 +1,5 @@
-﻿using SourceDev.API.Models.Entities;
+﻿using SourceDev.API.DTOs.Post;
+using SourceDev.API.Models.Entities;
 
 namespace SourceDev.API.Repositories
 {
@@ -20,5 +21,7 @@ namespace SourceDev.API.Repositories
         Task<IEnumerable<SourceDev.API.DTOs.Post.PostListDto>> GetByUserDtosAsync(int userId, int page = 1, int pageSize = 20);
         Task<IEnumerable<SourceDev.API.DTOs.Post.PostListDto>> GetByTagDtosAsync(string tagSlug, int page = 1, int pageSize = 20);
         Task<IEnumerable<SourceDev.API.DTOs.Post.PostListDto>> GetRelevantDtosAsync(int? userId, int page = 1, int pageSize = 20);
+        Task<IEnumerable<PostListDto>> SearchInDbAsync(string query, int? userId, int page = 1, int pageSize = 20);
+
     }
-}
+}   

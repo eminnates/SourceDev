@@ -3,6 +3,7 @@ using SourceDev.API.Data.Context;
 using SourceDev.API.Models.Entities;
 using SourceDev.API.DTOs.Post;
 using System.Linq.Expressions;
+using SourceDev.API.Models;
 
 namespace SourceDev.API.Repositories
 {
@@ -329,6 +330,48 @@ namespace SourceDev.API.Repositories
 
             return results;
         }
+
+        public async Task<IEnumerable<PostListDto>> SearchInDbAsync(string query, int? userId, int page = 1, int pageSize = 20)
+        {
+            var postsQuery = _dbSet.AsQueryable().Where(p => p.status);
+
+            if (userId.HasValue)
+            {
+                var followingIds = await _context.UserFollows
+                    .Where(uf => uf.follower_id == userId.Value)
+                    .Select(uf => uf.following_id)
+                    .ToListAsync();
+
+                postsQuery = postsQuery.OrderByDescending(p => followingIds.Contains(p.user_id))
+                                       .ThenByDescending(p => p.published_at);
+            }
+            else
+            {
+                postsQuery = postsQuery.OrderByDescending(p => p.published_at);
+            }
+
+            postsQuery = postsQuery
+                .Where(p => p.slug.Contains(query) || p.content_markdown.Contains(query));
+
+            return await postsQuery
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(p => new PostListDto
+                {
+                    Id = p.post_id,
+                    Slug = p.slug,
+                    Excerpt = p.content_markdown.Length > 200 ? p.content_markdown.Substring(0, 200) : p.content_markdown,
+                    Likes = p.likes_count,
+                    Views = p.view_count,
+                    Bookmarks = p.bookmarks_count,
+                    PublishedAt = p.published_at,
+                    AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
+                    Tags = p.PostTags.Select(pt => pt.Tag.name).ToList()
+                })
+                .ToListAsync();
+        }
+
+
     }
 }
 

@@ -1,6 +1,7 @@
 ﻿using SourceDev.API.DTOs.Post;
 using SourceDev.API.Models.Entities;
 using SourceDev.API.Repositories;
+using SourceDev.API.Models;
 
 namespace SourceDev.API.Services
 {
@@ -9,6 +10,7 @@ namespace SourceDev.API.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<PostService> _logger;
         private readonly IServiceScopeFactory _scopeFactory;
+        private readonly PostRepository _postRepository;
         public PostService(IUnitOfWork unitOfWork, ILogger<PostService> logger, IServiceScopeFactory scopeFactory)
         {
             _unitOfWork = unitOfWork;
@@ -467,6 +469,12 @@ namespace SourceDev.API.Services
             _logger.LogInformation("Tag removed from post. PostId: {PostId}, TagId: {TagId}", postId, tagId);
             return true;
         }
-        
+
+        //search
+        public async Task<IEnumerable<PostListDto>> SearchAsync(string query, int? userId, int page = 1, int pageSize = 20)
+        {
+            return await _postRepository.SearchInDbAsync(query, userId, page, pageSize);
+        }
+
     }
 }

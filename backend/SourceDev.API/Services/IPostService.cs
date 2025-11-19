@@ -1,4 +1,5 @@
 ﻿using SourceDev.API.DTOs.Post;
+using SourceDev.API.Models;
 
 namespace SourceDev.API.Services
 {
@@ -20,5 +21,8 @@ namespace SourceDev.API.Services
         Task<bool> ToggleBookmarkAsync(int postId, int userId);
         Task<bool> AddTagToPostAsync(int postId, string tagName, int userId);
         Task<bool> RemoveTagFromPostAsync(int postId, int tagId, int userId);
+        Task<IEnumerable<PostListDto>> SearchAsync(string query, int? userId, int page = 1, int pageSize = 20);
+
+
     }
 }

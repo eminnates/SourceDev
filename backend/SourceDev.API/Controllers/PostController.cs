@@ -237,5 +237,18 @@ namespace SourceDev.API.Controllers
                 return Forbid();
             }
         }
+
+        [HttpGet("search")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Search([FromQuery] string query, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        {
+            var currentUserId = User.GetUserId();
+            var results = await _postService.SearchAsync(query, currentUserId, page, pageSize);
+            return Ok(results);
+        }
+
+
+
+
     }
 }
