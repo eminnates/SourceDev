@@ -9,6 +9,8 @@ using SourceDev.API.Models.Entities;
 using SourceDev.API.Repositories;
 using SourceDev.API.Services;
 using System.Text;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,6 +46,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // AutoMapper Configuration
 builder.Services.AddAutoMapper(typeof(Program));
+
+// FluentValidation Configuration
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+builder.Services.AddFluentValidationAutoValidation();
 
 // Repository Pattern - Unit of Work
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
