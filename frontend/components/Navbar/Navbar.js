@@ -1,10 +1,43 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { isAuthenticated, getUser, logout } from '@/utils/auth';
 
 export default function Navbar() {
+    const router = useRouter();
     const [searchFocused, setSearchFocused] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [user, setUser] = useState(null);
+    const [showDropdown, setShowDropdown] = useState(false);
+
+    useEffect(() => {
+        // Check authentication status
+        setIsLoggedIn(isAuthenticated());
+        setUser(getUser());
+    }, []);
+
+    useEffect(() => {
+        // Close dropdown when clicking outside
+        const handleClickOutside = (event) => {
+            if (showDropdown && !event.target.closest('.profile-dropdown')) {
+                setShowDropdown(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showDropdown]);
+
+    const handleLogout = () => {
+        logout();
+        setIsLoggedIn(false);
+        setUser(null);
+        router.push('/login');
+    };
 
     return (
         <nav className="sticky top-0 z-50 bg-white border-b border-brand-muted/30 flex justify-center">
@@ -35,14 +68,106 @@ export default function Navbar() {
                         </div>
                     </div>
 
-                    {/* Auth Buttons */}
-                    <div className="flex flex-row justify-end ml-3 flex-1">
-                        <Link href="/login" className="hidden sm:block px-3 py-1.5 text-base  text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary rounded-md transition-colors mr-1">
-                            Log in
-                        </Link>
-                        <Link href="/register" className="px-3 py-1.5 text-base font-medium text-brand-primary border border-brand-primary hover:bg-brand-primary hover:text-white rounded-md transition-colors whitespace-nowrap">
-                            Create account
-                        </Link>
+                    {/* Auth Section */}
+                    <div className="flex flex-row justify-end items-center ml-3 flex-1 gap-2">
+                        {isLoggedIn && user ? (
+                            <>
+                                {/* Create Post Button */}
+                                <Link 
+                                    href="/create-post" 
+                                    className="px-4 py-2 text-base font-medium text-brand-primary border-2 border-brand-primary hover:bg-brand-primary hover:text-white rounded-md transition-colors whitespace-nowrap"
+                                >
+                                    Create Post
+                                </Link>
+
+                                {/* Notification Bell */}
+                                <button className="relative p-2 text-brand-dark hover:bg-gray-100 rounded-md transition-colors">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                    </svg>
+                                    {/* Notification Badge */}
+                                    <span className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                                        3
+                                    </span>
+                                </button>
+
+                                {/* Profile Picture & Dropdown */}
+                                <div className="relative profile-dropdown">
+                                    <button 
+                                        onClick={() => setShowDropdown(!showDropdown)}
+                                        className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200 hover:border-brand-primary transition-colors"
+                                    >
+                                        <img 
+                                            src={user.profileImageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.username)}&background=1ABC9C&color=fff&bold=true`} 
+                                            alt={user.displayName || user.username}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.username)}&background=1ABC9C&color=fff&bold=true`;
+                                            }}
+                                        />
+                                    </button>
+
+                                    {/* Dropdown Menu */}
+                                    {showDropdown && (
+                                        <div className="absolute right-0 mt-2 w-56 px-2 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                                            <div className="px-4 py-2 rounded-md hover:bg-brand-primary/20 hover:text-brand-primary transition-colors mb-1 cursor-pointer">
+                                                <p className="text-base font-semibold text-brand-dark">{user.displayName}</p>
+                                                <p className="text-sm text-brand-muted">@{user.username}</p>
+                                            </div>
+                                            <hr className="border-gray-200 mb-2" />
+                                            <div className="py-1">
+                                                <Link 
+                                                    href={`/user/${user.username}`}
+                                                    className="flex items-center px-4 py-2 text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary transition-colors rounded-md"
+                                                    onClick={() => setShowDropdown(false)}
+                                                >
+                                                    Dashboard
+                                                </Link>
+                                                <Link 
+                                                    href={`/user/${user.username}`}
+                                                    className="flex items-center px-4 py-2 text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary transition-colors rounded-md"
+                                                    onClick={() => setShowDropdown(false)}
+                                                >
+                                                    Create Post
+                                                </Link>
+                                                <Link 
+                                                    href="/reading-list"
+                                                    className="flex items-center px-4 py-2 text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary transition-colors rounded-md"
+                                                    onClick={() => setShowDropdown(false)}
+                                                >
+                                                    Reading list
+                                                </Link>
+                                                <Link 
+                                                    href="/settings"
+                                                    className="flex items-center px-4 py-2 text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary transition-colors rounded-md"
+                                                    onClick={() => setShowDropdown(false)}
+                                                >
+                                                    Settings
+                                                </Link>
+                                            </div>
+                                            <div className="border-t border-gray-200 py-1">
+                                                <button 
+                                                    onClick={handleLogout}
+                                                    className="w-full flex items-center text-left px-4 py-2 text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary transition-colors rounded-md"
+                                                >
+                                                    Sign Out
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                {/* Not Logged In - Show Login/Register */}
+                                <Link href="/login" className="hidden sm:block px-3 py-1.5 text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary rounded-md transition-colors mr-1">
+                                    Log in
+                                </Link>
+                                <Link href="/register" className="px-3 py-1.5 text-base font-medium text-brand-primary border border-brand-primary hover:bg-brand-primary hover:text-white rounded-md transition-colors whitespace-nowrap">
+                                    Create account
+                                </Link>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

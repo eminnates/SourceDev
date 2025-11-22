@@ -8,6 +8,7 @@ export default function InputField({
   type = "text", 
   value, 
   onChange, 
+  onFocus,
   placeholder,
   required = false 
 }) {
@@ -28,6 +29,7 @@ export default function InputField({
           type={isPasswordField && showPassword ? "text" : type}
           value={value}
           onChange={onChange}
+          onFocus={onFocus}
           placeholder={placeholder}
           required={required}
           className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-lg focus:outline-none focus:border-brand-primary transition-colors duration-200 text-brand-dark"

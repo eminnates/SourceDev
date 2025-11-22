@@ -1,25 +1,66 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { FaGoogle, FaGithub } from "react-icons/fa";
 import SocialLoginButton from "./SocialLoginButton";
 import InputField from "./InputField";
 import Checkbox from "./Checkbox";
+import { login } from "@/utils/api/authApi";
+import { isAuthenticated } from "@/utils/auth";
 
 export default function LoginForm() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    if (isAuthenticated()) {
+      router.push('/');
+    }
+  }, [router]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Login:", { email, password, rememberMe });
-    // API call will be implemented here
+    
+    // Hata ve başarı mesajlarını temizle
+    setError(null);
+    setSuccessMessage(null);
+    
+    setIsLoading(true);
+
+    try {
+      const result = await login({
+        emailOrUsername: email,
+        password: password,
+        rememberMe: rememberMe
+      });
+      
+      if (result.success) {
+        setSuccessMessage(result.message);
+        
+        // Redirect to home and reload to update navbar
+        setTimeout(() => {
+          router.push('/');
+          window.location.reload();
+        }, 300);
+      } else {
+        setError(result.message);
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSocialLogin = (provider) => {
     console.log(`Login with ${provider}`);
-    // OAuth implementation will be here
   };
 
   return (
@@ -64,6 +105,20 @@ export default function LoginForm() {
         </div>
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+          <p className="text-sm">{error}</p>
+        </div>
+      )}
+
+      {/* Success Message */}
+      {successMessage && (
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4">
+          <p className="text-sm">{successMessage}</p>
+        </div>
+      )}
+
       {/* Email/Password Form */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         <InputField
@@ -100,9 +155,12 @@ export default function LoginForm() {
         {/* Submit Button */}
         <button
           type="submit"
-          className="w-full bg-brand-primary hover:bg-brand-primary-dark text-white font-bold text-lg py-1.5 rounded-lg transition-colors duration-200"
+          disabled={isLoading}
+          className={`w-full bg-brand-primary hover:bg-brand-primary-dark text-white font-bold text-lg py-1.5 rounded-lg transition-colors duration-200 ${
+            isLoading ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
         >
-          Log in
+          {isLoading ? 'Logging in...' : 'Log in'}
         </button>
       </form>
 

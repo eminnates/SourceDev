@@ -1,12 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { FaGoogle, FaGithub } from "react-icons/fa";
 import SocialLoginButton from "./SocialLoginButton";
 import InputField from "./InputField";
 import TextArea from "./TextArea";
+import { register } from "@/utils/api/authApi";
+import { isAuthenticated } from "@/utils/auth";
 
 export default function RegisterForm() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -17,18 +21,43 @@ export default function RegisterForm() {
   });
 
   const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [serverError, setServerError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
+  const [passwordFocused, setPasswordFocused] = useState(false);
+  const [confirmPasswordFocused, setConfirmPasswordFocused] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated()) {
+      router.push('/');
+    }
+  }, [router]);
+
+  // Check password requirements
+  const passwordRequirements = {
+    minLength: formData.password.length >= 6,
+    hasUpperCase: /[A-Z]/.test(formData.password),
+    hasLowerCase: /[a-z]/.test(formData.password),
+    hasNumber: /[0-9]/.test(formData.password),
+    notEmpty: formData.password.length > 0
+  };
+
+  const passwordsMatch = formData.password === formData.confirmPassword && formData.confirmPassword.length > 0;
 
   const handleChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({
         ...prev,
         [field]: ""
       }));
+    }
+    // Clear server error
+    if (serverError) {
+      setServerError(null);
     }
   };
 
@@ -54,6 +83,12 @@ export default function RegisterForm() {
       newErrors.password = "Password is required";
     } else if (formData.password.length < 6) {
       newErrors.password = "Password must be at least 6 characters";
+    } else if (!/[A-Z]/.test(formData.password)) {
+      newErrors.password = "Password must contain at least one uppercase letter";
+    } else if (!/[a-z]/.test(formData.password)) {
+      newErrors.password = "Password must contain at least one lowercase letter";
+    } else if (!/[0-9]/.test(formData.password)) {
+      newErrors.password = "Password must contain at least one number";
     }
 
     // Confirm password validation
@@ -79,8 +114,11 @@ export default function RegisterForm() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    setServerError(null);
+    setSuccessMessage(null);
     
     if (!validateForm()) {
       return;
@@ -95,13 +133,38 @@ export default function RegisterForm() {
       bio: formData.bio || undefined
     };
 
-    console.log("Register:", registerData);
- 
+    setIsLoading(true);
+
+    try {
+      const result = await register(registerData);
+      
+      if (result.success) {
+        setSuccessMessage(result.message);
+        
+        // Redirect to home and reload to update navbar
+        setTimeout(() => {
+          router.push('/');
+          window.location.reload();
+        }, 300);
+      } else {
+        // Backend'den gelen hata mesajını göster
+        setServerError(result.message);
+        
+        // Eğer backend'den field-specific hatalar geldiyse
+        if (result.errors) {
+          setErrors(result.errors);
+        }
+      }
+    } catch (error) {
+      console.error('Register error:', error);
+      setServerError('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSocialLogin = (provider) => {
     console.log(`Register with ${provider}`);
-    
   };
 
   return (
@@ -141,6 +204,20 @@ export default function RegisterForm() {
         </div>
       </div>
 
+      {/* Error Message */}
+      {serverError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+          <p className="text-sm">{serverError}</p>
+        </div>
+      )}
+
+      {/* Success Message */}
+      {successMessage && (
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4">
+          <p className="text-sm">{successMessage}</p>
+        </div>
+      )}
+
       {/* Register Form */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <InputField
@@ -179,29 +256,103 @@ export default function RegisterForm() {
           <p className="text-red-500 text-sm -mt-3">{errors.email}</p>
         )}
 
-        <InputField
-          label="Password"
-          type="password"
-          value={formData.password}
-          onChange={(e) => handleChange("password", e.target.value)}
-          placeholder="At least 6 characters"
-          required
-        />
-        {errors.password && (
-          <p className="text-red-500 text-sm -mt-3">{errors.password}</p>
-        )}
+        <div>
+          <InputField
+            label="Password"
+            type="password"
+            value={formData.password}
+            onChange={(e) => handleChange("password", e.target.value)}
+            onFocus={() => setPasswordFocused(true)}
+            placeholder="At least 6 characters"
+            required
+          />
+          {errors.password && (
+            <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+          )}
+          
+          {/* Password Requirements */}
+          {(passwordFocused || formData.password.length > 0) && (
+            <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <p className="text-xs font-medium text-gray-700 mb-2">Password requirements:</p>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  {passwordRequirements.minLength ? (
+                    <span className="text-green-500 text-sm">✓</span>
+                  ) : (
+                    <span className="text-gray-400 text-sm">○</span>
+                  )}
+                  <span className={`text-xs ${passwordRequirements.minLength ? 'text-green-600' : 'text-gray-600'}`}>
+                    At least 6 characters
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {passwordRequirements.hasUpperCase ? (
+                    <span className="text-green-500 text-sm">✓</span>
+                  ) : (
+                    <span className="text-gray-400 text-sm">○</span>
+                  )}
+                  <span className={`text-xs ${passwordRequirements.hasUpperCase ? 'text-green-600' : 'text-gray-600'}`}>
+                    One uppercase letter (A-Z)
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {passwordRequirements.hasLowerCase ? (
+                    <span className="text-green-500 text-sm">✓</span>
+                  ) : (
+                    <span className="text-gray-400 text-sm">○</span>
+                  )}
+                  <span className={`text-xs ${passwordRequirements.hasLowerCase ? 'text-green-600' : 'text-gray-600'}`}>
+                    One lowercase letter (a-z)
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {passwordRequirements.hasNumber ? (
+                    <span className="text-green-500 text-sm">✓</span>
+                  ) : (
+                    <span className="text-gray-400 text-sm">○</span>
+                  )}
+                  <span className={`text-xs ${passwordRequirements.hasNumber ? 'text-green-600' : 'text-gray-600'}`}>
+                    One number (0-9)
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
 
-        <InputField
-          label="Confirm Password"
-          type="password"
-          value={formData.confirmPassword}
-          onChange={(e) => handleChange("confirmPassword", e.target.value)}
-          placeholder="Re-enter your password"
-          required
-        />
-        {errors.confirmPassword && (
-          <p className="text-red-500 text-sm -mt-3">{errors.confirmPassword}</p>
-        )}
+        <div>
+          <InputField
+            label="Confirm Password"
+            type="password"
+            value={formData.confirmPassword}
+            onChange={(e) => handleChange("confirmPassword", e.target.value)}
+            onFocus={() => setConfirmPasswordFocused(true)}
+            placeholder="Re-enter your password"
+            required
+          />
+          {errors.confirmPassword && (
+            <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>
+          )}
+          
+          {/* Password Match Indicator */}
+          {confirmPasswordFocused && formData.confirmPassword.length > 0 && (
+            <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex items-center gap-2">
+                {passwordsMatch ? (
+                  <>
+                    <span className="text-green-500 text-sm">✓</span>
+                    <span className="text-xs text-green-600">Passwords match</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-red-500 text-sm">✗</span>
+                    <span className="text-xs text-red-600">Passwords do not match</span>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
 
         <TextArea
           label="Bio (Optional)"
@@ -218,9 +369,12 @@ export default function RegisterForm() {
         {/* Submit Button */}
         <button
           type="submit"
-          className="w-full bg-brand-primary hover:bg-brand-primary-dark text-white font-bold text-lg py-3 rounded-lg transition-colors duration-200 mt-2"
+          disabled={isLoading}
+          className={`w-full bg-brand-primary hover:bg-brand-primary-dark text-white font-bold text-lg py-3 rounded-lg transition-colors duration-200 mt-2 ${
+            isLoading ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
         >
-          Create Account
+          {isLoading ? 'Creating Account...' : 'Create Account'}
         </button>
       </form>
 
