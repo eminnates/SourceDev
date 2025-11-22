@@ -68,6 +68,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPostService, PostService>();
 builder.Services.AddScoped<ITagService, TagService>();
+builder.Services.AddScoped<IFollowService, FollowService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();
 
