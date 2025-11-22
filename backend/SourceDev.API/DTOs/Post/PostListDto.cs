@@ -12,6 +12,10 @@ namespace SourceDev.API.DTOs.Post
         public DateTime PublishedAt { get; set; }
         public string AuthorDisplayName { get; set; } = string.Empty;
         public string? CoverImageUrl { get; set; }
+        public int CommentsCount { get; set; } = 0;
+        public long ReadingTimeMinutes { get; set; } = 0;
+        public Dictionary<string, int> ReactionTypes { get; set; } = new();
+
         public List<string> Tags { get; set; } = new();
     }
 }

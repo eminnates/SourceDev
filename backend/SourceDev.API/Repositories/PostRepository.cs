@@ -15,8 +15,11 @@ namespace SourceDev.API.Repositories
 
         public override async Task<Post?> GetByIdAsync(int id)
         {
-            return await _dbSet.AsNoTracking().FirstOrDefaultAsync(p => p.post_id == id && p.status);
+            return await _dbSet
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.post_id == id && p.status);
         }
+
 
         public async Task<Post?> GetByIdWithDetailsAsync(int id)
         {
@@ -39,20 +42,24 @@ namespace SourceDev.API.Repositories
                 .Select(p => new PostDto
                 {
                     Id = p.post_id,
-                    Title = p.title,
+                    Title = p.title ?? "",
                     Slug = p.slug,
                     ContentMarkdown = p.content_markdown,
                     CoverImageUrl = p.cover_img_url,
                     AuthorId = p.user_id,
                     AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
-                    Status = p.status,
+                    
                     PublishedAt = p.published_at,
                     CreatedAt = p.created_at,
                     UpdatedAt = p.updated_at,
                     LikesCount = p.likes_count,
+                    CommentsCount = _context.Comments.Count(c => c.post_id == p.post_id),
                     ViewCount = p.view_count,
                     BookmarksCount = p.bookmarks_count,
-                    Tags = p.PostTags.Select(pt => pt.Tag.name).ToList()
+                    ReadingTimeMinutes = p.reading_time_minutes,
+                    Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
+                    LikedByCurrentUser = false,
+                    BookmarkedByCurrentUser = false
                 })
                 .FirstOrDefaultAsync();
         }
@@ -65,7 +72,7 @@ namespace SourceDev.API.Repositories
                 .Select(p => new PostDto
                 {
                     Id = p.post_id,
-                    Title = p.title,
+                    Title = p.title ?? "",
                     Slug = p.slug,
                     ContentMarkdown = p.content_markdown,
                     CoverImageUrl = p.cover_img_url,
@@ -77,8 +84,12 @@ namespace SourceDev.API.Repositories
                     UpdatedAt = p.updated_at,
                     LikesCount = p.likes_count,
                     ViewCount = p.view_count,
+                    CommentsCount = _context.Comments.Count(c => c.post_id == p.post_id),
+                    Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
                     BookmarksCount = p.bookmarks_count,
-                    Tags = p.PostTags.Select(pt => pt.Tag.name).ToList()
+                    ReadingTimeMinutes = p.reading_time_minutes,
+                    LikedByCurrentUser = false,
+                    BookmarkedByCurrentUser = false
                 })
                 .FirstOrDefaultAsync();
         }
@@ -104,14 +115,19 @@ namespace SourceDev.API.Repositories
                 .Select(p => new PostListDto
                 {
                     Id = p.post_id,
+                    Title = p.title ?? "",
                     Slug = p.slug,
                     Excerpt = p.content_markdown.Length > 200 ? p.content_markdown.Substring(0, 200) : p.content_markdown,
                     Likes = p.likes_count,
                     Views = p.view_count,
                     Bookmarks = p.bookmarks_count,
+                    CoverImageUrl = p.cover_img_url,
+                    ReadingTimeMinutes = p.reading_time_minutes,
+                    CommentsCount = p.comments_count,
                     PublishedAt = p.published_at,
                     AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
-                    Tags = p.PostTags.Select(pt => pt.Tag.name).ToList()
+                    Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
+                    ReactionTypes = new Dictionary<string, int>()
                 })
                 .ToListAsync();
         }
@@ -136,14 +152,19 @@ namespace SourceDev.API.Repositories
                 .Select(p => new PostListDto
                 {
                     Id = p.post_id,
+                    Title = p.title ?? "",
                     Slug = p.slug,
                     Excerpt = p.content_markdown.Length > 200 ? p.content_markdown.Substring(0, 200) : p.content_markdown,
                     Likes = p.likes_count,
                     Views = p.view_count,
                     Bookmarks = p.bookmarks_count,
+                    CoverImageUrl = p.cover_img_url,
+                    ReadingTimeMinutes = p.reading_time_minutes,
+                    CommentsCount = p.comments_count,
                     PublishedAt = p.published_at,
                     AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
-                    Tags = p.PostTags.Select(pt => pt.Tag.name).ToList()
+                    Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
+                    ReactionTypes = new Dictionary<string, int>()
                 })
                 .ToListAsync();
         }
@@ -170,14 +191,19 @@ namespace SourceDev.API.Repositories
                 .Select(p => new PostListDto
                 {
                     Id = p.post_id,
+                    Title = p.title ?? "",
                     Slug = p.slug,
                     Excerpt = p.content_markdown.Length > 200 ? p.content_markdown.Substring(0, 200) : p.content_markdown,
                     Likes = p.likes_count,
                     Views = p.view_count,
                     Bookmarks = p.bookmarks_count,
+                    CoverImageUrl = p.cover_img_url,
+                    ReadingTimeMinutes = p.reading_time_minutes,
+                    CommentsCount = p.comments_count,
                     PublishedAt = p.published_at,
                     AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
-                    Tags = p.PostTags.Select(pt => pt.Tag.name).ToList()
+                    Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
+                    ReactionTypes = new Dictionary<string, int>()
                 })
                 .ToListAsync();
         }
@@ -201,28 +227,26 @@ namespace SourceDev.API.Repositories
         {
             return await _context.PostTags
                 .AsNoTracking()
-                .Include(pt => pt.Post)
-                    .ThenInclude(p => p.User)
-                .Include(pt => pt.Post)
-                    .ThenInclude(p => p.PostTags)
-                        .ThenInclude(pt2 => pt2.Tag)
-                .Include(pt => pt.Tag)
                 .Where(pt => pt.Tag != null && pt.Post != null && pt.Tag.name == tagSlug && pt.Post.status)
-                .Select(pt => pt.Post!)
-                .OrderByDescending(p => p.published_at)
+                .OrderByDescending(pt => pt.Post!.published_at)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(p => new PostListDto
+                .Select(pt => new PostListDto
                 {
-                    Id = p.post_id,
-                    Slug = p.slug,
-                    Excerpt = p.content_markdown.Length > 200 ? p.content_markdown.Substring(0, 200) : p.content_markdown,
-                    Likes = p.likes_count,
-                    Views = p.view_count,
-                    Bookmarks = p.bookmarks_count,
-                    PublishedAt = p.published_at,
-                    AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
-                    Tags = p.PostTags.Select(pt => pt.Tag.name).ToList()
+                    Id = pt.Post!.post_id,
+                    Title = pt.Post.title ?? "",
+                    Slug = pt.Post.slug,
+                    Excerpt = pt.Post.content_markdown.Length > 200 ? pt.Post.content_markdown.Substring(0, 200) : pt.Post.content_markdown,
+                    Likes = pt.Post.likes_count,
+                    Views = pt.Post.view_count,
+                    Bookmarks = pt.Post.bookmarks_count,
+                    CoverImageUrl = pt.Post.cover_img_url,
+                    ReadingTimeMinutes = pt.Post.reading_time_minutes,
+                    CommentsCount = pt.Post.comments_count,
+                    PublishedAt = pt.Post.published_at,
+                    AuthorDisplayName = pt.Post.User != null ? pt.Post.User.display_name : string.Empty,
+                    Tags = pt.Post.PostTags.Where(pt2 => pt2.Tag != null).Select(pt2 => pt2.Tag!.name).ToList(),
+                    ReactionTypes = new Dictionary<string, int>()
                 })
                 .ToListAsync();
         }
@@ -290,22 +314,26 @@ namespace SourceDev.API.Repositories
                     IsFollowing = _context.UserFollows
                         .Any(uf => uf.follower_id == userId.Value && uf.following_id == p.user_id)
                 })
-                .OrderByDescending(x => x.IsFollowing)  // Takip edilenler önce
+                .OrderByDescending(x => x.IsFollowing)
                 .ThenByDescending(x => x.Post.published_at)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .Select(x => new PostListDto
                 {
                     Id = x.Post.post_id,
+                    Title = x.Post.title ?? "",
                     Slug = x.Post.slug,
-                    Excerpt = x.Post.content_markdown.Substring(0,
-                        x.Post.content_markdown.Length > 200 ? 200 : x.Post.content_markdown.Length),
+                    Excerpt = x.Post.content_markdown.Length > 200 ? x.Post.content_markdown.Substring(0, 200) : x.Post.content_markdown,
                     Likes = x.Post.likes_count,
                     Views = x.Post.view_count,
                     Bookmarks = x.Post.bookmarks_count,
+                    CoverImageUrl = x.Post.cover_img_url,
+                    ReadingTimeMinutes = x.Post.reading_time_minutes,
+                    CommentsCount = x.Post.comments_count,
                     PublishedAt = x.Post.published_at,
-                    AuthorDisplayName = x.Post.User.display_name,
-                    Tags = x.Post.PostTags.Select(pt => pt.Tag.name).ToList()
+                    AuthorDisplayName = x.Post.User != null ? x.Post.User.display_name : "",
+                    Tags = x.Post.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
+                    ReactionTypes = new Dictionary<string, int>()
                 });
 
             return await query.ToListAsync();
@@ -392,13 +420,13 @@ namespace SourceDev.API.Repositories
 
         public async Task<IEnumerable<PostListDto>> SearchInDbAsync(string query, int? userId, int page = 1, int pageSize = 20)
         {
-            // Boþ query kontrolü
+            // Boï¿½ query kontrolï¿½
             if (string.IsNullOrWhiteSpace(query))
             {
                 return new List<PostListDto>();
             }
 
-            // Query'yi normalize et (küçük harfe çevir, trim yap)
+            // Query'yi normalize et (kï¿½ï¿½ï¿½k harfe ï¿½evir, trim yap)
             var normalizedQuery = query.Trim().ToLower();
 
             var postsQuery = _dbSet
@@ -407,7 +435,7 @@ namespace SourceDev.API.Repositories
                 .Where(p => p.slug.ToLower().Contains(normalizedQuery) ||
                             p.content_markdown.ToLower().Contains(normalizedQuery));
 
-            // Eðer kullanýcý giriþ yaptýysa, takip ettiklerini öne çýkar
+            // Eï¿½er kullanï¿½cï¿½ giriï¿½ yaptï¿½ysa, takip ettiklerini ï¿½ne ï¿½ï¿½kar
             if (userId.HasValue)
             {
                 var followingIds = await _context.UserFollows
@@ -415,7 +443,7 @@ namespace SourceDev.API.Repositories
                     .Select(uf => uf.following_id)
                     .ToListAsync();
 
-                // Takip edilenleri önce göster, sonra tarihe göre sýrala
+                // Takip edilenleri ï¿½nce gï¿½ster, sonra tarihe gï¿½re sï¿½rala
                 postsQuery = postsQuery
                     .AsNoTracking()
                     .OrderByDescending(p => followingIds.Contains(p.user_id))
@@ -423,7 +451,7 @@ namespace SourceDev.API.Repositories
             }
             else
             {
-                // Giriþ yapmamýþsa sadece tarihe göre sýrala
+                // Giriï¿½ yapmamï¿½ï¿½sa sadece tarihe gï¿½re sï¿½rala
                 postsQuery = postsQuery.AsNoTracking().OrderByDescending(p => p.published_at); // AsNoTracking EKLENDI
             }
 
@@ -433,6 +461,7 @@ namespace SourceDev.API.Repositories
                 .Select(p => new PostListDto
                 {
                     Id = p.post_id,
+                    Title = p.title ?? "",
                     Slug = p.slug,
                     Excerpt = p.content_markdown.Length > 200
                         ? p.content_markdown.Substring(0, 200)
@@ -440,9 +469,13 @@ namespace SourceDev.API.Repositories
                     Likes = p.likes_count,
                     Views = p.view_count,
                     Bookmarks = p.bookmarks_count,
+                    CoverImageUrl = p.cover_img_url,
+                    ReadingTimeMinutes = p.reading_time_minutes,
+                    CommentsCount = p.comments_count,
                     PublishedAt = p.published_at,
                     AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
-                    Tags = p.PostTags.Select(pt => pt.Tag.name).ToList()
+                    Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
+                    ReactionTypes = new Dictionary<string, int>()
                 })
                 .ToListAsync();
         }

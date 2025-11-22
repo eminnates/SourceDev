@@ -9,7 +9,7 @@ namespace SourceDev.API.Repositories
         IRepository<Comment> Comments { get; }
         IRepository<Bookmark> Bookmarks { get; }
         IRepository<Reaction> Reactions { get; }
-        IRepository<Tag> Tags { get; }
+        ITagRepository Tags { get; }
         IRepository<PostTag> PostTags { get; }
         IRepository<UserFollow> UserFollows { get; }
         

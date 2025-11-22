@@ -111,7 +111,7 @@ namespace SourceDev.API.Data.Context
             // Reaction - Post ilişkisi
             modelBuilder.Entity<Reaction>()
                 .HasOne(r => r.Post)
-                .WithMany()
+                .WithMany(p => p.Reactions)
                 .HasForeignKey(r => r.post_id)
                 .OnDelete(DeleteBehavior.Cascade);
 

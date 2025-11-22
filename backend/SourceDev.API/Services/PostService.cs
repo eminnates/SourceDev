@@ -85,12 +85,21 @@ namespace SourceDev.API.Services
             await _unitOfWork.Posts.AddAsync(post);
             await _unitOfWork.SaveChangesAsync();
 
-            // Add tags if provided
+            // Add tags by name if provided
             if (dto.Tags != null && dto.Tags.Any())
             {
                 foreach (var tagName in dto.Tags)
                 {
                     await AddTagToPostInternalAsync(post.post_id, tagName);
+                }
+            }
+
+            // Add tags by ID if provided
+            if (dto.TagIds != null && dto.TagIds.Any())
+            {
+                foreach (var tagId in dto.TagIds)
+                {
+                    await AddTagToPostByIdInternalAsync(post.post_id, tagId);
                 }
             }
 
@@ -448,6 +457,35 @@ namespace SourceDev.API.Services
             await _unitOfWork.SaveChangesAsync();
 
             _logger.LogInformation("Tag added to post. PostId: {PostId}, Tag: {TagName}", postId, tagName);
+            return true;
+        }
+
+        private async Task<bool> AddTagToPostByIdInternalAsync(int postId, int tagId)
+        {
+            // Check if tag exists
+            var tag = await _unitOfWork.Tags.GetByIdAsync(tagId);
+            if (tag == null)
+            {
+                _logger.LogWarning("Tag not found. TagId: {TagId}", tagId);
+                return false;
+            }
+
+            // Check if already linked
+            var existingLink = await _unitOfWork.PostTags
+                .FirstOrDefaultAsync(pt => pt.post_id == postId && pt.tag_id == tagId);
+
+            if (existingLink != null) return true; // Already exists
+
+            // Create link
+            var postTag = new Models.Entities.PostTag
+            {
+                post_id = postId,
+                tag_id = tagId
+            };
+            await _unitOfWork.PostTags.AddAsync(postTag);
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation("Tag added to post by ID. PostId: {PostId}, TagId: {TagId}", postId, tagId);
             return true;
         }
 

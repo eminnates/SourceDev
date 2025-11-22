@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace SourceDev.API.Models.Entities
 {
@@ -18,8 +19,10 @@ namespace SourceDev.API.Models.Entities
         public string reaction_type { get; set; } = string.Empty;
         public DateTime created_at { get; set; } = DateTime.Now;
 
+        [JsonIgnore]
         public User? User { get; set; }
 
+        [JsonIgnore]
         public Post? Post { get; set; }
 
     }

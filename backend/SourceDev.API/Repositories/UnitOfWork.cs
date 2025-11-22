@@ -16,7 +16,7 @@ namespace SourceDev.API.Repositories
             Comments = new Repository<Comment>(_context);
             Bookmarks = new Repository<Bookmark>(_context);
             Reactions = new Repository<Reaction>(_context);
-            Tags = new Repository<Tag>(_context);
+            Tags = new TagRepository(_context);
             PostTags = new Repository<PostTag>(_context);
             UserFollows = new Repository<UserFollow>(_context);
             
@@ -28,7 +28,7 @@ namespace SourceDev.API.Repositories
         public IRepository<Comment> Comments { get; private set; }
         public IRepository<Bookmark> Bookmarks { get; private set; }
         public IRepository<Reaction> Reactions { get; private set; }
-        public IRepository<Tag> Tags { get; private set; }
+        public ITagRepository Tags { get; private set; }
         public IRepository<PostTag> PostTags { get; private set; }
         public IRepository<UserFollow> UserFollows { get; private set; }
         

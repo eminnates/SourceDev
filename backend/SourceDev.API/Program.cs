@@ -42,7 +42,12 @@ Console.WriteLine("============================");
 
 // Database Context Configuration
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(connectionString));
+{
+    options.UseSqlServer(connectionString);
+    options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking); // Global NoTracking
+    options.EnableSensitiveDataLogging(); // Debug için
+    options.LogTo(Console.WriteLine, LogLevel.Information); // SQL logları
+});
 
 // AutoMapper Configuration
 builder.Services.AddAutoMapper(typeof(Program));
@@ -55,12 +60,14 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPostRepository, PostRepository>();
+builder.Services.AddScoped<ITagRepository, TagRepository>();
 builder.Services.AddScoped<IAdminRepository, AdminRepository>();
 
 // Services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPostService, PostService>();
+builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();
 

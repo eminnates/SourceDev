@@ -14,8 +14,10 @@ namespace SourceDev.API.DTOs.Post
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public int LikesCount { get; set; }
+        public int CommentsCount { get; set; }
         public long ViewCount { get; set; }
         public int BookmarksCount { get; set; }
+        public long ReadingTimeMinutes { get; set; } = 0;
         public bool LikedByCurrentUser { get; set; }
         public bool BookmarkedByCurrentUser { get; set; }
         public List<string> Tags { get; set; } = new();
