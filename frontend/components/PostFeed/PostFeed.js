@@ -3,77 +3,59 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import PostCard from '../Post/PostCard';
+import { getRelevantPosts, getLatestPosts, getTopPosts } from '@/utils/api/postApi';
 
 export default function PostFeed({ defaultTab = 'relevant' }) {
     const [activeTab, setActiveTab] = useState(defaultTab);
+    const [posts, setPosts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const router = useRouter();
 
     useEffect(() => {
         setActiveTab(defaultTab);
     }, [defaultTab]);
 
-    const posts = [
-        {
-            id: 1,
-            title: "Getting Started with React Hooks",
-            author: "Sarah Johnson",
-            date: "Oct 25",
-            excerpt: "Learn the fundamentals of React Hooks and how they can simplify your component logic. Perfect for beginners!",
-            tags: ["react", "javascript", "tutorial"],
-            reactionTypes: { heart: 25, party: 12, wow: 5 },
-            comments: 8,
-            readTime: 5,
-            coverImage: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&h=400&fit=crop"
-        },
-        {
-            id: 2,
-            title: "Building Scalable APIs with Node.js",
-            author: "Michael Chen",
-            date: "Oct 24",
-            excerpt: "Discover best practices for creating robust and maintainable REST APIs using Express and modern Node.js patterns.",
-            tags: ["nodejs", "backend", "api"],
-            reactionTypes: { heart: 20, party: 18 },
-            comments: 0,
-            readTime: 8,
-            coverImage: null
-        },
-        {
-            id: 3,
-            title: "CSS Grid vs Flexbox: When to Use Each",
-            author: "Emma Davis",
-            date: "Oct 24",
-            excerpt: "A comprehensive guide to understanding the differences between CSS Grid and Flexbox, with practical examples.",
-            tags: ["css", "webdesign", "frontend"],
-            reactionTypes: { wow: 30, heart: 15, party: 10 },
-            comments: 15,
-            readTime: 6,
-            coverImage: null
-        },
-        {
-            id: 4,
-            title: "Introduction to TypeScript for JavaScript Devs",
-            author: "Alex Kumar",
-            date: "Oct 23",
-            excerpt: "Make the transition from JavaScript to TypeScript easier with this beginner-friendly introduction.",
-            tags: ["typescript", "javascript"],
-            reactionTypes: { party: 40, heart: 27 },
-            comments: 20,
-            readTime: 7,
-            coverImage: null
-        },
-        {
-            id: 5,
-            title: "Docker Best Practices for 2024",
-            author: "David Miller",
-            date: "Oct 23",
-            excerpt: "Optimize your Docker workflow with these essential tips and tricks used by industry professionals.",
-            tags: ["docker", "devops", "containers"],
-            reactionTypes: { heart: 48 },
-            comments: 0,
-            readTime: 10,
-            coverImage: null
-        },
-    ];
+    // Fetch posts based on active tab
+    useEffect(() => {
+        const fetchPosts = async () => {
+            setLoading(true);
+            setError(null);
+
+            try {
+                let result;
+                switch (activeTab) {
+                    case 'latest':
+                        result = await getLatestPosts(1, 20);
+                        break;
+                    case 'top':
+                        result = await getTopPosts(20);
+                        break;
+                    case 'relevant':
+                    default:
+                        result = await getRelevantPosts(1, 20);
+                        break;
+                }
+
+                if (result.success && result.data) {
+                    // Backend data is already in the correct format (PostListDto)
+                    // PostCard will normalize it internally
+                    setPosts(result.data);
+                } else {
+                    setError(result.message || 'Failed to load posts');
+                    setPosts([]);
+                }
+            } catch (err) {
+                console.error('Error fetching posts:', err);
+                setError('Failed to load posts');
+                setPosts([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPosts();
+    }, [activeTab]);
 
     const tabs = [
         { id: 'relevant', label: 'Relevant', path: '/' },
@@ -86,31 +68,59 @@ export default function PostFeed({ defaultTab = 'relevant' }) {
         router.push(tab.path);
     };
 
-    // Sort posts based on active tab
-    const getSortedPosts = () => {
-        const sortedPosts = [...posts];
-        
-        if (activeTab === 'latest') {
-            // Sort by date (most recent first)
-            return sortedPosts.sort((a, b) => {
-                const dateA = new Date(a.date);
-                const dateB = new Date(b.date);
-                return dateB - dateA;
-            });
-        } else if (activeTab === 'top') {
-            // Sort by total reactions (most popular first)
-            return sortedPosts.sort((a, b) => {
-                const reactionsA = Object.values(a.reactionTypes).reduce((sum, count) => sum + count, 0);
-                const reactionsB = Object.values(b.reactionTypes).reduce((sum, count) => sum + count, 0);
-                return reactionsB - reactionsA;
-            });
-        }
-        
-        // Default: relevant (no sorting)
-        return sortedPosts;
-    };
+    if (loading) {
+        return (
+            <div className="w-full">
+                <nav className="flex gap-2 mb-2">
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => handleTabClick(tab)}
+                            className={`px-3 py-1 rounded-md text-lg transition-colors cursor-pointer hover:bg-white ${
+                                activeTab === tab.id
+                                    ? 'text-black font-bold'
+                                    : 'text-brand-muted hover:text-brand-primary'
+                            }`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </nav>
+                <div className="flex justify-center items-center py-20">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto mb-4"></div>
+                        <p className="text-brand-muted">Loading posts...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
-    const displayPosts = getSortedPosts();
+    if (error) {
+        return (
+            <div className="w-full">
+                <nav className="flex gap-2 mb-2">
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => handleTabClick(tab)}
+                            className={`px-3 py-1 rounded-md text-lg transition-colors cursor-pointer hover:bg-white ${
+                                activeTab === tab.id
+                                    ? 'text-black font-bold'
+                                    : 'text-brand-muted hover:text-brand-primary'
+                            }`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </nav>
+                <div className="bg-white rounded-lg p-8 text-center">
+                    <p className="text-red-600 mb-2">Error loading posts</p>
+                    <p className="text-brand-muted">{error}</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full">
@@ -132,12 +142,18 @@ export default function PostFeed({ defaultTab = 'relevant' }) {
             </nav>
 
             {/* Posts List */}
-            <div className="space-y-2">
-                {displayPosts.map((post, index) => (
-                    <PostCard key={post.id} post={post} showCover={index === 0} />
-                ))}
-            </div>
+            {posts.length === 0 ? (
+                <div className="bg-white rounded-lg p-8 text-center">
+                    <p className="text-brand-muted text-lg">No posts found</p>
+                    <p className="text-sm text-brand-muted mt-2">Be the first to create a post!</p>
+                </div>
+            ) : (
+                <div className="space-y-2">
+                    {posts.map((post, index) => (
+                        <PostCard key={post.id} post={post} showCover={index === 0} />
+                    ))}
+                </div>
+            )}
         </div>
     );
 }
-

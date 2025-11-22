@@ -6,12 +6,37 @@ import { BsBookmark} from 'react-icons/bs';
 import { RiChat1Line } from "react-icons/ri";
 
 export default function PostCard({ post, showCover = false }) {
+    // Normalize data from backend to component format
+    const author = post.authorDisplayName;
+    const coverImage = post.coverImageUrl;
+    const postUrl = post.slug ? `/post/${post.slug}` : `/post/${post.id}`;
+    const comments = post.commentsCount || post.comments || 0;
+    const readTime = post.readingTimeMinutes || post.readTime || 5;
+    const tags = post.tags || [];
+    
+    // Format date
+    const date = post.date || (post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
+    }) : '');
+
+    // Handle reactions
+    const reactionTypes = post.reactionTypes && Object.keys(post.reactionTypes).length > 0 
+        ? post.reactionTypes 
+        : (post.likes > 0 ? { heart: post.likes } : {});
+
+    // Get author initials safely
+    const getAuthorInitials = (authorName) => {
+        if (!authorName || authorName === 'Anonymous') return 'A';
+        return authorName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    };
+
     return (
         <article className="bg-white rounded-lg border border-brand-muted/20 overflow-hidden">
-            {showCover && post.coverImage && (
-                <Link href={`/post/${post.id}`}>
+            {showCover && coverImage && (
+                <Link href={postUrl}>
                     <img 
-                        src={post.coverImage} 
+                        src={coverImage} 
                         alt={post.title}
                         className="w-full h-48 object-cover cursor-pointer hover:opacity-95 transition-opacity"
                     />
@@ -21,29 +46,29 @@ export default function PostCard({ post, showCover = false }) {
             <div className="p-5">
                 <div className="flex gap-2">
 
-                    <Link href={`/user/${post.author}`} className="flex-shrink-0">
+                    <Link href={`/user/${author}`} className="flex-shrink-0">
                         <div className="w-8 h-8 bg-gradient-to-br from-brand-primary to-brand-primary-dark rounded-full flex items-center justify-center text-white text-xs font-bold hover:opacity-80 transition-opacity cursor-pointer">
-                            {post.author.split(' ').map(n => n[0]).join('')}
+                            {getAuthorInitials(author)}
                         </div>
                     </Link>
 
                     {/* Content Area */}
                     <div className="flex-1 min-w-0">
                         <div className="mb-2">
-                            <Link href={`/user/${post.author}`} className="text-sm font-medium text-brand-dark hover:bg-brand-muted/10 transition-colors px-2 py-1 rounded cursor-pointer">
-                                {post.author}
+                            <Link href={`/user/${author}`} className="text-sm font-medium text-brand-dark hover:bg-brand-muted/10 transition-colors px-2 py-1 rounded cursor-pointer">
+                                {author}
                             </Link>
-                            <p className="text-xs text-brand-muted ms-2">{post.date}</p>
+                            <p className="text-xs text-brand-muted ms-2">{date}</p>
                         </div>
 
-                        <Link href={`/post/${post.id}`}>
+                        <Link href={postUrl}>
                             <h2 className="text-2xl font-bold text-black mb-2 hover:text-brand-primary cursor-pointer transition-colors">
                                 {post.title}
                             </h2>
                         </Link>
 
                         <div className="flex gap-2 flex-wrap mb-3">
-                            {post.tags.slice(0, 3).map((tag, idx) => {
+                            {tags.length > 0 && tags.slice(0, 3).map((tag, idx) => {
                                 const tagColors = [
                                     { bg: 'bg-yellow-50', text: 'text-yellow-700', hover: 'hover:bg-yellow-100/50', border: 'hover:border-yellow-200' },
                                     { bg: 'bg-green-50', text: 'text-green-700', hover: 'hover:bg-green-100/50', border: 'hover:border-green-200' },
@@ -69,10 +94,10 @@ export default function PostCard({ post, showCover = false }) {
 
                         <div className="flex items-center justify-between text-sm text-brand-muted">
                             <div className="flex items-center gap-4">
-                                {post.reactionTypes && Object.keys(post.reactionTypes).length > 0 && (
+                                {reactionTypes && Object.keys(reactionTypes).length > 0 && (
                                     <button className="flex items-center gap-2 hover:bg-gray-100 px-2 py-1 rounded transition-colors">
                                         <div className="flex items-center">
-                                            {Object.entries(post.reactionTypes)
+                                            {Object.entries(reactionTypes)
                                                 .sort((a, b) => b[1] - a[1])
                                                 .slice(0, 3)
                                                 .map(([type, count], index) => {
@@ -98,21 +123,21 @@ export default function PostCard({ post, showCover = false }) {
                                                 })}
                                         </div>
                                         <span className="text-sm text-brand-dark">
-                                            {Object.values(post.reactionTypes).reduce((a, b) => a + b, 0)} reactions
+                                            {Object.values(reactionTypes).reduce((a, b) => a + b, 0)} reactions
                                         </span>
                                     </button>
                                 )}
                                 
-                                <Link href={`/post/${post.id}#comments`} className="flex items-center gap-2 hover:bg-gray-100 px-2 py-1 rounded transition-colors">
+                                <Link href={`${postUrl}#comments`} className="flex items-center gap-2 hover:bg-gray-100 px-2 py-1 rounded transition-colors">
                                     <RiChat1Line className="w-5 h-5 text-brand-muted" />
                                     <span className="text-sm text-brand-dark">
-                                        {post.comments > 0 ? `${post.comments} comments` : 'Add comment'}
+                                        {comments > 0 ? `${comments} comments` : 'Add comment'}
                                     </span>
                                 </Link>
                             </div>
 
                             <div className="flex items-center gap-3">
-                                <span className="text-xs">{post.readTime} min read</span>
+                                <span className="text-xs">{readTime} min read</span>
 
                                 <button className="hover:text-brand-primary transition-colors cursor-pointer">
                                     <BsBookmark className="w-4 h-4" />

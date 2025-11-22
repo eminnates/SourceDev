@@ -7,6 +7,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { MdClose } from 'react-icons/md';
 import { isAuthenticated } from '@/utils/auth';
+import { createPost } from '@/utils/api/postApi';
 import 'easymde/dist/easymde.min.css';
 
 // Dynamic import to avoid SSR issues
@@ -53,31 +54,90 @@ export default function CreatePostPage() {
       return;
     }
 
+    if (!content.trim()) {
+      alert('Please enter content');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // TODO: Implement API call to create post
-      console.log({
-        title,
-        content,
-        tags: tags.split(',').map(t => t.trim()).filter(t => t),
-        coverImage
-      });
+      // Parse tags
+      const tagArray = tags
+        .split(',')
+        .map(t => t.trim())
+        .filter(t => t)
+        .slice(0, 4); // Maximum 4 tags
 
-      // Redirect to home after successful creation
-      setTimeout(() => {
-        router.push('/');
-      }, 1000);
+      // Create post data
+      const postData = {
+        title: title.trim(),
+        content: content.trim(),
+        tags: tagArray,
+        coverImageUrl: coverImage || null,
+        publishNow: true
+      };
+
+      // Call API
+      const result = await createPost(postData);
+
+      if (result.success) {
+        alert(result.message);
+        // Redirect to the created post or home
+        if (result.data?.slug) {
+          router.push(`/post/${result.data.slug}`);
+        } else {
+          router.push('/');
+        }
+      } else {
+        alert(result.message || 'Failed to create post');
+      }
     } catch (error) {
       console.error('Error creating post:', error);
-      alert('Failed to create post');
+      alert('Failed to create post. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSaveDraft = () => {
-    // TODO: Implement save draft functionality
-    console.log('Save draft');
+  const handleSaveDraft = async () => {
+    if (!title.trim()) {
+      alert('Please enter a title');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Parse tags
+      const tagArray = tags
+        .split(',')
+        .map(t => t.trim())
+        .filter(t => t)
+        .slice(0, 4); // Maximum 4 tags
+
+      // Create post data as draft
+      const postData = {
+        title: title.trim(),
+        content: content.trim() || '',
+        tags: tagArray,
+        coverImageUrl: coverImage || null,
+        publishNow: false // Save as draft
+      };
+
+      // Call API
+      const result = await createPost(postData);
+
+      if (result.success) {
+        alert('Draft saved successfully!');
+        router.push('/');
+      } else {
+        alert(result.message || 'Failed to save draft');
+      }
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      alert('Failed to save draft. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const editorOptions = useMemo(() => ({
