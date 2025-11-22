@@ -15,24 +15,26 @@ namespace SourceDev.API.Repositories
 
         public override async Task<Post?> GetByIdAsync(int id)
         {
-            return await _dbSet.FirstOrDefaultAsync(p => p.post_id == id && p.status);
+            return await _dbSet.AsNoTracking().FirstOrDefaultAsync(p => p.post_id == id && p.status);
         }
 
         public async Task<Post?> GetByIdWithDetailsAsync(int id)
         {
             return await _dbSet
+                .AsNoTracking()
                 .Include(p => p.User)
                 .FirstOrDefaultAsync(p => p.post_id == id && p.status);
         }
 
         public async Task<Post?> GetBySlugAsync(string slug)
         {
-            return await _dbSet.FirstOrDefaultAsync(p => p.slug == slug && p.status);
+            return await _dbSet.AsNoTracking().FirstOrDefaultAsync(p => p.slug == slug && p.status);
         }
 
         public async Task<PostDto?> GetDtoByIdAsync(int id)
         {
             return await _dbSet
+                .AsNoTracking()
                 .Where(p => p.post_id == id)
                 .Select(p => new PostDto
                 {
@@ -57,6 +59,7 @@ namespace SourceDev.API.Repositories
         public async Task<PostDto?> GetDtoBySlugAsync(string slug)
         {
             return await _dbSet
+                .AsNoTracking()
                 .Where(p => p.slug == slug && p.status)
                 .Select(p => new PostDto
                 {
@@ -81,6 +84,7 @@ namespace SourceDev.API.Repositories
         public async Task<IEnumerable<Post>> GetLatestAsync(int take = 10)
         {
             return await _dbSet
+                .AsNoTracking()
                 .Where(p => p.status)
                 .OrderByDescending(p => p.published_at)
                 .Take(take)
@@ -90,6 +94,7 @@ namespace SourceDev.API.Repositories
         public async Task<IEnumerable<PostListDto>> GetLatestDtosAsync(int page = 1, int pageSize = 20)
         {
             return await _dbSet
+                .AsNoTracking()
                 .Where(p => p.status)
                 .OrderByDescending(p => p.published_at)
                 .Skip((page - 1) * pageSize)
@@ -112,6 +117,7 @@ namespace SourceDev.API.Repositories
         public async Task<IEnumerable<Post>> GetTopAsync(int take = 10)
         {
             return await _dbSet
+                .AsNoTracking()
                 .Where(p => p.status)
                 .OrderByDescending(p => p.likes_count)
                 .Take(take)
@@ -121,6 +127,7 @@ namespace SourceDev.API.Repositories
         public async Task<IEnumerable<PostListDto>> GetTopDtosAsync(int take = 10)
         {
             return await _dbSet
+                .AsNoTracking()
                 .Where(p => p.status)
                 .OrderByDescending(p => p.likes_count)
                 .Take(take)
@@ -142,6 +149,7 @@ namespace SourceDev.API.Repositories
         public async Task<IEnumerable<Post>> GetByUserAsync(int userId, int page = 1, int pageSize = 20)
         {
             return await _dbSet
+                .AsNoTracking()
                 .Where(p => p.user_id == userId && p.status)
                 .OrderByDescending(p => p.published_at)
                 .Skip((page - 1) * pageSize)
@@ -152,6 +160,7 @@ namespace SourceDev.API.Repositories
         public async Task<IEnumerable<PostListDto>> GetByUserDtosAsync(int userId, int page = 1, int pageSize = 20)
         {
             return await _dbSet
+                .AsNoTracking()
                 .Where(p => p.user_id == userId && p.status)
                 .OrderByDescending(p => p.published_at)
                 .Skip((page - 1) * pageSize)
@@ -189,6 +198,7 @@ namespace SourceDev.API.Repositories
         public async Task<IEnumerable<PostListDto>> GetByTagDtosAsync(string tagSlug, int page = 1, int pageSize = 20)
         {
             return await _context.PostTags
+                .AsNoTracking()
                 .Include(pt => pt.Post)
                     .ThenInclude(p => p.User)
                 .Include(pt => pt.Post)
@@ -220,6 +230,7 @@ namespace SourceDev.API.Repositories
             if (userId == null)
             {
                 return await _dbSet
+                    .AsNoTracking()
                     .Where(p => p.status)
                     .OrderByDescending(p => p.published_at)
                     .Skip((page - 1) * pageSize)
@@ -228,13 +239,15 @@ namespace SourceDev.API.Repositories
             }
 
             var followingIds = await _context.UserFollows
+                .AsNoTracking()
                 .Where(uf => uf.follower_id == userId.Value)
                 .Select(uf => uf.following_id)
                 .ToListAsync();
 
-            var query = _dbSet.Where(p => p.status && followingIds.Contains(p.user_id));
+            var query = _dbSet.AsNoTracking().Where(p => p.status && followingIds.Contains(p.user_id));
 
             var results = await query
+                .AsNoTracking()
                 .OrderByDescending(p => p.published_at)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -244,6 +257,7 @@ namespace SourceDev.API.Repositories
             {
                 var needed = pageSize - results.Count;
                 var extras = await _dbSet
+                    .AsNoTracking()
                     .Where(p => p.status && !followingIds.Contains(p.user_id))
                     .OrderByDescending(p => p.published_at)
                     .Take(needed)
@@ -256,80 +270,123 @@ namespace SourceDev.API.Repositories
         }
 
         // DTO-returning projection for relevant feed
+
         public async Task<IEnumerable<PostListDto>> GetRelevantDtosAsync(int? userId, int page = 1, int pageSize = 20)
         {
             if (userId == null)
             {
-                return await _dbSet
-                    .Where(p => p.status)
-                    .OrderByDescending(p => p.published_at)
-                    .Skip((page - 1) * pageSize)
-                    .Take(pageSize)
-                    .Select(p => new PostListDto
-                    {
-                        Id = p.post_id,
-                        Slug = p.slug,
-                        Excerpt = p.content_markdown.Length > 200 ? p.content_markdown.Substring(0, 200) : p.content_markdown,
-                        Likes = p.likes_count,
-                        Views = p.view_count,
-                        Bookmarks = p.bookmarks_count,
-                        PublishedAt = p.published_at,
-                        AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
-                        Tags = p.PostTags.Select(pt => pt.Tag.name).ToList()
-                    })
-                    .ToListAsync();
+                return await GetLatestDtosAsync(page, pageSize);
             }
 
-            var followingIds = await _context.UserFollows
-                .Where(uf => uf.follower_id == userId.Value)
-                .Select(uf => uf.following_id)
-                .ToListAsync();
-
-            var results = await _dbSet
-                .Where(p => p.status && followingIds.Contains(p.user_id))
-                .OrderByDescending(p => p.published_at)
+            //TEK SORGU: Following posts + fallback posts
+            var query = _dbSet
+                .AsNoTracking()
+                .Where(p => p.status)
+                .Select(p => new
+                {
+                    Post = p,
+                    IsFollowing = _context.UserFollows
+                        .Any(uf => uf.follower_id == userId.Value && uf.following_id == p.user_id)
+                })
+                .OrderByDescending(x => x.IsFollowing)  // Takip edilenler önce
+                .ThenByDescending(x => x.Post.published_at)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(p => new PostListDto
+                .Select(x => new PostListDto
                 {
-                    Id = p.post_id,
-                    Slug = p.slug,
-                    Excerpt = p.content_markdown.Length > 200 ? p.content_markdown.Substring(0, 200) : p.content_markdown,
-                    Likes = p.likes_count,
-                    Views = p.view_count,
-                    Bookmarks = p.bookmarks_count,
-                    PublishedAt = p.published_at,
-                    AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
-                    Tags = p.PostTags.Select(pt => pt.Tag.name).ToList()
-                })
-                .ToListAsync();
+                    Id = x.Post.post_id,
+                    Slug = x.Post.slug,
+                    Excerpt = x.Post.content_markdown.Substring(0,
+                        x.Post.content_markdown.Length > 200 ? 200 : x.Post.content_markdown.Length),
+                    Likes = x.Post.likes_count,
+                    Views = x.Post.view_count,
+                    Bookmarks = x.Post.bookmarks_count,
+                    PublishedAt = x.Post.published_at,
+                    AuthorDisplayName = x.Post.User.display_name,
+                    Tags = x.Post.PostTags.Select(pt => pt.Tag.name).ToList()
+                });
 
-            if (results.Count < pageSize)
-            {
-                var needed = pageSize - results.Count;
-                var extras = await _dbSet
-                    .Where(p => p.status && !followingIds.Contains(p.user_id))
-                    .OrderByDescending(p => p.published_at)
-                    .Take(needed)
-                    .Select(p => new PostListDto
-                    {
-                        Id = p.post_id,
-                        Slug = p.slug,
-                        Excerpt = p.content_markdown.Length > 200 ? p.content_markdown.Substring(0, 200) : p.content_markdown,
-                        Likes = p.likes_count,
-                        Views = p.view_count,
-                        Bookmarks = p.bookmarks_count,
-                        PublishedAt = p.published_at,
-                        AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
-                        Tags = p.PostTags.Select(pt => pt.Tag.name).ToList()
-                    })
-                    .ToListAsync();
-
-                results.AddRange(extras);
-            }
-
-            return results;
+            return await query.ToListAsync();
         }
+
+        //public async Task<IEnumerable<PostListDto>> GetRelevantDtosAsync(int? userId, int page = 1, int pageSize = 20)
+        //{
+        //    if (userId == null)
+        //    {
+        //        return await _dbSet
+        //            .AsNoTracking()
+        //            .Where(p => p.status)
+        //            .OrderByDescending(p => p.published_at)
+        //            .Skip((page - 1) * pageSize)
+        //            .Take(pageSize)
+        //            .Select(p => new PostListDto
+        //            {
+        //                Id = p.post_id,
+        //                Slug = p.slug,
+        //                Excerpt = p.content_markdown.Length > 200 ? p.content_markdown.Substring(0, 200) : p.content_markdown,
+        //                Likes = p.likes_count,
+        //                Views = p.view_count,
+        //                Bookmarks = p.bookmarks_count,
+        //                PublishedAt = p.published_at,
+        //                AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
+        //                Tags = p.PostTags.Select(pt => pt.Tag.name).ToList()
+        //            })
+        //            .ToListAsync();
+        //    }
+
+        //var followingIds = await _context.UserFollows
+        //    .AsNoTracking()
+        //    .Where(uf => uf.follower_id == userId.Value)
+        //    .Select(uf => uf.following_id)
+        //    .ToListAsync();
+
+        //var results = await _dbSet
+        //    .AsNoTracking()
+        //    .Where(p => p.status && followingIds.Contains(p.user_id))
+        //    .OrderByDescending(p => p.published_at)
+        //    .Skip((page - 1) * pageSize)
+        //    .Take(pageSize)
+        //    .Select(p => new PostListDto
+        //    {
+        //        Id = p.post_id,
+        //        Slug = p.slug,
+        //        Excerpt = p.content_markdown.Length > 200 ? p.content_markdown.Substring(0, 200) : p.content_markdown,
+        //        Likes = p.likes_count,
+        //        Views = p.view_count,
+        //        Bookmarks = p.bookmarks_count,
+        //        PublishedAt = p.published_at,
+        //        AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
+        //        Tags = p.PostTags.Select(pt => pt.Tag.name).ToList()
+        //    })
+        //    .ToListAsync();
+
+        //if (results.Count < pageSize)
+        //{
+        //    var needed = pageSize - results.Count;
+        //    var extras = await _dbSet
+        //        .AsNoTracking()
+        //        .Where(p => p.status && !followingIds.Contains(p.user_id))
+        //        .OrderByDescending(p => p.published_at)
+        //        .Take(needed)
+        //        .Select(p => new PostListDto
+        //        {
+        //            Id = p.post_id,
+        //            Slug = p.slug,
+        //            Excerpt = p.content_markdown.Length > 200 ? p.content_markdown.Substring(0, 200) : p.content_markdown,
+        //            Likes = p.likes_count,
+        //            Views = p.view_count,
+        //            Bookmarks = p.bookmarks_count,
+        //            PublishedAt = p.published_at,
+        //            AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
+        //            Tags = p.PostTags.Select(pt => pt.Tag.name).ToList()
+        //        })
+        //        .ToListAsync();
+
+        //    results.AddRange(extras);
+        //}
+
+        //    return results;
+        //}
 
         public async Task<IEnumerable<PostListDto>> SearchInDbAsync(string query, int? userId, int page = 1, int pageSize = 20)
         {
@@ -358,13 +415,14 @@ namespace SourceDev.API.Repositories
 
                 // Takip edilenleri önce göster, sonra tarihe göre sýrala
                 postsQuery = postsQuery
+                    .AsNoTracking()
                     .OrderByDescending(p => followingIds.Contains(p.user_id))
                     .ThenByDescending(p => p.published_at);
             }
             else
             {
                 // Giriþ yapmamýþsa sadece tarihe göre sýrala
-                postsQuery = postsQuery.OrderByDescending(p => p.published_at);
+                postsQuery = postsQuery.AsNoTracking().OrderByDescending(p => p.published_at); // AsNoTracking EKLENDI
             }
 
             return await postsQuery

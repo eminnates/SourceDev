@@ -17,7 +17,7 @@ namespace SourceDev.API.Repositories
         // POST MANAGEMENT
         public async Task<IEnumerable<AdminPostListDto>> GetAllPostsAsync(int page, int pageSize, bool? status = null)
         {
-            var query = _context.Posts.AsQueryable();
+            var query = _context.Posts.AsNoTracking().AsQueryable();
 
             if (status.HasValue)
             {
@@ -25,6 +25,7 @@ namespace SourceDev.API.Repositories
             }
 
             return await query
+                .AsNoTracking()
                 .OrderByDescending(p => p.created_at)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -51,7 +52,7 @@ namespace SourceDev.API.Repositories
 
         public async Task<int> GetTotalPostsCountAsync(bool? status = null)
         {
-            var query = _context.Posts.AsQueryable();
+            var query = _context.Posts.AsNoTracking().AsQueryable();
 
             if (status.HasValue)
             {
@@ -64,6 +65,7 @@ namespace SourceDev.API.Repositories
         public async Task<Post?> GetPostByIdForAdminAsync(int postId)
         {
             return await _context.Posts
+                .AsNoTracking()
                 .Include(p => p.User)
                 .Include(p => p.PostTags)
                     .ThenInclude(pt => pt.Tag)
@@ -101,6 +103,7 @@ namespace SourceDev.API.Repositories
         public async Task<IEnumerable<AdminUserListDto>> GetAllUsersAsync(int page, int pageSize)
         {
             return await _context.Users
+                .AsNoTracking()
                 .OrderByDescending(u => u.created_at)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -126,12 +129,13 @@ namespace SourceDev.API.Repositories
 
         public async Task<int> GetTotalUsersCountAsync()
         {
-            return await _context.Users.CountAsync();
+            return await _context.Users.AsNoTracking().CountAsync();
         }
 
         public async Task<User?> GetUserByIdAsync(int userId)
         {
             return await _context.Users
+                .AsNoTracking()
                 .Include(u => u.Followers)
                 .Include(u => u.Following)
                 .FirstOrDefaultAsync(u => u.Id == userId);
@@ -156,15 +160,15 @@ namespace SourceDev.API.Repositories
 
             return new AdminStatsDto
             {
-                TotalUsers = await _context.Users.CountAsync(),
-                TotalPosts = await _context.Posts.CountAsync(),
-                PublishedPosts = await _context.Posts.CountAsync(p => p.status),
-                DraftPosts = await _context.Posts.CountAsync(p => !p.status),
-                TotalTags = await _context.Tags.CountAsync(),
-                TodayPosts = await _context.Posts.CountAsync(p => p.created_at >= today),
-                TodayUsers = await _context.Users.CountAsync(u => u.created_at >= today),
-                TotalViews = await _context.Posts.SumAsync(p => (long?)p.view_count) ?? 0,
-                TotalLikes = await _context.Posts.SumAsync(p => (int?)p.likes_count) ?? 0
+                TotalUsers = await _context.Users.AsNoTracking().CountAsync(),
+                TotalPosts = await _context.Posts.AsNoTracking().CountAsync(),
+                PublishedPosts = await _context.Posts.AsNoTracking().CountAsync(p => p.status),
+                DraftPosts = await _context.Posts.AsNoTracking().CountAsync(p => !p.status),
+                TotalTags = await _context.Tags.AsNoTracking().CountAsync(),
+                TodayPosts = await _context.Posts.AsNoTracking().CountAsync(p => p.created_at >= today),
+                TodayUsers = await _context.Users.AsNoTracking().CountAsync(u => u.created_at >= today),
+                TotalViews = await _context.Posts.AsNoTracking().SumAsync(p => (long?)p.view_count) ?? 0,
+                TotalLikes = await _context.Posts.AsNoTracking().SumAsync(p => (int?)p.likes_count) ?? 0
             };
         }
     }

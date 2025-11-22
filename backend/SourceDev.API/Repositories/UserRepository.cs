@@ -12,32 +12,33 @@ namespace SourceDev.API.Repositories
 
         public async Task<User?> GetByEmailAsync(string email)
         {
-            return await _dbSet.FirstOrDefaultAsync(u => u.Email == email);
+            return await _dbSet.AsNoTracking().FirstOrDefaultAsync(u => u.Email == email);
         }
 
         public async Task<User?> GetByUsernameAsync(string username)
         {
-            return await _dbSet.FirstOrDefaultAsync(u => u.UserName == username);
+            return await _dbSet.AsNoTracking().FirstOrDefaultAsync(u => u.UserName == username);
         }
 
         public async Task<bool> IsEmailExistsAsync(string email)
         {
-            return await _dbSet.AnyAsync(u => u.Email == email);
+            return await _dbSet.AsNoTracking().AnyAsync(u => u.Email == email);
         }
 
         public async Task<bool> IsUsernameExistsAsync(string username)
         {
-            return await _dbSet.AnyAsync(u => u.UserName == username);
+            return await _dbSet.AsNoTracking().AnyAsync(u => u.UserName == username);
         }
 
         public async Task<IEnumerable<User>> GetActiveUsersAsync()
         {
-            return await _dbSet.Where(u => !u.on_deleted).ToListAsync();
+            return await _dbSet.AsNoTracking().Where(u => !u.on_deleted).ToListAsync();
         }
 
         public async Task<IEnumerable<User>> SearchUsersByDisplayNameAsync(string searchTerm)
         {
             return await _dbSet
+                .AsNoTracking()
                 .Where(u => !u.on_deleted && u.display_name.Contains(searchTerm))
                 .ToListAsync();
         }
@@ -45,12 +46,14 @@ namespace SourceDev.API.Repositories
         public async Task<int> GetFollowersCountAsync(int userId)
         {
             return await _context.UserFollows
+                .AsNoTracking()
                 .CountAsync(uf => uf.following_id == userId);
         }
 
         public async Task<int> GetFollowingCountAsync(int userId)
         {
             return await _context.UserFollows
+                .AsNoTracking()
                 .CountAsync(uf => uf.follower_id == userId);
         }
     }

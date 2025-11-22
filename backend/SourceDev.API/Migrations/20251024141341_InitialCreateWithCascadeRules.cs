@@ -11,6 +11,12 @@ namespace SourceDev.API.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.Sql(@"
+                CREATE NONCLUSTERED INDEX IX_posts_status_published_at_covering
+                ON posts (status, published_at DESC)
+                INCLUDE (post_id, slug, content_markdown, user_id, likes_count, view_count, bookmarks_count)
+                WHERE status = 1;");
+
             migrationBuilder.CreateTable(
                 name: "Roles",
                 columns: table => new
@@ -351,6 +357,12 @@ namespace SourceDev.API.Migrations
                 column: "post_id");
 
             migrationBuilder.CreateIndex(
+                name: "IX_posts_slug_unique",
+                table: "posts",
+                column: "slug",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Reactions_post_id",
                 table: "Reactions",
                 column: "post_id");
@@ -403,6 +415,10 @@ namespace SourceDev.API.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropIndex(
+                name: "IX_posts_slug_unique",
+                table: "posts");
+
             migrationBuilder.DropTable(
                 name: "Bookmarks");
 
