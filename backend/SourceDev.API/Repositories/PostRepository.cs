@@ -37,6 +37,7 @@ namespace SourceDev.API.Repositories
                 .Select(p => new PostDto
                 {
                     Id = p.post_id,
+                    Title = p.title,
                     Slug = p.slug,
                     ContentMarkdown = p.content_markdown,
                     CoverImageUrl = p.cover_img_url,
@@ -61,6 +62,7 @@ namespace SourceDev.API.Repositories
                 .Select(p => new PostDto
                 {
                     Id = p.post_id,
+                    Title = p.title,
                     Slug = p.slug,
                     ContentMarkdown = p.content_markdown,
                     CoverImageUrl = p.cover_img_url,

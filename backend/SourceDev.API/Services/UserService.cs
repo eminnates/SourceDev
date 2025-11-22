@@ -165,5 +165,10 @@ namespace SourceDev.API.Services
         {
             return !await _unitOfWork.Users.IsUsernameExistsAsync(username);
         }
+
+        public Task<bool> FollowUserAsync(int id)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

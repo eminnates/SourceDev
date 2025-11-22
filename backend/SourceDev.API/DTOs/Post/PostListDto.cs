@@ -3,6 +3,7 @@ namespace SourceDev.API.DTOs.Post
     public class PostListDto
     {
         public int Id { get; set; }
+        public string Title { get; set; } = string.Empty;
         public string Slug { get; set; } = string.Empty;
         public string Excerpt { get; set; } = string.Empty;
         public int Likes { get; set; }
@@ -10,6 +11,7 @@ namespace SourceDev.API.DTOs.Post
         public int Bookmarks { get; set; }
         public DateTime PublishedAt { get; set; }
         public string AuthorDisplayName { get; set; } = string.Empty;
+        public string? CoverImageUrl { get; set; }
         public List<string> Tags { get; set; } = new();
     }
 }

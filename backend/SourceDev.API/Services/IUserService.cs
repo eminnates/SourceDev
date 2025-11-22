@@ -14,6 +14,7 @@ namespace SourceDev.API.Services
         Task<IEnumerable<UserDto>> SearchUsersAsync(string searchTerm);
         Task<User> UpdateUserAsync(User user);
         Task<bool> DeleteUserAsync(int id);
+        Task<bool> FollowUserAsync(int id);
         Task<bool> IsEmailAvailableAsync(string email);
         Task<bool> IsUsernameAvailableAsync(string username);
     }

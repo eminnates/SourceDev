@@ -3,6 +3,7 @@ namespace SourceDev.API.DTOs.Post
     public class PostDto
     {
         public int Id { get; set; }
+        public string Title { get; set; } = string.Empty;
         public string Slug { get; set; } = string.Empty;
         public string ContentMarkdown { get; set; } = string.Empty;
         public string? CoverImageUrl { get; set; }

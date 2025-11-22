@@ -16,6 +16,10 @@ namespace SourceDev.API.Models.Entities
         public string slug { get; set; } = string.Empty;
 
         [Required]
+        [MaxLength(200)] 
+        public string title { get; set; } = string.Empty;
+
+        [Required]
         [MaxLength(30000)] // character limit expanded
         public string content_markdown { get; set; } = string.Empty;
 

@@ -70,6 +70,7 @@ namespace SourceDev.API.Services
             var post = new Post
             {
                 user_id = authorId,  // ← Entity property isimleri
+                title = dto.Title,
                 slug = slug,
                 content_markdown = dto.Content,
                 cover_img_url = dto.CoverImageUrl,
