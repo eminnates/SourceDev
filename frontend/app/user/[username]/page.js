@@ -1,64 +1,117 @@
 "use client";
 
-import { use } from 'react';
+import { use, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import ProfileHeader from '@/components/Profile/ProfileHeader';
 import ProfileSidebar from '@/components/Profile/ProfileSidebar';
 import PostCard from '@/components/Post/PostCard';
+import { searchUsers, getUserById, getUserPosts } from '@/utils/api/userApi';
+import { isAuthenticated, getUser as getCurrentUser } from '@/utils/auth';
 
 export default function UserProfilePage({ params }) {
   const { username } = use(params);
+  const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Mock data - will be replaced with actual API call
-  const user = {
-    name: "Shalen Mathew",
-    bio: "Hello there I am android dev sharing my knowledge to community",
-    location: "Banglore, India",
-    joinedDate: "Jun 20, 2024",
-    email: "shalenmj@gmail.com",
-    website: "https://linktr.ee/shalenmathew",
-    github: "shalenmathew",
-    avatar: null
-  };
+  useEffect(() => {
+    // Fetch user data
+    const fetchUserData = async () => {
+      setLoading(true);
+      setError(null);
 
+      try {
+        // Check if viewing own profile
+        const currentUser = getCurrentUser();
+        if (currentUser && currentUser.username === username) {
+          // Use current user data
+          setUser(currentUser);
+          
+          // Fetch user posts
+          const postsResult = await getUserPosts(currentUser.id);
+          if (postsResult.success) {
+            setPosts(postsResult.data || []);
+          }
+        } else {
+          // Search for user by username
+          const searchResult = await searchUsers(username);
+          if (searchResult.success && searchResult.data.length > 0) {
+            // Find exact match
+            const foundUser = searchResult.data.find(u => u.username.toLowerCase() === username.toLowerCase());
+            if (foundUser) {
+              setUser(foundUser);
+              
+              // Fetch user posts
+              const postsResult = await getUserPosts(foundUser.id);
+              if (postsResult.success) {
+                setPosts(postsResult.data || []);
+              }
+            } else {
+              setError('User not found');
+            }
+          } else {
+            setError('User not found');
+          }
+        }
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('Error fetching user data:', err);
+        setError('Failed to load profile');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [username, router]);
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-brand-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary"></div>
+          <p className="mt-4 text-brand-muted">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !user) {
+    return (
+      <div className="min-h-screen bg-brand-background flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-brand-dark mb-2">Profile not found</h2>
+          <p className="text-brand-muted mb-4">{error || 'User does not exist'}</p>
+          <button
+            onClick={() => router.push('/')}
+            className="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary-dark transition-colors"
+          >
+            Go to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate stats from user data
   const stats = {
-    posts: 4,
-    comments: 0,
-    tags: 0
+    posts: posts.length || 0,
+    comments: user.commentsCount || 0,
+    tags: user.tagsCount || 0
   };
 
   const badges = [
-    { emoji: "🥚", name: "Badge 1" },
-    { emoji: "📝", name: "Badge 2" }
+    { emoji: "🥚", name: "New User" },
+    { emoji: "📝", name: "Writer" }
   ];
 
-  const skills = "Android, Kotlin, Java, Jetpack Compose, App development";
-  const learning = "Android dev, Mobile dev";
-  const availableFor = "Freelance work, Consultations";
-
-  const posts = [
-    {
-      id: 1,
-      author: "Shalen Mathew",
-      date: "Oct 24",
-      title: "Why I'm Building in Public (And Why You Should Too)",
-      tags: ["swift", "android", "reactnative", "hacktoberfest"],
-      reactionTypes: { heart: 5, party: 2, fire: 1 },
-      comments: 2,
-      readTime: 3,
-      coverImage: null
-    },
-    {
-      id: 2,
-      author: "Shalen Mathew",
-      date: "Apr 8",
-      title: "A Guide to Using Singleton Design Pattern in Android",
-      tags: ["designpatterns", "android", "tutorial", "learning"],
-      reactionTypes: {},
-      comments: 0,
-      readTime: 1,
-      coverImage: null
-    }
-  ];
+  const skills = user.skills || "";
+  const learning = user.learning || "";
+  const availableFor = user.availableFor || "";
 
   return (
     <div className="min-h-screen bg-brand-background">

@@ -2,8 +2,33 @@
 
 import { BsThreeDots } from 'react-icons/bs';
 import { FaGithub, FaEnvelope, FaLink, FaMapMarkerAlt, FaBirthdayCake } from 'react-icons/fa';
+import { isAuthenticated, getUser as getCurrentUser } from '@/utils/auth';
+import { useRouter } from 'next/navigation';
 
 export default function ProfileHeader({ user }) {
+  const router = useRouter();
+  const currentUser = getCurrentUser();
+  const isOwnProfile = currentUser && (currentUser.username === user.username || currentUser.id === user.id);
+  
+  // Backend uses both camelCase (UserDto) and snake_case (User entity)
+  const displayName = user.displayName || user.display_name || user.name || user.username;
+  const profileImage = user.profileImageUrl || user.profile_img_url;
+  const createdDate = user.createdAt || user.created_at;
+  const userEmail = user.email || '';
+
+  const handleEditProfile = () => {
+    router.push('/settings');
+  };
+
+  const handleFollow = () => {
+    if (!isAuthenticated()) {
+      router.push('/login');
+      return;
+    }
+    // TODO: Implement follow functionality
+    console.log('Follow user:', user.id);
+  };
+  
   return (
     <div className="bg-white rounded-lg border border-brand-muted/20 relative">
       {/* Cover Background - Black */}
@@ -14,26 +39,46 @@ export default function ProfileHeader({ user }) {
         {/* Avatar - Centered and overlapping */}
         <div className="flex justify-center">
           <div className="relative -mt-16">
-            <div className="w-32 h-32 rounded-full border-4 border-black bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center text-white text-4xl font-bold shadow-lg">
-              {user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-            </div>
+            {profileImage ? (
+              <img 
+                src={profileImage}
+                alt={displayName}
+                className="w-32 h-32 rounded-full border-4 border-black object-cover shadow-lg"
+                onError={(e) => {
+                  e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=1ABC9C&color=fff&bold=true&size=128`;
+                }}
+              />
+            ) : (
+              <div className="w-32 h-32 rounded-full border-4 border-black bg-brand-primary flex items-center justify-center text-white text-4xl font-bold shadow-lg">
+                {displayName.split(' ').map(n => n[0]).join('').toUpperCase()}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Follow Button - Top Right */}
+        {/* Action Buttons - Top Right */}
         <div className="absolute top-6 right-8 flex gap-2">
-          <button className="px-6 py-2 bg-brand-primary hover:bg-brand-primary-dark text-white font-bold rounded-lg transition-colors">
-            Follow
-          </button>
-          <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <BsThreeDots className="w-6 h-6 text-brand-dark" />
-          </button>
+          {isOwnProfile ? (
+            <button 
+              onClick={handleEditProfile}
+              className="px-6 py-2 bg-brand-primary hover:bg-brand-primary-dark text-white font-bold rounded-lg transition-colors"
+            >
+              Edit Profile
+            </button>
+          ) : (
+            <button 
+              onClick={handleFollow}
+              className="px-6 py-2 bg-brand-primary hover:bg-brand-primary-dark text-white font-bold rounded-lg transition-colors"
+            >
+              Follow
+            </button>
+          )}
         </div>
 
         {/* Name and Bio - Centered */}
         <div className="text-center mt-4 mb-6">
-          <h1 className="text-3xl font-bold text-brand-dark mb-2">{user.name}</h1>
-          <p className="text-brand-muted text-base">{user.bio}</p>
+          <h1 className="text-3xl font-bold text-brand-dark mb-2">{displayName}</h1>
+          {user.bio && <p className="text-brand-muted text-base">{user.bio}</p>}
         </div>
 
         {/* Info Row - Centered */}
@@ -45,17 +90,17 @@ export default function ProfileHeader({ user }) {
             </div>
           )}
           
-          {user.joinedDate && (
+          {createdDate && (
             <div className="flex items-center gap-2">
               <FaBirthdayCake className="w-4 h-4 text-gray-500" />
-              <span>Joined on {user.joinedDate}</span>
+              <span>Joined on {new Date(createdDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
             </div>
           )}
           
-          {user.email && (
+          {userEmail && (
             <div className="flex items-center gap-2">
               <FaEnvelope className="w-4 h-4 text-gray-500" />
-              <span>{user.email}</span>
+              <span>{userEmail}</span>
             </div>
           )}
           
@@ -68,10 +113,9 @@ export default function ProfileHeader({ user }) {
             </div>
           )}
           
-          {user.github && (
+          {(user.githubUrl || user.github_url) && (
             <div className="flex items-center gap-2">
-              <FaGithub className="w-4 h-4 text-gray-500" />
-              <a href={`https://github.com/${user.github}`} target="_blank" rel="noopener noreferrer" className="hover:text-brand-primary transition-colors">
+              <a href={user.githubUrl || user.github_url} target="_blank" rel="noopener noreferrer" className="hover:text-brand-primary transition-colors">
                 <FaGithub className="w-5 h-5" />
               </a>
             </div>

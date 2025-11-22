@@ -111,8 +111,10 @@ export default function Navbar() {
                                     {showDropdown && (
                                         <div className="absolute right-0 mt-2 w-56 px-2 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
                                             <div className="px-4 py-2 rounded-md hover:bg-brand-primary/20 hover:text-brand-primary transition-colors mb-1 cursor-pointer">
+                                                <Link href={`/user/${user.username}`}>
                                                 <p className="text-base font-semibold text-brand-dark">{user.displayName}</p>
                                                 <p className="text-sm text-brand-muted">@{user.username}</p>
+                                                </Link>
                                             </div>
                                             <hr className="border-gray-200 mb-2" />
                                             <div className="py-1">

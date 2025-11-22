@@ -32,19 +32,6 @@ export default function ProfileSidebar({ badges, skills, learning, availableFor,
           </div>
         </div>
       )}
-      {/* Badges */}
-      {badges && badges.length > 0 && (
-        <div className="bg-white rounded-lg border border-brand-muted/20 p-6">
-          <h3 className="text-lg font-bold text-brand-dark mb-4">Badges</h3>
-          <div className="flex gap-4">
-            {badges.map((badge, idx) => (
-              <div key={idx} className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
-                <span className="text-3xl">{badge.emoji}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Skills/Languages */}
       {skills && (
