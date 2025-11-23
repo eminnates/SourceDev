@@ -34,6 +34,7 @@ export default function CreatePostPage() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingPost, setEditingPost] = useState(null);
   const tagInputRef = useRef(null);
+  const titleTextareaRef = useRef(null);
 
   useEffect(() => {
     const initializePage = async () => {
@@ -63,6 +64,14 @@ export default function CreatePostPage() {
       document.body.style.backgroundColor = '';
     };
   }, [router, editPostId]);
+
+  // Auto-resize title textarea when title changes
+  useEffect(() => {
+    if (titleTextareaRef.current) {
+      titleTextareaRef.current.style.height = 'auto';
+      titleTextareaRef.current.style.height = titleTextareaRef.current.scrollHeight + 'px';
+    }
+  }, [title]);
 
   // Load popular tags
   const loadPopularTags = async () => {
@@ -485,6 +494,7 @@ export default function CreatePostPage() {
 
               {/* Title */}
               <textarea
+                ref={titleTextareaRef}
                 value={title}
                 onChange={(e) => {
                   setTitle(e.target.value);
@@ -709,8 +719,8 @@ export default function CreatePostPage() {
                 )}
               </div>
             ) : (
-              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                <p className="text-sm text-brand-muted text-center">
+              <div className="">
+                <p className="text-sm text-brand-dark text-center">
                   Click on any field to see helpful tips
                 </p>
               </div>
