@@ -26,6 +26,7 @@ export default function CreatePostPage() {
   const [coverImage, setCoverImage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isPreview, setIsPreview] = useState(false);
+  const [errors, setErrors] = useState({});
   const tagInputRef = useRef(null);
 
   useEffect(() => {
@@ -79,7 +80,6 @@ export default function CreatePostPage() {
   // Handle tag selection
   const handleAddTag = (tagName) => {
     if (selectedTags.length >= 4) {
-      alert('Maximum 4 tags allowed');
       return;
     }
 
@@ -90,6 +90,11 @@ export default function CreatePostPage() {
     const newTags = [...selectedTags, tagName];
     setSelectedTags(newTags);
     setTagInput('');
+    
+    // Clear tags error if it exists
+    if (errors.tags) {
+      setErrors({ ...errors, tags: null });
+    }
     
     // If we've reached 4 tags, close suggestions
     if (newTags.length >= 4) {
@@ -131,14 +136,40 @@ export default function CreatePostPage() {
     }
   };
 
-  const handlePublish = async () => {
+  // Validate form
+  const validateForm = () => {
+    const newErrors = {};
+    
+    // Title validation (30-300 characters)
     if (!title.trim()) {
-      alert('Please enter a title');
-      return;
+      newErrors.title = 'Title is required';
+    } else if (title.trim().length < 30) {
+      newErrors.title = `Title must be at least 30 characters (currently ${title.trim().length})`;
+    } else if (title.trim().length > 300) {
+      newErrors.title = `Title must be maximum 300 characters (currently ${title.trim().length})`;
     }
 
+    // Content validation (minimum 300 characters)
     if (!content.trim()) {
-      alert('Please enter content');
+      newErrors.content = 'Content is required';
+    } else if (content.trim().length < 300) {
+      newErrors.content = `Content must be at least 300 characters (currently ${content.trim().length})`;
+    }
+
+    // Tags validation (exactly 4 tags required)
+    if (selectedTags.length === 0) {
+      newErrors.tags = 'Please add at least 4 tags';
+    } else if (selectedTags.length < 4) {
+      newErrors.tags = `Please add ${4 - selectedTags.length} more tag(s) (${selectedTags.length}/4)`;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handlePublish = async () => {
+    // Validate form
+    if (!validateForm()) {
       return;
     }
 
@@ -157,7 +188,6 @@ export default function CreatePostPage() {
       const result = await createPost(postData);
 
       if (result.success) {
-        alert(result.message);
         // Redirect to the created post using ID
         if (result.data?.id) {
           router.push(`/post/${result.data.id}`);
@@ -165,23 +195,36 @@ export default function CreatePostPage() {
           router.push('/');
         }
       } else {
-        alert(result.message || 'Failed to create post');
+        setErrors({ submit: result.message || 'Failed to create post' });
       }
     } catch (error) {
       console.error('Error creating post:', error);
-      alert('Failed to create post. Please try again.');
+      setErrors({ submit: 'Failed to create post. Please try again.' });
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleSaveDraft = async () => {
+    // For draft, only title is required
     if (!title.trim()) {
-      alert('Please enter a title');
+      setErrors({ title: 'Title is required to save draft' });
+      return;
+    }
+
+    if (title.trim().length < 30) {
+      setErrors({ title: `Title must be at least 30 characters (currently ${title.trim().length})` });
+      return;
+    }
+
+    if (title.trim().length > 300) {
+      setErrors({ title: `Title must be maximum 300 characters (currently ${title.trim().length})` });
       return;
     }
 
     setIsLoading(true);
+    setErrors({});
+    
     try {
       // Create post data as draft
       const postData = {
@@ -196,14 +239,13 @@ export default function CreatePostPage() {
       const result = await createPost(postData);
 
       if (result.success) {
-        alert('Draft saved successfully!');
         router.push('/');
       } else {
-        alert(result.message || 'Failed to save draft');
+        setErrors({ submit: result.message || 'Failed to save draft' });
       }
     } catch (error) {
       console.error('Error saving draft:', error);
-      alert('Failed to save draft. Please try again.');
+      setErrors({ submit: 'Failed to save draft. Please try again.' });
     } finally {
       setIsLoading(false);
     }
@@ -322,14 +364,26 @@ export default function CreatePostPage() {
               {/* Title */}
               <textarea
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  if (errors.title) {
+                    setErrors({ ...errors, title: null });
+                  }
+                  // Auto-resize textarea
+                  e.target.style.height = 'auto';
+                  e.target.style.height = e.target.scrollHeight + 'px';
+                }}
                 placeholder="New post title here..."
-                className="w-full text-5xl font-bold text-brand-dark placeholder-gray-400 resize-none border-none outline-none"
+                className={`w-full text-5xl font-bold text-brand-dark placeholder-gray-400 resize-none border-none outline-none overflow-hidden ${errors.title ? 'border-b-2 border-red-500' : ''}`}
                 rows={1}
+                style={{ minHeight: '1.2em', maxHeight: '2.4em' }}
               />
+              {errors.title && (
+                <p className="text-red-600 text-sm mt-1 mb-2">{errors.title}</p>
+              )}
 
               {/* Tags */}
-              <div>
+              <div className='mb-2'>
                 {/* Selected Tags */}
                 {selectedTags.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-3">
@@ -364,18 +418,24 @@ export default function CreatePostPage() {
                     }}
                     onKeyDown={handleTagInputKeyDown}
                     placeholder={selectedTags.length === 0 ? "Add up to 4 tags..." : "Add another tag..."}
-                    className="w-full text-base text-brand-dark placeholder-gray-400 border-none outline-none mb-3"
+                    className="w-full text-base text-brand-dark placeholder-gray-400 border-none outline-none mb-2"
                   />
                 )}
 
                 {selectedTags.length >= 4 && (
-                  <p className="text-sm text-brand-muted italic mb-3">Maximum 4 tags reached</p>
+                  <p className="text-sm text-green-600 font-medium">✓ All 4 tags added</p>
                 )}
               </div>
-
-              {/* Tag Suggestions Dropdown - Between Tags and Editor */}
-              {showSuggestions && tagSuggestions.length > 0 && (
+              
+              {/* Tags Error */}
+              {errors.tags && (
+                <p className="text-red-600 text-sm mb-2">{errors.tags}</p>
+              )}
+              
+              {/* Tag Suggestions Dropdown - Directly below input */}
+              {showSuggestions && (tagSuggestions.length > 0 || tagInput.trim().length > 0) && (
                 <div className="bg-white border border-gray-200 rounded-lg shadow-lg overflow-y-auto mb-4" style={{ maxHeight: '180px' }}>
+                  {/* Existing tags */}
                   {tagSuggestions
                     .filter(tag => !selectedTags.includes(tag.name || tag)) // Filter out already selected tags
                     .slice(0, 10)
@@ -391,6 +451,31 @@ export default function CreatePostPage() {
                         <span className="text-brand-dark font-medium">#{tag.name || tag}</span>
                       </button>
                     ))}
+                  
+                  {/* Create new tag option */}
+                  {tagInput.trim().length >= 2 && 
+                   !tagSuggestions.some(tag => (tag.name || tag).toLowerCase() === tagInput.trim().toLowerCase()) &&
+                   !selectedTags.includes(tagInput.trim()) && (
+                    <button
+                      onMouseDown={(e) => {
+                        e.preventDefault(); // Prevent input blur
+                        handleAddTag(tagInput.trim());
+                      }}
+                      className="w-full text-left px-4 py-2 hover:bg-brand-primary/10 transition-colors border-t border-gray-200"
+                    >
+                      <span className="text-brand-primary font-medium">
+                        Create new tag: <span className="font-bold">#{tagInput.trim()}</span>
+                      </span>
+                    </button>
+                  )}
+                  
+                  {/* No results message */}
+                  {tagSuggestions.filter(tag => !selectedTags.includes(tag.name || tag)).length === 0 && 
+                   tagInput.trim().length < 2 && (
+                    <div className="px-4 py-2 text-sm text-brand-muted">
+                      Type at least 2 characters to create a new tag
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -399,10 +484,27 @@ export default function CreatePostPage() {
                 <SimpleMDE
                   key="markdown-editor"
                   value={content}
-                  onChange={setContent}
+                  onChange={(value) => {
+                    setContent(value);
+                    if (errors.content) {
+                      setErrors({ ...errors, content: null });
+                    }
+                  }}
                   options={editorOptions}
                 />
               </div>
+              
+              {/* Content Error */}
+              {errors.content && (
+                <p className="text-red-600 text-sm mt-2">{errors.content}</p>
+              )}
+              
+              {/* Submit Error */}
+              {errors.submit && (
+                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-600 text-sm">{errors.submit}</p>
+                </div>
+              )}
             </div>
             ) : (
               /* Preview Mode */
