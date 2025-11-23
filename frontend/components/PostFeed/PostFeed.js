@@ -33,7 +33,7 @@ export default function PostFeed({ defaultTab = 'relevant' }) {
                         break;
                     case 'relevant':
                     default:
-                        result = await getRelevantPosts(1, 20);
+                        result = await getRelevantPosts(1, 10);
                         break;
                 }
 

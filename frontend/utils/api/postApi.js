@@ -220,21 +220,30 @@ export const getTopPosts = async (take = 20) => {
 /**
  * Get relevant posts (personalized feed)
  * @param {number} [page=1] - Page number
- * @param {number} [pageSize=20] - Page size
+ * @param {number} [pageSize=10] - Page size
  * @returns {Promise<Object>} API response
  */
-export const getRelevantPosts = async (page = 1, pageSize = 20) => {
+export const getRelevantPosts = async (page = 1, pageSize = 10) => {
   try {
-    const response = await apiClient.get('/post/relevant', {
-      params: { page, pageSize }
+    // Create a separate axios instance without Authorization header for this endpoint
+    const axios = require('axios');
+    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5254/api'}/post/relevant`, {
+      params: { page, pageSize },
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      timeout: 30000
     });
-    
+
     return {
       success: true,
       data: response.data
     };
   } catch (error) {
+    console.log('Full error object:', error);
     console.error('Get relevant posts error:', error);
+    console.error('Response status:', error.response?.status);
+    console.error('Response data:', error.response?.data);
     return {
       success: false,
       message: error.message || 'Failed to fetch posts'

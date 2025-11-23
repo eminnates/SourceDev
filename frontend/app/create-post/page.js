@@ -8,7 +8,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { MdClose } from 'react-icons/md';
 import { isAuthenticated } from '@/utils/auth';
-import { createPost, updatePost, getPostById, publishPost } from '@/utils/api/postApi';
+import { createPost, updatePost, getPostById, publishPost, deletePost } from '@/utils/api/postApi';
 import { searchTags, getPopularTags } from '@/utils/api/tagApi';
 import 'easymde/dist/easymde.min.css';
 
@@ -33,6 +33,7 @@ export default function CreatePostPage() {
   const [activeSection, setActiveSection] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingPost, setEditingPost] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const tagInputRef = useRef(null);
   const titleTextareaRef = useRef(null);
 
@@ -237,7 +238,8 @@ export default function CreatePostPage() {
         await updatePost(editingPost.id, {
           title: postData.title,
           content: postData.content,
-          coverImageUrl: postData.coverImageUrl
+          coverImageUrl: postData.coverImageUrl,
+          tags: postData.tags
         });
 
         // Then publish the updated draft
@@ -302,6 +304,7 @@ export default function CreatePostPage() {
           title: postData.title,
           content: postData.content,
           coverImageUrl: postData.coverImageUrl,
+          tags: postData.tags,
           publishNow: false
         });
       } else {
@@ -319,6 +322,36 @@ export default function CreatePostPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDelete = () => {
+    if (!editingPost) return;
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    setShowDeleteModal(false);
+    setIsLoading(true);
+    setErrors({});
+
+    try {
+      const result = await deletePost(editingPost.id);
+
+      if (result.success) {
+        router.push('/');
+      } else {
+        setErrors({ submit: result.message || 'Failed to delete post' });
+      }
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      setErrors({ submit: 'Failed to delete post. Please try again.' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
   };
 
   // Help content for each section
@@ -746,9 +779,50 @@ export default function CreatePostPage() {
             >
               Save draft
             </button>
+
+            {/* Delete button - only show in edit mode */}
+            {isEditMode && (
+              <button
+                onClick={handleDelete}
+                disabled={isLoading}
+                className={`w-full px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-colors mt-3 ${
+                  isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                {isLoading ? 'Deleting...' : 'Delete Post'}
+              </button>
+            )}
           </div>
         </div>
       </main>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-bold text-brand-dark mb-4">Delete Post</h3>
+            <p className="text-brand-muted mb-6">
+              Are you sure you want to delete this post? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={cancelDelete}
+                className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-brand-dark font-medium rounded-lg transition-colors"
+                disabled={isLoading}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-colors"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
