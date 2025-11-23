@@ -4,14 +4,14 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getUser } from '@/utils/auth';
 
-export default function PostAuthorCard({ author, authorId, joinDate, bio }) {
+export default function PostAuthorCard({ author, authorId, joinDate, bio, postId }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
 
   useEffect(() => {
     const user = getUser();
     setCurrentUser(user);
-    
+
     // Check if this is the current user's own post
     if (user && authorId) {
       setIsOwnProfile(user.id === authorId);
@@ -37,9 +37,15 @@ export default function PostAuthorCard({ author, authorId, joinDate, bio }) {
         </div>
       </Link>
 
-      {/* Only show Follow button if not own profile */}
-      {!isOwnProfile && (
-        <button className="w-full bg-brand-primary hover:bg-brand-primary-dark text-white font-bold py-2 px-4 rounded-lg transition-colors mb-4">
+      {/* Show Edit button if own profile, otherwise show Follow button */}
+      {isOwnProfile ? (
+        <Link href={`/create-post?edit=${postId}`}>
+          <button className="w-full bg-brand-primary hover:bg-brand-primary-dark text-white font-bold py-2 px-4 rounded-lg transition-colors mb-4 cursor-pointer">
+            Edit Post
+          </button>
+        </Link>
+      ) : (
+        <button className="w-full bg-brand-primary hover:bg-brand-primary-dark text-white font-bold py-2 px-4 rounded-lg transition-colors mb-4 cursor-pointer">
           Follow
         </button>
       )}
