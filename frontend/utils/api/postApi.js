@@ -254,7 +254,7 @@ export const getPostsByUser = async (userId, page = 1, pageSize = 20) => {
     const response = await apiClient.get(`/post/user/${userId}`, {
       params: { page, pageSize }
     });
-    
+
     return {
       success: true,
       data: response.data
@@ -264,6 +264,31 @@ export const getPostsByUser = async (userId, page = 1, pageSize = 20) => {
     return {
       success: false,
       message: error.message || 'Failed to fetch posts'
+    };
+  }
+};
+
+/**
+ * Get user's draft posts
+ * @param {number} [page=1] - Page number
+ * @param {number} [pageSize=20] - Page size
+ * @returns {Promise<Object>} API response
+ */
+export const getUserDrafts = async (page = 1, pageSize = 20) => {
+  try {
+    const response = await apiClient.get('/post/drafts', {
+      params: { page, pageSize }
+    });
+
+    return {
+      success: true,
+      data: response.data
+    };
+  } catch (error) {
+    console.error('Get user drafts error:', error);
+    return {
+      success: false,
+      message: error.message || 'Failed to fetch drafts'
     };
   }
 };

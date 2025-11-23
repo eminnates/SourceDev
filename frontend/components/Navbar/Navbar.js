@@ -118,19 +118,19 @@ export default function Navbar() {
                                             </div>
                                             <hr className="border-gray-200 mb-2" />
                                             <div className="py-1">
-                                                <Link 
+                                                <Link
                                                     href={`/user/${user.username}`}
                                                     className="flex items-center px-4 py-2 text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary transition-colors rounded-md"
                                                     onClick={() => setShowDropdown(false)}
                                                 >
                                                     Dashboard
                                                 </Link>
-                                                <Link 
-                                                    href={`/user/${user.username}`}
+                                                <Link
+                                                    href="/drafts"
                                                     className="flex items-center px-4 py-2 text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary transition-colors rounded-md"
                                                     onClick={() => setShowDropdown(false)}
                                                 >
-                                                    Create Post
+                                                    My Drafts
                                                 </Link>
                                                 <Link 
                                                     href="/reading-list"

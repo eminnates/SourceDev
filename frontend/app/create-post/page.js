@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { MdClose } from 'react-icons/md';
 import { isAuthenticated } from '@/utils/auth';
-import { createPost } from '@/utils/api/postApi';
+import { createPost, updatePost, getPostById, publishPost } from '@/utils/api/postApi';
 import { searchTags, getPopularTags } from '@/utils/api/tagApi';
 import 'easymde/dist/easymde.min.css';
 
@@ -17,6 +17,9 @@ const SimpleMDE = dynamic(() => import('react-simplemde-editor'), { ssr: false }
 
 export default function CreatePostPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editPostId = searchParams.get('edit');
+
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [selectedTags, setSelectedTags] = useState([]);
@@ -28,31 +31,64 @@ export default function CreatePostPage() {
   const [isPreview, setIsPreview] = useState(false);
   const [errors, setErrors] = useState({});
   const [activeSection, setActiveSection] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingPost, setEditingPost] = useState(null);
   const tagInputRef = useRef(null);
 
   useEffect(() => {
-    // Check if user is authenticated
-    if (!isAuthenticated()) {
-      router.push('/login');
-    }
+    const initializePage = async () => {
+      // Check if user is authenticated
+      if (!isAuthenticated()) {
+        router.push('/login');
+        return;
+      }
 
-    // Load popular tags on mount
-    loadPopularTags();
+      // Load popular tags on mount
+      loadPopularTags();
 
-    // Change body background for this page only
-    document.body.style.backgroundColor = '#f5f5f5';
-    
+      // If editing, load the draft data
+      if (editPostId) {
+        setIsEditMode(true);
+        await loadDraftData(editPostId);
+      }
+
+      // Change body background for this page only
+      document.body.style.backgroundColor = '#f5f5f5';
+    };
+
+    initializePage();
+
     // Cleanup - restore original background when leaving page
     return () => {
       document.body.style.backgroundColor = '';
     };
-  }, [router]);
+  }, [router, editPostId]);
 
   // Load popular tags
   const loadPopularTags = async () => {
     const result = await getPopularTags(20);
     if (result.success && result.data) {
       setTagSuggestions(result.data);
+    }
+  };
+
+  // Load draft data for editing
+  const loadDraftData = async (postId) => {
+    try {
+      const result = await getPostById(postId);
+      if (result.success && result.data) {
+        const post = result.data;
+        setEditingPost(post);
+        setTitle(post.title || '');
+        setContent(post.content || '');
+        setSelectedTags(post.tags || []);
+        setCoverImage(post.coverImage || null);
+      } else {
+        setErrors({ submit: 'Failed to load draft for editing' });
+      }
+    } catch (error) {
+      console.error('Error loading draft:', error);
+      setErrors({ submit: 'Failed to load draft for editing' });
     }
   };
 
@@ -185,22 +221,36 @@ export default function CreatePostPage() {
         publishNow: true
       };
 
-      // Call API
-      const result = await createPost(postData);
+      // Call API - create or update based on mode
+      let result;
+      if (isEditMode && editingPost) {
+        // First update the draft content, then publish it
+        await updatePost(editingPost.id, {
+          title: postData.title,
+          content: postData.content,
+          coverImageUrl: postData.coverImageUrl
+        });
+
+        // Then publish the updated draft
+        result = await publishPost(editingPost.id);
+      } else {
+        result = await createPost(postData);
+      }
 
       if (result.success) {
-        // Redirect to the created post using ID
-        if (result.data?.id) {
-          router.push(`/post/${result.data.id}`);
+        // Redirect to the post using ID
+        const postId = isEditMode ? editingPost.id : result.data?.id;
+        if (postId) {
+          router.push(`/post/${postId}`);
         } else {
           router.push('/');
         }
       } else {
-        setErrors({ submit: result.message || 'Failed to create post' });
+        setErrors({ submit: result.message || `Failed to ${isEditMode ? 'update' : 'create'} post` });
       }
     } catch (error) {
-      console.error('Error creating post:', error);
-      setErrors({ submit: 'Failed to create post. Please try again.' });
+      console.error(`Error ${isEditMode ? 'updating' : 'creating'} post:`, error);
+      setErrors({ submit: `Failed to ${isEditMode ? 'update' : 'create'} post. Please try again.` });
     } finally {
       setIsLoading(false);
     }
@@ -225,7 +275,7 @@ export default function CreatePostPage() {
 
     setIsLoading(true);
     setErrors({});
-    
+
     try {
       // Create post data as draft
       const postData = {
@@ -236,11 +286,21 @@ export default function CreatePostPage() {
         publishNow: false // Save as draft
       };
 
-      // Call API
-      const result = await createPost(postData);
+      // Call API - create or update based on mode
+      let result;
+      if (isEditMode && editingPost) {
+        result = await updatePost(editingPost.id, {
+          title: postData.title,
+          content: postData.content,
+          coverImageUrl: postData.coverImageUrl,
+          publishNow: false
+        });
+      } else {
+        result = await createPost(postData);
+      }
 
       if (result.success) {
-        router.push('/');
+        router.push('/drafts');
       } else {
         setErrors({ submit: result.message || 'Failed to save draft' });
       }
@@ -341,7 +401,9 @@ export default function CreatePostPage() {
                 SourceDev
               </Link>
               <span className="text-brand-muted">|</span>
-              <h1 className="text-base font-semibold text-brand-dark">Create Post</h1>
+              <h1 className="text-base font-semibold text-brand-dark">
+                {isEditMode ? 'Edit Draft' : 'Create Post'}
+              </h1>
             </div>
 
             {/* Right: Edit/Preview + Close */}
@@ -666,7 +728,7 @@ export default function CreatePostPage() {
                 isLoading ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
-              {isLoading ? 'Publishing...' : 'Publish'}
+              {isLoading ? (isEditMode ? 'Updating...' : 'Publishing...') : (isEditMode ? 'Update & Publish' : 'Publish')}
             </button>
             <button
               onClick={handleSaveDraft}
