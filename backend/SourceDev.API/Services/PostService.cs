@@ -2,6 +2,7 @@
 using SourceDev.API.Models.Entities;
 using SourceDev.API.Repositories;
 using SourceDev.API.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace SourceDev.API.Services
 {
@@ -11,11 +12,13 @@ namespace SourceDev.API.Services
         private readonly ILogger<PostService> _logger;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly PostRepository _postRepository;
-        public PostService(IUnitOfWork unitOfWork, ILogger<PostService> logger, IServiceScopeFactory scopeFactory)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public PostService(IUnitOfWork unitOfWork, ILogger<PostService> logger, IServiceScopeFactory scopeFactory, IHttpContextAccessor httpContextAccessor)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
             _scopeFactory = scopeFactory;
+            _httpContextAccessor = httpContextAccessor;
         }
         private void QueueIncrementViewCount(int postId)
         {
@@ -261,24 +264,77 @@ namespace SourceDev.API.Services
 
         public async Task<IEnumerable<PostListDto>> GetLatestAsync(int page, int pageSize)
         {
-            var result = await _unitOfWork.Posts.GetLatestDtosAsync(page, pageSize);
+            var result = (await _unitOfWork.Posts.GetLatestDtosAsync(page, pageSize)).ToList();
+            // Fill UserReactions if user context available
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId.HasValue)
+            {
+                var tasks = result.Select(async post =>
+                {
+                    post.UserReactions = await _unitOfWork.Reactions
+                        .Query()
+                        .Where(r => r.post_id == post.Id && r.user_id == currentUserId.Value)
+                        .Select(r => r.reaction_type)
+                        .ToListAsync();
+                }).ToList();
+                await Task.WhenAll(tasks);
+            }
             _logger.LogInformation("Latest posts fetched. Page: {Page}, Size: {Size}", page, pageSize);
             return result;
         }
 
         public async Task<IEnumerable<PostListDto>> GetRelevantAsync(int? userId, int page, int pageSize)
         {
-            var result = await _unitOfWork.Posts.GetRelevantDtosAsync(userId, page, pageSize);
+            var result = (await _unitOfWork.Posts.GetRelevantDtosAsync(userId, page, pageSize)).ToList();
+            if (userId.HasValue)
+            {
+                var tasks = result.Select(async post =>
+                {
+                    post.UserReactions = await _unitOfWork.Reactions
+                        .Query()
+                        .Where(r => r.post_id == post.Id && r.user_id == userId.Value)
+                        .Select(r => r.reaction_type)
+                        .ToListAsync();
+                }).ToList();
+                await Task.WhenAll(tasks);
+            }
             _logger.LogInformation("Relevant posts fetched. UserId: {UserId}, Page: {Page}, Size: {Size}", userId, page, pageSize);
             return result;
         }
 
         public async Task<IEnumerable<PostListDto>> GetTopAsync(int take)
         {
-            var result = await _unitOfWork.Posts.GetTopDtosAsync(take);
+            var result = (await _unitOfWork.Posts.GetTopDtosAsync(take)).ToList();
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId.HasValue)
+            {
+                var tasks = result.Select(async post =>
+                {
+                    post.UserReactions = await _unitOfWork.Reactions
+                        .Query()
+                        .Where(r => r.post_id == post.Id && r.user_id == currentUserId.Value)
+                        .Select(r => r.reaction_type)
+                        .ToListAsync();
+                }).ToList();
+                await Task.WhenAll(tasks);
+            }
             _logger.LogInformation("Top posts fetched. Take: {Take}", take);
             return result;
         }
+                // Helper to get current user id from context (if available)
+                private int? GetCurrentUserId()
+                {
+                    var httpContext = _httpContextAccessor?.HttpContext;
+                    if (httpContext == null || httpContext.User == null)
+                        return null;
+                    var userIdClaim = httpContext.User.Claims.FirstOrDefault(c => c.Type == "sub" || c.Type == "id" || c.Type.EndsWith("nameidentifier", StringComparison.OrdinalIgnoreCase));
+                    if (userIdClaim == null)
+                        return null;
+                    if (int.TryParse(userIdClaim.Value, out int userId))
+                        return userId;
+                    return null;
+                }
+        
 
         public async Task<bool> PublishAsync(int id, int requesterId)
         {

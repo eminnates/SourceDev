@@ -26,23 +26,28 @@ namespace SourceDev.API.Controllers
         public async Task<IActionResult> ToggleReaction(int postId, [FromBody] string reactionType)
         {
             if (string.IsNullOrWhiteSpace(reactionType))
-                return BadRequest(new { message = "Reaction type is required" });
+                return BadRequest(new { error = "Reaction type is required." });
 
             var userId = User.GetUserId();
             if (!userId.HasValue)
-                return Unauthorized("User ID not found in token.");
+                return Unauthorized(new { error = "User ID not found in token." });
 
             try
             {
                 var result = await _reactionService.ToggleReactionAsync(postId, userId.Value, reactionType);
                 if (!result)
-                    return NotFound("Post not found.");
+                    return NotFound(new { error = "Post not found or reaction could not be toggled." });
 
                 return Ok(new { message = "Reaction toggled successfully." });
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error in ToggleReaction");
+                return StatusCode(500, new { error = "Unexpected server error." });
             }
         }
 
@@ -54,23 +59,28 @@ namespace SourceDev.API.Controllers
         public async Task<IActionResult> RemoveReaction(int postId, [FromQuery] string reactionType)
         {
             if (string.IsNullOrWhiteSpace(reactionType))
-                return BadRequest(new { message = "Reaction type is required" });
+                return BadRequest(new { error = "Reaction type is required." });
 
             var userId = User.GetUserId();
             if (!userId.HasValue)
-                return Unauthorized("User ID not found in token.");
+                return Unauthorized(new { error = "User ID not found in token." });
 
             try
             {
                 var result = await _reactionService.RemoveReactionAsync(postId, userId.Value, reactionType);
                 if (!result)
-                    return NotFound("Reaction not found or post not found.");
+                    return NotFound(new { error = "Reaction not found or post not found." });
 
                 return Ok(new { message = "Reaction removed successfully." });
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error in RemoveReaction");
+                return StatusCode(500, new { error = "Unexpected server error." });
             }
         }
 
@@ -81,8 +91,18 @@ namespace SourceDev.API.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetReactionSummary(int postId)
         {
-            var summary = await _reactionService.GetSummaryAsync(postId);
-            return Ok(summary);
+            try
+            {
+                var summary = await _reactionService.GetSummaryAsync(postId);
+                if (summary == null)
+                    return NotFound(new { error = "Post not found or no reactions." });
+                return Ok(summary);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error in GetReactionSummary");
+                return StatusCode(500, new { error = "Unexpected server error." });
+            }
         }
     }
 }

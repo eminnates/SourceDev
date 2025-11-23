@@ -133,30 +133,33 @@ namespace SourceDev.API.Repositories
 
         public async Task<IEnumerable<PostListDto>> GetLatestDtosAsync(int page = 1, int pageSize = 20)
         {
-            return await _dbSet
+            var posts = await _dbSet
                 .AsNoTracking()
+                .Include(p => p.Reactions)
                 .Where(p => p.status)
                 .OrderByDescending(p => p.published_at)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(p => new PostListDto
-                {
-                    Id = p.post_id,
-                    Title = p.title ?? "",
-                    Slug = p.slug,
-                    Excerpt = p.content_markdown.Length > 200 ? p.content_markdown.Substring(0, 200) : p.content_markdown,
-                    Likes = p.likes_count,
-                    Views = p.view_count,
-                    Bookmarks = p.bookmarks_count,
-                    CoverImageUrl = p.cover_img_url,
-                    ReadingTimeMinutes = p.reading_time_minutes,
-                    CommentsCount = p.comments_count,
-                    PublishedAt = p.published_at,
-                    AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
-                    Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
-                    ReactionTypes = new Dictionary<string, int>() // Will be populated in service layer if needed
-                })
                 .ToListAsync();
+
+            var postDtos = posts.Select(p => new PostListDto
+            {
+                Id = p.post_id,
+                Title = p.title ?? "",
+                Slug = p.slug,
+                Excerpt = p.content_markdown.Length > 200 ? p.content_markdown.Substring(0, 200) : p.content_markdown,
+                Likes = p.likes_count,
+                Views = p.view_count,
+                Bookmarks = p.bookmarks_count,
+                CoverImageUrl = p.cover_img_url,
+                ReadingTimeMinutes = p.reading_time_minutes,
+                CommentsCount = p.comments_count,
+                PublishedAt = p.published_at,
+                AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
+                Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
+                ReactionTypes = p.Reactions.GroupBy(r => r.reaction_type).ToDictionary(g => g.Key, g => g.Count())
+            }).ToList();
+            return postDtos;
         }
 
         public async Task<IEnumerable<Post>> GetTopAsync(int take = 10)
@@ -171,29 +174,32 @@ namespace SourceDev.API.Repositories
 
         public async Task<IEnumerable<PostListDto>> GetTopDtosAsync(int take = 10)
         {
-            return await _dbSet
+            var posts = await _dbSet
                 .AsNoTracking()
+                .Include(p => p.Reactions)
                 .Where(p => p.status)
                 .OrderByDescending(p => p.likes_count)
                 .Take(take)
-                .Select(p => new PostListDto
-                {
-                    Id = p.post_id,
-                    Title = p.title ?? "",
-                    Slug = p.slug,
-                    Excerpt = p.content_markdown.Length > 200 ? p.content_markdown.Substring(0, 200) : p.content_markdown,
-                    Likes = p.likes_count,
-                    Views = p.view_count,
-                    Bookmarks = p.bookmarks_count,
-                    CoverImageUrl = p.cover_img_url,
-                    ReadingTimeMinutes = p.reading_time_minutes,
-                    CommentsCount = p.comments_count,
-                    PublishedAt = p.published_at,
-                    AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
-                    Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
-                    ReactionTypes = new Dictionary<string, int>() // Will be populated in service layer if needed
-                })
                 .ToListAsync();
+
+            var postDtos = posts.Select(p => new PostListDto
+            {
+                Id = p.post_id,
+                Title = p.title ?? "",
+                Slug = p.slug,
+                Excerpt = p.content_markdown.Length > 200 ? p.content_markdown.Substring(0, 200) : p.content_markdown,
+                Likes = p.likes_count,
+                Views = p.view_count,
+                Bookmarks = p.bookmarks_count,
+                CoverImageUrl = p.cover_img_url,
+                ReadingTimeMinutes = p.reading_time_minutes,
+                CommentsCount = p.comments_count,
+                PublishedAt = p.published_at,
+                AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
+                Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
+                ReactionTypes = p.Reactions.GroupBy(r => r.reaction_type).ToDictionary(g => g.Key, g => g.Count())
+            }).ToList();
+            return postDtos;
         }
 
         public async Task<IEnumerable<Post>> GetByUserAsync(int userId, int page = 1, int pageSize = 20)
@@ -333,41 +339,33 @@ namespace SourceDev.API.Repositories
                 return await GetLatestDtosAsync(page, pageSize);
             }
 
-            //TEK SORGU: Following posts + fallback posts
-            var query = _dbSet
+            var posts = await _dbSet
                 .AsNoTracking()
+                .Include(p => p.Reactions)
                 .Where(p => p.status)
-                .Select(p => new
-                {
-                    Post = p,
-                    IsFollowing = _context.UserFollows
-                        .Any(uf => uf.follower_id == userId.Value && uf.following_id == p.user_id)
-                })
-                .OrderByDescending(x => x.IsFollowing)
-                .ThenByDescending(x => x.Post.published_at)
+                .OrderByDescending(p => p.published_at)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(x => new PostListDto
-                {
-                    Id = x.Post.post_id,
-                    Title = x.Post.title ?? "",
-                    Slug = x.Post.slug,
-                    Excerpt = x.Post.content_markdown.Length > 200 ? x.Post.content_markdown.Substring(0, 200) : x.Post.content_markdown,
-                    Likes = x.Post.likes_count,
-                    Views = x.Post.view_count,
-                    Bookmarks = x.Post.bookmarks_count,
-                    CoverImageUrl = x.Post.cover_img_url,
-                    ReadingTimeMinutes = x.Post.reading_time_minutes,
-                    CommentsCount = x.Post.comments_count,
-                    PublishedAt = x.Post.published_at,
-                    AuthorDisplayName = x.Post.User != null ? x.Post.User.display_name : "",
-                    Tags = x.Post.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
-                    ReactionTypes = x.Post.Reactions
-                        .GroupBy(r => r.reaction_type)
-                        .ToDictionary(g => g.Key, g => g.Count())
-                });
+                .ToListAsync();
 
-            return await query.ToListAsync();
+            var postDtos = posts.Select(p => new PostListDto
+            {
+                Id = p.post_id,
+                Title = p.title ?? "",
+                Slug = p.slug,
+                Excerpt = p.content_markdown.Length > 200 ? p.content_markdown.Substring(0, 200) : p.content_markdown,
+                Likes = p.likes_count,
+                Views = p.view_count,
+                Bookmarks = p.bookmarks_count,
+                CoverImageUrl = p.cover_img_url,
+                ReadingTimeMinutes = p.reading_time_minutes,
+                CommentsCount = p.comments_count,
+                PublishedAt = p.published_at,
+                AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
+                Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
+                ReactionTypes = p.Reactions.GroupBy(r => r.reaction_type).ToDictionary(g => g.Key, g => g.Count())
+            }).ToList();
+            return postDtos;
         }
 
         //public async Task<IEnumerable<PostListDto>> GetRelevantDtosAsync(int? userId, int page = 1, int pageSize = 20)
