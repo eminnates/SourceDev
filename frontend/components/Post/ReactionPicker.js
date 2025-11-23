@@ -48,16 +48,9 @@ export default function ReactionPicker({ totalReactions = 0, userReactions = [],
       >
         <div className="w-10 h-10 flex items-center justify-center">
           {userReactions.length > 0 ? (
-            <div className="relative">
-              <span className="text-2xl">
-                {reactions.find(r => r.type === userReactions[0])?.emoji}
-              </span>
-              {userReactions.length > 1 && (
-                <div className="absolute -top-1 -right-1 bg-brand-primary text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
-                  {userReactions.length}
-                </div>
-              )}
-            </div>
+            <span className="text-2xl">
+              {reactions.find(r => r.type === userReactions[0])?.emoji}
+            </span>
           ) : (
             <BsHeart className="w-6 h-6 text-brand-muted group-hover:text-red-500 transition-colors" />
           )}
@@ -72,20 +65,27 @@ export default function ReactionPicker({ totalReactions = 0, userReactions = [],
           style={{ marginLeft: '8px' }}
         >
           <div className="flex gap-1">
-            {reactions.map((reaction) => (
-              <button
-                key={reaction.type}
-                onClick={() => handleReactionClick(reaction)}
-                className="group/reaction relative flex flex-col items-center p-2 hover:bg-brand-primary/10 rounded-lg transition-all transform hover:scale-110"
-                title={reaction.label}
-              >
-                <span className="text-2xl">{reaction.emoji}</span>
-                {/* Tooltip */}
-                <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-brand-dark text-white text-xs px-2 py-1 rounded opacity-0 group-hover/reaction:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                  {reaction.label}
-                </div>
-              </button>
-            ))}
+            {reactions.map((reaction) => {
+              const isSelected = userReactions.includes(reaction.type);
+              return (
+                <button
+                  key={reaction.type}
+                  onClick={() => handleReactionClick(reaction)}
+                  className={`group/reaction relative flex flex-col items-center p-2 rounded-lg transition-all transform hover:scale-110 ${
+                    isSelected
+                      ? 'bg-brand-primary/20 border-2 border-brand-primary'
+                      : 'hover:bg-brand-primary/10'
+                  }`}
+                  title={reaction.label}
+                >
+                  <span className="text-2xl">{reaction.emoji}</span>
+                  {/* Tooltip */}
+                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-brand-dark text-white text-xs px-2 py-1 rounded opacity-0 group-hover/reaction:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                    {reaction.label}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}

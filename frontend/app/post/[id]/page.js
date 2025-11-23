@@ -50,16 +50,34 @@ export default function PostDetailPage({ params }) {
   const handleReaction = async (reactionType) => {
     if (!post) return;
 
-    const result = await toggleReaction(post.id, reactionType);
+    const hasCurrentReaction = userReactions.length > 0;
+    const currentReaction = userReactions[0];
+    const isSameReaction = currentReaction === reactionType;
+
+    let result;
+
+    if (isSameReaction) {
+      // Same reaction clicked - toggle it off
+      result = await toggleReaction(post.id, reactionType);
+    } else {
+      // Different reaction clicked - remove current and add new one
+      if (hasCurrentReaction) {
+        // First remove current reaction
+        await toggleReaction(post.id, currentReaction);
+      }
+      // Then add new reaction
+      result = await toggleReaction(post.id, reactionType);
+    }
+
     if (result.success) {
-      // Update user's current reactions
+      // Update user's current reactions - only one reaction allowed at a time
       setUserReactions(prev => {
-        if (prev.includes(reactionType)) {
-          // Remove reaction if it exists
-          return prev.filter(r => r !== reactionType);
+        if (isSameReaction) {
+          // Remove reaction if it's the same one
+          return [];
         } else {
-          // Add reaction if it doesn't exist
-          return [...prev, reactionType];
+          // Set new reaction
+          return [reactionType];
         }
       });
 
