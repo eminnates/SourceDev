@@ -27,6 +27,7 @@ export default function CreatePostPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isPreview, setIsPreview] = useState(false);
   const [errors, setErrors] = useState({});
+  const [activeSection, setActiveSection] = useState(null);
   const tagInputRef = useRef(null);
 
   useEffect(() => {
@@ -251,6 +252,60 @@ export default function CreatePostPage() {
     }
   };
 
+  // Help content for each section
+  const helpContent = {
+    title: {
+      title: "Writing a Great Title",
+      tips: [
+        "Keep it between 30-300 characters",
+        "Make it descriptive and engaging",
+        "Use clear, concise language",
+        "Avoid clickbait or misleading titles",
+        "Include relevant keywords"
+      ]
+    },
+    tags: {
+      title: "Adding Tags",
+      tips: [
+        "Add exactly 4 tags to your post",
+        "Use existing tags when possible",
+        "Create new tags if needed",
+        "Tags help others find your content",
+        "Choose relevant and specific tags"
+      ]
+    },
+    content: {
+      title: "Editor Basics",
+      tips: [
+        "Use Markdown to write and format posts",
+        "Minimum 300 characters required",
+        "Embed rich content (Tweets, YouTube, etc.)",
+        "Add images with drag and drop",
+        "Use code blocks for syntax highlighting"
+      ],
+      markdown: [
+        "**bold text** - Bold",
+        "*italic text* - Italic",
+        "# Heading 1",
+        "## Heading 2",
+        "[link text](url) - Links",
+        "![alt text](image-url) - Images",
+        "`code` - Inline code",
+        "```language\\ncode block\\n``` - Code blocks"
+      ]
+    },
+    coverImage: {
+      title: "Cover Image",
+      tips: [
+        "Upload an eye-catching cover image",
+        "Recommended size: 1200x600px",
+        "Supports: JPG, PNG, GIF",
+        "Optional but recommended",
+        "Drag and drop to upload"
+      ]
+    }
+  };
+
   const editorOptions = useMemo(() => ({
     spellChecker: false,
     placeholder: 'Write your post content here...',
@@ -327,9 +382,9 @@ export default function CreatePostPage() {
       </header>
 
       {/* Main Content - Scrollable */}
-      <main className="flex-1 flex">
-        {/* Left Content Area */}
-        <div className="flex-1 overflow-y-auto px-16 py-8">
+      <main className="flex-1 flex relative">
+        {/* Left Content Area - Full Width */}
+        <div className="flex-2 ps-16 py-8">
           <div className="max-w-[900px] bg-white rounded-lg p-12">
             {!isPreview ? (
               /* Edit Mode */
@@ -337,12 +392,17 @@ export default function CreatePostPage() {
               {/* Cover Image */}
               <div className="flex gap-4">
                 {!coverImage && (
-                <label className="px-4 py-2 border-2 border-gray-300 rounded-md cursor-pointer hover:border-brand-primary transition-colors text-brand-dark font-medium">
+                <label 
+                  className="px-4 py-2 border-2 border-gray-300 rounded-md cursor-pointer hover:border-brand-primary transition-colors text-brand-dark font-medium"
+                  onFocus={() => setActiveSection('coverImage')}
+                  onClick={() => setActiveSection('coverImage')}
+                >
                   Upload Cover Image
                   <input
                     type="file"
                     accept="image/*"
                     onChange={handleCoverImageUpload}
+                    onFocus={() => setActiveSection('coverImage')}
                     className="hidden"
                   />
                 </label>
@@ -373,6 +433,7 @@ export default function CreatePostPage() {
                   e.target.style.height = 'auto';
                   e.target.style.height = e.target.scrollHeight + 'px';
                 }}
+                onFocus={() => setActiveSection('title')}
                 placeholder="New post title here..."
                 className={`w-full text-5xl font-bold text-brand-dark placeholder-gray-400 resize-none border-none outline-none overflow-hidden ${errors.title ? 'border-b-2 border-red-500' : ''}`}
                 rows={1}
@@ -411,7 +472,10 @@ export default function CreatePostPage() {
                     type="text"
                     value={tagInput}
                     onChange={(e) => setTagInput(e.target.value)}
-                    onFocus={() => setShowSuggestions(true)}
+                    onFocus={() => {
+                      setShowSuggestions(true);
+                      setActiveSection('tags');
+                    }}
                     onBlur={() => {
                       // Delay to allow click events to fire first
                       setTimeout(() => setShowSuggestions(false), 150);
@@ -480,7 +544,11 @@ export default function CreatePostPage() {
               )}
 
               {/* Markdown Editor */}
-              <div className="markdown-editor">
+              <div 
+                className="markdown-editor"
+                onFocus={() => setActiveSection('content')}
+                onClick={() => setActiveSection('content')}
+              >
                 <SimpleMDE
                   key="markdown-editor"
                   value={content}
@@ -544,9 +612,53 @@ export default function CreatePostPage() {
           </div>
         </div>
 
-        {/* Right Sidebar - Action Buttons (Fixed) */}
-        <aside className="w-72 flex-shrink-0 p-6">
-          <div className="sticky top-6">
+        {/* Right Sidebar - Help Panel Always Visible */}
+        <aside className="flex-1 flex items-center">
+          <div className="w-full max-w-sm ">
+            {activeSection && helpContent[activeSection] ? (
+              <div className="">
+                <h3 className="text-base font-bold text-brand-dark mb-3">
+                  {helpContent[activeSection].title}
+                </h3>
+                
+                <ul className="space-y-1.5 mb-3">
+                  {helpContent[activeSection].tips.map((tip, index) => (
+                    <li key={index} className="flex items-start gap-2 text-xs text-brand-muted">
+                      <span className="text-brand-primary mt-0.5">•</span>
+                      <span>{tip}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* Markdown syntax examples */}
+                {helpContent[activeSection].markdown && (
+                  <div className="mt-3 pt-3 border-t border-gray-200">
+                    <h4 className="text-xs font-semibold text-brand-dark mb-2">
+                      ▸ Commonly used syntax
+                    </h4>
+                    <div className="space-y-1">
+                      {helpContent[activeSection].markdown.map((syntax, index) => (
+                        <code key={index} className="block text-xs bg-gray-50 p-1.5 rounded text-brand-dark">
+                          {syntax}
+                        </code>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                <p className="text-sm text-brand-muted text-center">
+                  Click on any field to see helpful tips
+                </p>
+              </div>
+            )}
+          </div>
+        </aside>
+
+        {/* Action Buttons - Absolute Position Top Right */}
+        <div className="absolute right-0 top-6 w-64 z-10">
+          <div className="p-4">
             <button
               onClick={handlePublish}
               disabled={isLoading}
@@ -558,12 +670,12 @@ export default function CreatePostPage() {
             </button>
             <button
               onClick={handleSaveDraft}
-              className="w-full px-6 py-3 text-brand-dark hover:bg-gray-100 font-medium rounded-lg transition-colors"
+              className="w-full px-6 py-3 bg-white border border-gray-200 text-brand-dark hover:bg-gray-100 font-medium rounded-lg transition-colors"
             >
               Save draft
             </button>
           </div>
-        </aside>
+        </div>
       </main>
     </div>
   );
