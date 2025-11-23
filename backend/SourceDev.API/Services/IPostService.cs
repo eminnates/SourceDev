@@ -11,6 +11,7 @@ namespace SourceDev.API.Services
         Task<IEnumerable<PostListDto>> GetTopAsync(int take);
         Task<IEnumerable<PostListDto>> GetRelevantAsync(int? userId, int page, int pageSize);
         Task<IEnumerable<PostListDto>> GetByUserAsync(int userId, int page, int pageSize);
+        Task<IEnumerable<PostListDto>> GetUserDraftsAsync(int userId, int page, int pageSize);
         Task<IEnumerable<PostListDto>> GetByTagAsync(string tagSlug, int page, int pageSize);
         Task<PostDto> CreateAsync(CreatePostDto dto, int authorId);
         Task<bool> UpdateAsync(int id, UpdatePostDto dto, int requesterId);

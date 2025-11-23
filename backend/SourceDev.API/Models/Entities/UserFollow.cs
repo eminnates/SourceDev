@@ -6,5 +6,6 @@ namespace SourceDev.API.Models.Entities
     {
         public int follower_id { get; set; }
         public int following_id { get; set; }
+        public DateTime created_at { get; set; }
     }
 }

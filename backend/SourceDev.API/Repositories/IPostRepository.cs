@@ -22,6 +22,7 @@ namespace SourceDev.API.Repositories
         Task<IEnumerable<SourceDev.API.DTOs.Post.PostListDto>> GetByTagDtosAsync(string tagSlug, int page = 1, int pageSize = 20);
         Task<IEnumerable<SourceDev.API.DTOs.Post.PostListDto>> GetRelevantDtosAsync(int? userId, int page = 1, int pageSize = 20);
         Task<IEnumerable<PostListDto>> SearchInDbAsync(string query, int? userId, int page = 1, int pageSize = 20);
+        Task<IEnumerable<PostListDto>> GetUserDraftDtosAsync(int userId, int page = 1, int pageSize = 20);
 
     }
 }   

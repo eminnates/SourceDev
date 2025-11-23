@@ -74,6 +74,17 @@ namespace SourceDev.API.Controllers
             return Ok(items);
         }
 
+        [HttpGet("drafts")]
+        [Authorize]
+        public async Task<IActionResult> GetMyDrafts([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        {
+            if (page < 1 || pageSize < 1) return BadRequest("Invalid paging.");
+            var currentUserId = User.GetUserId();
+            if (!currentUserId.HasValue) return Unauthorized();
+            var items = await _postService.GetUserDraftsAsync(currentUserId.Value, page, pageSize);
+            return Ok(items);
+        }
+
         [HttpGet("tag/{tagSlug}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetByTag(string tagSlug, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)

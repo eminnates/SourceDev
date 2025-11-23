@@ -69,13 +69,13 @@ namespace SourceDev.API.Services
 
             var post = new Post
             {
-                user_id = authorId,  // ← Entity property isimleri
+                user_id = authorId,
                 title = dto.Title,
                 slug = slug,
                 content_markdown = dto.Content,
                 cover_img_url = dto.CoverImageUrl,
-                status = dto.PublishNow,  // ← true/false
-                published_at = dto.PublishNow ? DateTime.UtcNow : default,  // ← default yerine DateTime.MinValue
+                status = dto.PublishNow,
+                published_at = dto.PublishNow ? DateTime.UtcNow : null,
                 created_at = DateTime.UtcNow,
                 updated_at = DateTime.UtcNow,
                 likes_count = 0,
@@ -240,6 +240,13 @@ namespace SourceDev.API.Services
             return result;
         }
 
+        public async Task<IEnumerable<PostListDto>> GetUserDraftsAsync(int userId, int page, int pageSize)
+        {
+            var result = await _unitOfWork.Posts.GetUserDraftDtosAsync(userId, page, pageSize);
+            _logger.LogInformation("Draft posts fetched. UserId: {UserId}, Page: {Page}, Size: {Size}", userId, page, pageSize);
+            return result;
+        }
+
         public async Task<IEnumerable<PostListDto>> GetLatestAsync(int page, int pageSize)
         {
             var result = await _unitOfWork.Posts.GetLatestDtosAsync(page, pageSize);
@@ -269,17 +276,29 @@ namespace SourceDev.API.Services
             if (post.user_id != requesterId)
                 throw new UnauthorizedAccessException("You can only publish your own posts");
 
-            if (!post.status)
+            if (post.status)
             {
-                post.status = true;
-                post.published_at = DateTime.UtcNow;
-                post.updated_at = DateTime.UtcNow;
-
-                _unitOfWork.Posts.Update(post);
-                await _unitOfWork.SaveChangesAsync();
-                _logger.LogInformation("Post published. PostId: {PostId}, UserId: {UserId}", id, requesterId);
+                // Already published; ensure published_at is not unexpectedly null
+                if (!post.published_at.HasValue)
+                {
+                    post.published_at = DateTime.UtcNow;
+                    post.updated_at = DateTime.UtcNow;
+                    _unitOfWork.Posts.Update(post);
+                    await _unitOfWork.SaveChangesAsync();
+                    _logger.LogInformation("Post had missing published_at fixed. PostId: {PostId}, UserId: {UserId}", id, requesterId);
+                }
+                return true;
             }
 
+            post.status = true;
+            if (!post.published_at.HasValue)
+            {
+                post.published_at = DateTime.UtcNow; // first publish timestamp
+            }
+            post.updated_at = DateTime.UtcNow;
+            _unitOfWork.Posts.Update(post);
+            await _unitOfWork.SaveChangesAsync();
+            _logger.LogInformation("Post published. PostId: {PostId}, UserId: {UserId}", id, requesterId);
             return true;
         }
         public async Task<bool> UnpublishAsync(int id, int requesterId)
@@ -290,16 +309,20 @@ namespace SourceDev.API.Services
             if (post.user_id != requesterId)
                 throw new UnauthorizedAccessException("You can only unpublish your own posts");
 
-            if (post.status)
+            if (!post.status)
             {
-                post.status = false;
-                post.updated_at = DateTime.UtcNow;
-
-                _unitOfWork.Posts.Update(post);
-                await _unitOfWork.SaveChangesAsync();
-                _logger.LogInformation("Post unpublished. PostId: {PostId}, UserId: {UserId}", id, requesterId);
+                // Already draft
+                return true;
             }
 
+            post.status = false;
+            // Business rule: reset published_at when reverting to draft
+            post.published_at = null;
+            post.updated_at = DateTime.UtcNow;
+
+            _unitOfWork.Posts.Update(post);
+            await _unitOfWork.SaveChangesAsync();
+            _logger.LogInformation("Post unpublished (reverted to draft). PostId: {PostId}, UserId: {UserId}", id, requesterId);
             return true;
         }
         public async Task<bool> UpdateAsync(int id, UpdatePostDto dto, int requesterId)

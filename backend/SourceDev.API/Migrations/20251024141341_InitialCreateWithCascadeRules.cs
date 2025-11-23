@@ -11,11 +11,6 @@ namespace SourceDev.API.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql(@"
-                CREATE NONCLUSTERED INDEX IX_posts_status_published_at_covering
-                ON post (status, published_at DESC)
-                INCLUDE (post_id, slug, content_markdown, user_id, likes_count, view_count, bookmarks_count)
-                WHERE status = 1;");
 
             migrationBuilder.CreateTable(
                 name: "Roles",

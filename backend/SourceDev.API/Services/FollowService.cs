@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SourceDev.API.Data.Context;
 using SourceDev.API.Models.Entities;
 using SourceDev.API.Repositories;
 
@@ -7,11 +8,13 @@ namespace SourceDev.API.Services
     public class FollowService : IFollowService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly AppDbContext _context;
         private readonly ILogger<FollowService> _logger;
 
-        public FollowService(IUnitOfWork unitOfWork, ILogger<FollowService> logger)
+        public FollowService(IUnitOfWork unitOfWork, AppDbContext context, ILogger<FollowService> logger)
         {
             _unitOfWork = unitOfWork;
+            _context = context;
             _logger = logger;
         }
 
@@ -83,7 +86,7 @@ namespace SourceDev.API.Services
 
         public async Task<bool> IsFollowingAsync(int followerId, int followingId)
         {
-            var existingFollow = await _unitOfWork.UserFollows
+            var existingFollow = await _context.UserFollows
                 .AsNoTracking()
                 .FirstOrDefaultAsync(uf => uf.follower_id == followerId && uf.following_id == followingId);
 
@@ -92,14 +95,14 @@ namespace SourceDev.API.Services
 
         public async Task<int> GetFollowersCountAsync(int userId)
         {
-            return await _unitOfWork.UserFollows
+            return await _context.UserFollows
                 .AsNoTracking()
                 .CountAsync(uf => uf.following_id == userId);
         }
 
         public async Task<int> GetFollowingCountAsync(int userId)
         {
-            return await _unitOfWork.UserFollows
+            return await _context.UserFollows
                 .AsNoTracking()
                 .CountAsync(uf => uf.follower_id == userId);
         }

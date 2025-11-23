@@ -10,7 +10,7 @@ namespace SourceDev.API.DTOs.Post
         public int AuthorId { get; set; }
         public string AuthorDisplayName { get; set; } = string.Empty;
         public bool Status { get; set; }  // true = published, false = draft
-        public DateTime PublishedAt { get; set; }
+        public DateTime? PublishedAt { get; set; } // draft ise null
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public int LikesCount { get; set; }

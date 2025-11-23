@@ -9,7 +9,7 @@ namespace SourceDev.API.DTOs.Post
         public int Likes { get; set; }
         public long Views { get; set; }
         public int Bookmarks { get; set; }
-        public DateTime PublishedAt { get; set; }
+        public DateTime? PublishedAt { get; set; }
         public string AuthorDisplayName { get; set; } = string.Empty;
         public string? CoverImageUrl { get; set; }
         public int CommentsCount { get; set; } = 0;

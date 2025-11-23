@@ -37,7 +37,8 @@ namespace SourceDev.API.Models.Entities
         public int bookmarks_count { get; set; } = 0;
     
 
-        public DateTime published_at { get; set; } = DateTime.UtcNow;
+        // Nullable: null when draft, value when published
+        public DateTime? published_at { get; set; }
         public DateTime created_at { get; set; } = DateTime.UtcNow;
         public DateTime updated_at { get; set; } = DateTime.UtcNow;
         public DateTime? deleted_at { get; set; }

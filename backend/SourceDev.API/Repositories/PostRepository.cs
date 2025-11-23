@@ -15,9 +15,10 @@ namespace SourceDev.API.Repositories
 
         public override async Task<Post?> GetByIdAsync(int id)
         {
+            // Draft post'lar� da d�nd�r (Service katman�nda yetki kontrol� yap�l�r)
             return await _dbSet
                 .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.post_id == id && p.status);
+                .FirstOrDefaultAsync(p => p.post_id == id);
         }
 
 
@@ -38,7 +39,7 @@ namespace SourceDev.API.Repositories
         {
             return await _dbSet
                 .AsNoTracking()
-                .Where(p => p.post_id == id)
+                .Where(p => p.post_id == id) // Status kontrolü yok - draft'ları da getir (Service'te kontrol edilecek)
                 .Select(p => new PostDto
                 {
                     Id = p.post_id,
@@ -48,7 +49,7 @@ namespace SourceDev.API.Repositories
                     CoverImageUrl = p.cover_img_url,
                     AuthorId = p.user_id,
                     AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
-                    
+                    Status = p.status, // ← Status'u DTO'ya ekle
                     PublishedAt = p.published_at,
                     CreatedAt = p.created_at,
                     UpdatedAt = p.updated_at,
@@ -420,7 +421,6 @@ namespace SourceDev.API.Repositories
 
         public async Task<IEnumerable<PostListDto>> SearchInDbAsync(string query, int? userId, int page = 1, int pageSize = 20)
         {
-            // Bo� query kontrol�
             if (string.IsNullOrWhiteSpace(query))
             {
                 return new List<PostListDto>();
@@ -466,6 +466,34 @@ namespace SourceDev.API.Repositories
                     Excerpt = p.content_markdown.Length > 200
                         ? p.content_markdown.Substring(0, 200)
                         : p.content_markdown,
+                    Likes = p.likes_count,
+                    Views = p.view_count,
+                    Bookmarks = p.bookmarks_count,
+                    CoverImageUrl = p.cover_img_url,
+                    ReadingTimeMinutes = p.reading_time_minutes,
+                    CommentsCount = p.comments_count,
+                    PublishedAt = p.published_at,
+                    AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
+                    Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
+                    ReactionTypes = new Dictionary<string, int>()
+                })
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<PostListDto>> GetUserDraftDtosAsync(int userId, int page = 1, int pageSize = 20)
+        {
+            return await _dbSet
+                .AsNoTracking()
+                .Where(p => p.user_id == userId && !p.status)
+                .OrderByDescending(p => p.updated_at)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(p => new PostListDto
+                {
+                    Id = p.post_id,
+                    Title = p.title ?? "",
+                    Slug = p.slug,
+                    Excerpt = p.content_markdown.Length > 200 ? p.content_markdown.Substring(0, 200) : p.content_markdown,
                     Likes = p.likes_count,
                     Views = p.view_count,
                     Bookmarks = p.bookmarks_count,
