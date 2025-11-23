@@ -383,13 +383,12 @@ namespace SourceDev.API.Services
             if (!string.IsNullOrWhiteSpace(dto.CoverImageUrl))
                 post.cover_img_url = dto.CoverImageUrl;
 
-            // Update Tags if provided
-            if (dto.Tags != null)
+            // Update Tags only if provided and non-empty
+            if (dto.Tags != null && dto.Tags.Count > 0)
             {
                 // Remove all existing tags
                 var existingPostTags = (await _unitOfWork.PostTags
                     .FindAsync(pt => pt.post_id == id)).ToList();
-                
                 foreach (var postTag in existingPostTags)
                 {
                     _unitOfWork.PostTags.Delete(postTag);
@@ -397,14 +396,11 @@ namespace SourceDev.API.Services
                 await _unitOfWork.SaveChangesAsync();
 
                 // Add new tags
-                if (dto.Tags.Count > 0)
+                foreach (var tagName in dto.Tags)
                 {
-                    foreach (var tagName in dto.Tags)
+                    if (!string.IsNullOrWhiteSpace(tagName))
                     {
-                        if (!string.IsNullOrWhiteSpace(tagName))
-                        {
-                            await AddTagToPostInternalAsync(id, tagName);
-                        }
+                        await AddTagToPostInternalAsync(id, tagName);
                     }
                 }
             }
