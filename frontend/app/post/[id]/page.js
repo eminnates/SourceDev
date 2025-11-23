@@ -4,10 +4,10 @@ import { use, useState, useEffect } from 'react';
 import PostDetailSidebar from '@/components/Post/PostDetailSidebar';
 import PostContent from '@/components/Post/PostContent';
 import PostAuthorCard from '@/components/Post/PostAuthorCard';
-import { getPostBySlug, toggleLike } from '@/utils/api/postApi';
+import { getPostById, toggleLike } from '@/utils/api/postApi';
 
 export default function PostDetailPage({ params }) {
-  const { id } = use(params); // This is actually slug from URL
+  const { id } = use(params); // This is the post ID from URL
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -18,7 +18,15 @@ export default function PostDetailPage({ params }) {
       setError(null);
       
       try {
-        const result = await getPostBySlug(id);
+        // Convert id to number
+        const postId = parseInt(id, 10);
+        if (isNaN(postId)) {
+          setError('Invalid post ID');
+          setLoading(false);
+          return;
+        }
+
+        const result = await getPostById(postId);
         if (result.success && result.data) {
           setPost(result.data);
         } else {
@@ -44,7 +52,8 @@ export default function PostDetailPage({ params }) {
       const result = await toggleLike(post.id);
       if (result.success) {
         // Refresh post data
-        const updatedPost = await getPostBySlug(id);
+        const postId = parseInt(id, 10);
+        const updatedPost = await getPostById(postId);
         if (updatedPost.success && updatedPost.data) {
           setPost(updatedPost.data);
         }

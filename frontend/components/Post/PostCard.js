@@ -9,7 +9,7 @@ export default function PostCard({ post, showCover = false }) {
     // Normalize data from backend to component format
     const author = post.authorDisplayName;
     const coverImage = post.coverImageUrl;
-    const postUrl = post.slug ? `/post/${post.slug}` : `/post/${post.id}`;
+    const postUrl = `/post/${post.id}`; // Always use ID for unique identification
     const comments = post.commentsCount || post.comments || 0;
     const readTime = post.readingTimeMinutes || post.readTime || 5;
     const tags = post.tags || [];

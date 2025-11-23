@@ -82,9 +82,9 @@ export default function CreatePostPage() {
 
       if (result.success) {
         alert(result.message);
-        // Redirect to the created post or home
-        if (result.data?.slug) {
-          router.push(`/post/${result.data.slug}`);
+        // Redirect to the created post using ID
+        if (result.data?.id) {
+          router.push(`/post/${result.data.id}`);
         } else {
           router.push('/');
         }
