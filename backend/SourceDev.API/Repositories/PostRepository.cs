@@ -136,6 +136,9 @@ namespace SourceDev.API.Repositories
             var posts = await _dbSet
                 .AsNoTracking()
                 .Include(p => p.Reactions)
+                .Include(p => p.User)
+                .Include(p => p.PostTags)
+                    .ThenInclude(pt => pt.Tag)
                 .Where(p => p.status)
                 .OrderByDescending(p => p.published_at)
                 .Skip((page - 1) * pageSize)
@@ -177,6 +180,9 @@ namespace SourceDev.API.Repositories
             var posts = await _dbSet
                 .AsNoTracking()
                 .Include(p => p.Reactions)
+                .Include(p => p.User)
+                .Include(p => p.PostTags)
+                    .ThenInclude(pt => pt.Tag)
                 .Where(p => p.status)
                 .OrderByDescending(p => p.likes_count)
                 .Take(take)
@@ -342,6 +348,9 @@ namespace SourceDev.API.Repositories
             var posts = await _dbSet
                 .AsNoTracking()
                 .Include(p => p.Reactions)
+                .Include(p => p.User)
+                .Include(p => p.PostTags)
+                    .ThenInclude(pt => pt.Tag)
                 .Where(p => p.status)
                 .OrderByDescending(p => p.published_at)
                 .Skip((page - 1) * pageSize)
