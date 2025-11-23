@@ -4,6 +4,9 @@ namespace SourceDev.API.Repositories
 {
     public interface IRepository<T> where T : class
     {
+        // Query
+        IQueryable<T> Query();
+
         // Read
         Task<T?> GetByIdAsync(int id);
         Task<IEnumerable<T>> GetAllAsync();

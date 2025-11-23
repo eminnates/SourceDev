@@ -87,6 +87,16 @@ namespace SourceDev.API.Data.Context
                 .HasForeignKey(p => p.user_id)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Post - Slug index (for fast lookups)
+            modelBuilder.Entity<Post>()
+                .HasIndex(p => p.slug)
+                .HasDatabaseName("IX_Posts_slug");
+
+            // Post - Slug and Status composite index (for GetBySlugAsync query optimization)
+            modelBuilder.Entity<Post>()
+                .HasIndex(p => new { p.slug, p.status })
+                .HasDatabaseName("IX_Posts_slug_status");
+
             // Comment - User ilişkisi
             modelBuilder.Entity<Comment>()
                 .HasOne(c => c.User)
@@ -97,9 +107,16 @@ namespace SourceDev.API.Data.Context
             // Comment - Post ilişkisi
             modelBuilder.Entity<Comment>()
                 .HasOne(c => c.Post)
-                .WithMany()
+                .WithMany(p => p.Comments)
                 .HasForeignKey(c => c.post_id)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Comment - Parent Comment ilişkisi (self-referencing)
+            modelBuilder.Entity<Comment>()
+                .HasOne(c => c.ParentComment)
+                .WithMany(c => c.Replies)
+                .HasForeignKey(c => c.parent_comment_id)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Reaction - User ilişkisi
             modelBuilder.Entity<Reaction>()

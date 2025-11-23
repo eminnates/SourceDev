@@ -25,6 +25,10 @@ namespace SourceDev.API.Models.Entities
         public Post? Post { get; set; }
         public User? User { get; set; }
 
-
+        // Self-referencing relationship for nested comments
+        [ForeignKey("parent_comment_id")]
+        public Comment? ParentComment { get; set; }
+        
+        public ICollection<Comment> Replies { get; set; } = new List<Comment>();
     }
 }

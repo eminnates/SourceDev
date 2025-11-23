@@ -37,7 +37,7 @@ namespace SourceDev.API.Repositories
 
         public async Task<PostDto?> GetDtoByIdAsync(int id)
         {
-            return await _dbSet
+            var postDto = await _dbSet
                 .AsNoTracking()
                 .Where(p => p.post_id == id) // Status kontrolü yok - draft'ları da getir (Service'te kontrol edilecek)
                 .Select(p => new PostDto
@@ -59,15 +59,28 @@ namespace SourceDev.API.Repositories
                     BookmarksCount = p.bookmarks_count,
                     ReadingTimeMinutes = p.reading_time_minutes,
                     Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
+                    ReactionTypes = new Dictionary<string, int>(), // Will be populated below
+                    UserReactions = new List<string>(), // Will be populated in service layer
                     LikedByCurrentUser = false,
                     BookmarkedByCurrentUser = false
                 })
                 .FirstOrDefaultAsync();
+
+            if (postDto != null)
+            {
+                postDto.ReactionTypes = await _context.Reactions
+                    .Where(r => r.post_id == postDto.Id)
+                    .GroupBy(r => r.reaction_type)
+                    .Select(g => new { Type = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(x => x.Type, x => x.Count);
+            }
+
+            return postDto;
         }
 
         public async Task<PostDto?> GetDtoBySlugAsync(string slug)
         {
-            return await _dbSet
+            var postDto = await _dbSet
                 .AsNoTracking()
                 .Where(p => p.slug == slug && p.status)
                 .Select(p => new PostDto
@@ -89,10 +102,23 @@ namespace SourceDev.API.Repositories
                     Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
                     BookmarksCount = p.bookmarks_count,
                     ReadingTimeMinutes = p.reading_time_minutes,
+                    ReactionTypes = new Dictionary<string, int>(), // Will be populated below
+                    UserReactions = new List<string>(), // Will be populated in service layer
                     LikedByCurrentUser = false,
                     BookmarkedByCurrentUser = false
                 })
                 .FirstOrDefaultAsync();
+
+            if (postDto != null)
+            {
+                postDto.ReactionTypes = await _context.Reactions
+                    .Where(r => r.post_id == postDto.Id)
+                    .GroupBy(r => r.reaction_type)
+                    .Select(g => new { Type = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(x => x.Type, x => x.Count);
+            }
+
+            return postDto;
         }
 
         public async Task<IEnumerable<Post>> GetLatestAsync(int take = 10)
@@ -128,7 +154,7 @@ namespace SourceDev.API.Repositories
                     PublishedAt = p.published_at,
                     AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
                     Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
-                    ReactionTypes = new Dictionary<string, int>()
+                    ReactionTypes = new Dictionary<string, int>() // Will be populated in service layer if needed
                 })
                 .ToListAsync();
         }
@@ -165,7 +191,7 @@ namespace SourceDev.API.Repositories
                     PublishedAt = p.published_at,
                     AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
                     Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
-                    ReactionTypes = new Dictionary<string, int>()
+                    ReactionTypes = new Dictionary<string, int>() // Will be populated in service layer if needed
                 })
                 .ToListAsync();
         }
@@ -204,7 +230,7 @@ namespace SourceDev.API.Repositories
                     PublishedAt = p.published_at,
                     AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
                     Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
-                    ReactionTypes = new Dictionary<string, int>()
+                    ReactionTypes = new Dictionary<string, int>() // Will be populated in service layer if needed
                 })
                 .ToListAsync();
         }
@@ -247,7 +273,9 @@ namespace SourceDev.API.Repositories
                     PublishedAt = pt.Post.published_at,
                     AuthorDisplayName = pt.Post.User != null ? pt.Post.User.display_name : string.Empty,
                     Tags = pt.Post.PostTags.Where(pt2 => pt2.Tag != null).Select(pt2 => pt2.Tag!.name).ToList(),
-                    ReactionTypes = new Dictionary<string, int>()
+                    ReactionTypes = pt.Post.Reactions
+                        .GroupBy(r => r.reaction_type)
+                        .ToDictionary(g => g.Key, g => g.Count())
                 })
                 .ToListAsync();
         }
@@ -334,7 +362,9 @@ namespace SourceDev.API.Repositories
                     PublishedAt = x.Post.published_at,
                     AuthorDisplayName = x.Post.User != null ? x.Post.User.display_name : "",
                     Tags = x.Post.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
-                    ReactionTypes = new Dictionary<string, int>()
+                    ReactionTypes = x.Post.Reactions
+                        .GroupBy(r => r.reaction_type)
+                        .ToDictionary(g => g.Key, g => g.Count())
                 });
 
             return await query.ToListAsync();
@@ -475,7 +505,7 @@ namespace SourceDev.API.Repositories
                     PublishedAt = p.published_at,
                     AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
                     Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
-                    ReactionTypes = new Dictionary<string, int>()
+                    ReactionTypes = new Dictionary<string, int>() // Will be populated in service layer if needed
                 })
                 .ToListAsync();
         }
@@ -503,7 +533,7 @@ namespace SourceDev.API.Repositories
                     PublishedAt = p.published_at,
                     AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
                     Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
-                    ReactionTypes = new Dictionary<string, int>()
+                    ReactionTypes = new Dictionary<string, int>() // Will be populated in service layer if needed
                 })
                 .ToListAsync();
         }

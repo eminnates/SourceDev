@@ -166,8 +166,14 @@ namespace SourceDev.API.Services
             // Kullanıcıya özel alanlar
             if (currentUserId.HasValue)
             {
-                postDto.LikedByCurrentUser = await _unitOfWork.Reactions
-                    .AnyAsync(r => r.post_id == id && r.user_id == currentUserId.Value);
+                // Kullanıcının reaction'larını getir
+                postDto.UserReactions = (await _unitOfWork.Reactions
+                    .FindAsync(r => r.post_id == id && r.user_id == currentUserId.Value))
+                    .Select(r => r.reaction_type)
+                    .ToList();
+
+                // LikedByCurrentUser - "like" reaction'ı var mı?
+                postDto.LikedByCurrentUser = postDto.UserReactions.Contains("like");
 
                 postDto.BookmarkedByCurrentUser = await _unitOfWork.Bookmarks
                     .AnyAsync(b => b.post_id == id && b.user_id == currentUserId.Value);
@@ -202,8 +208,14 @@ namespace SourceDev.API.Services
             }
             if (currentUserId.HasValue)
             {
-                postDto.LikedByCurrentUser = await _unitOfWork.Reactions
-                    .AnyAsync(r => r.post_id == postDto.Id && r.user_id == currentUserId.Value);
+                // Kullanıcının reaction'larını getir
+                postDto.UserReactions = (await _unitOfWork.Reactions
+                    .FindAsync(r => r.post_id == postDto.Id && r.user_id == currentUserId.Value))
+                    .Select(r => r.reaction_type)
+                    .ToList();
+
+                // LikedByCurrentUser - "like" reaction'ı var mı?
+                postDto.LikedByCurrentUser = postDto.UserReactions.Contains("like");
 
                 postDto.BookmarkedByCurrentUser = await _unitOfWork.Bookmarks
                     .AnyAsync(b => b.post_id == postDto.Id && b.user_id == currentUserId.Value);
@@ -337,18 +349,93 @@ namespace SourceDev.API.Services
             if (post.user_id != requesterId)
                 throw new UnauthorizedAccessException("You can only update your own posts");
 
+            // Update Title (and slug if title changed)
+            if (!string.IsNullOrWhiteSpace(dto.Title) && dto.Title != post.title)
+            {
+                post.title = dto.Title;
+                // Generate new slug from title
+                post.slug = GenerateSlug(dto.Title);
+                
+                // Check if slug already exists (for published posts)
+                if (post.status)
+                {
+                    var existingPost = await _unitOfWork.Posts.GetBySlugAsync(post.slug);
+                    if (existingPost != null && existingPost.post_id != id)
+                    {
+                        // Slug conflict - append number
+                        var counter = 1;
+                        var originalSlug = post.slug;
+                        while (existingPost != null && existingPost.post_id != id)
+                        {
+                            post.slug = $"{originalSlug}-{counter}";
+                            existingPost = await _unitOfWork.Posts.GetBySlugAsync(post.slug);
+                            counter++;
+                        }
+                    }
+                }
+            }
+
+            // Update Content
             if (!string.IsNullOrWhiteSpace(dto.Content))
                 post.content_markdown = dto.Content;
 
+            // Update Cover Image
             if (!string.IsNullOrWhiteSpace(dto.CoverImageUrl))
                 post.cover_img_url = dto.CoverImageUrl;
+
+            // Update Tags if provided
+            if (dto.Tags != null)
+            {
+                // Remove all existing tags
+                var existingPostTags = (await _unitOfWork.PostTags
+                    .FindAsync(pt => pt.post_id == id)).ToList();
+                
+                foreach (var postTag in existingPostTags)
+                {
+                    _unitOfWork.PostTags.Delete(postTag);
+                }
+                await _unitOfWork.SaveChangesAsync();
+
+                // Add new tags
+                if (dto.Tags.Count > 0)
+                {
+                    foreach (var tagName in dto.Tags)
+                    {
+                        if (!string.IsNullOrWhiteSpace(tagName))
+                        {
+                            await AddTagToPostInternalAsync(id, tagName);
+                        }
+                    }
+                }
+            }
+
+            // Update Publish Status
+            if (dto.PublishNow.HasValue)
+            {
+                if (dto.PublishNow.Value && !post.status)
+                {
+                    // Publish
+                    post.status = true;
+                    if (!post.published_at.HasValue)
+                    {
+                        post.published_at = DateTime.UtcNow;
+                    }
+                }
+                else if (!dto.PublishNow.Value && post.status)
+                {
+                    // Unpublish
+                    post.status = false;
+                    post.published_at = null;
+                }
+            }
 
             post.updated_at = DateTime.UtcNow;
 
             _unitOfWork.Posts.Update(post);
             await _unitOfWork.SaveChangesAsync();
 
-            _logger.LogInformation("Post updated. PostId: {PostId}, UserId: {UserId}", id, requesterId);
+            _logger.LogInformation("Post updated. PostId: {PostId}, UserId: {UserId}, Title: {Title}, Tags: {TagCount}", 
+                id, requesterId, post.title, dto.Tags?.Count ?? 0);
             return true;
         }
 

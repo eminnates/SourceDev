@@ -50,5 +50,7 @@ namespace SourceDev.API.Models.Entities
         public ICollection<Reaction> Reactions { get; set; } = new List<Reaction>();
         [JsonIgnore]
         public ICollection<PostTag> PostTags { get; set; } = new List<PostTag>();
+        [JsonIgnore]
+        public ICollection<Comment> Comments { get; set; } = new List<Comment>();
     }
 }

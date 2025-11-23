@@ -43,7 +43,10 @@ Console.WriteLine("============================");
 // Database Context Configuration
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    options.UseSqlServer(connectionString);
+    options.UseSqlServer(connectionString, sqlOptions =>
+    {
+        sqlOptions.CommandTimeout(60); // 60 saniye timeout (default 30)
+    });
     options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking); // Global NoTracking
     options.EnableSensitiveDataLogging(); // Debug için
     options.LogTo(Console.WriteLine, LogLevel.Information); // SQL logları
@@ -71,6 +74,8 @@ builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<IFollowService, FollowService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();
+builder.Services.AddScoped<ICommentService, CommentService>();
+builder.Services.AddScoped<IReactionService, ReactionService>();
 
 // Identity Configuration
 builder.Services.AddIdentity<User, IdentityRole<int>>(options =>

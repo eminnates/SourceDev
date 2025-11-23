@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SourceDev.API.Data.Context;
 
@@ -11,9 +12,11 @@ using SourceDev.API.Data.Context;
 namespace SourceDev.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251123174233_AddParentCommentForeignKey")]
+    partial class AddParentCommentForeignKey
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -270,13 +273,7 @@ namespace SourceDev.API.Migrations
 
                     b.HasKey("post_id");
 
-                    b.HasIndex("slug")
-                        .HasDatabaseName("IX_Posts_slug");
-
                     b.HasIndex("user_id");
-
-                    b.HasIndex("slug", "status")
-                        .HasDatabaseName("IX_Posts_slug_status");
 
                     b.ToTable("Posts");
                 });

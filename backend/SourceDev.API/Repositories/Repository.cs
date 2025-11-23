@@ -15,6 +15,11 @@ namespace SourceDev.API.Repositories
             _dbSet = _context.Set<T>();
         }
 
+        public virtual IQueryable<T> Query()
+        {
+            return _dbSet;
+        }
+
         public virtual async Task<T?> GetByIdAsync(int id)
         {
             return await _dbSet.FindAsync(id);
