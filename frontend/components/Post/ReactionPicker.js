@@ -3,9 +3,8 @@
 import { useState, useRef } from 'react';
 import { BsHeart } from 'react-icons/bs';
 
-export default function ReactionPicker({ totalReactions = 0, onReact }) {
+export default function ReactionPicker({ totalReactions = 0, userReactions = [], onReact }) {
   const [showPicker, setShowPicker] = useState(false);
-  const [selectedReaction, setSelectedReaction] = useState(null);
   const timeoutRef = useRef(null);
 
   const reactions = [
@@ -31,7 +30,6 @@ export default function ReactionPicker({ totalReactions = 0, onReact }) {
   };
 
   const handleReactionClick = (reaction) => {
-    setSelectedReaction(reaction.type);
     if (onReact) {
       onReact(reaction.type);
     }
@@ -49,10 +47,17 @@ export default function ReactionPicker({ totalReactions = 0, onReact }) {
         className="flex flex-col items-center gap-1 p-2 hover:bg-brand-primary/10 rounded-lg transition-colors group"
       >
         <div className="w-10 h-10 flex items-center justify-center">
-          {selectedReaction ? (
-            <span className="text-2xl">
-              {reactions.find(r => r.type === selectedReaction)?.emoji}
-            </span>
+          {userReactions.length > 0 ? (
+            <div className="relative">
+              <span className="text-2xl">
+                {reactions.find(r => r.type === userReactions[0])?.emoji}
+              </span>
+              {userReactions.length > 1 && (
+                <div className="absolute -top-1 -right-1 bg-brand-primary text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                  {userReactions.length}
+                </div>
+              )}
+            </div>
           ) : (
             <BsHeart className="w-6 h-6 text-brand-muted group-hover:text-red-500 transition-colors" />
           )}

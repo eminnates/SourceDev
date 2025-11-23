@@ -116,9 +116,8 @@ const transformPostData = (backendPost) => {
     readingTimeMinutes: backendPost.readingTimeMinutes || 0,
     likedByCurrentUser: backendPost.likedByCurrentUser || false,
     bookmarkedByCurrentUser: backendPost.bookmarkedByCurrentUser || false,
-    reactionTypes: {
-      heart: backendPost.likesCount || 0
-    },
+    reactionTypes: backendPost.reactionTypes || {},
+    userReactions: backendPost.userReactions || [],
     comments: backendPost.commentsCount || 0,
     readTime: backendPost.readingTimeMinutes || 5
   };
@@ -213,6 +212,34 @@ export const getTopPosts = async (take = 20) => {
     return {
       success: false,
       message: error.message || 'Failed to fetch posts'
+    };
+  }
+};
+
+/**
+ * Toggle reaction on a post
+ * @param {number} postId - Post ID
+ * @param {string} reactionType - Reaction type (heart, unicorn, etc.)
+ * @returns {Promise<Object>} API response
+ */
+export const toggleReaction = async (postId, reactionType) => {
+  try {
+    const response = await apiClient.post(`/reaction/post/${postId}`, reactionType, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    return {
+      success: true,
+      data: response.data,
+      message: response.data?.message || 'Reaction toggled successfully'
+    };
+  } catch (error) {
+    console.error('Toggle reaction error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'Failed to toggle reaction'
     };
   }
 };
