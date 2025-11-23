@@ -4,13 +4,15 @@ import { use, useState, useEffect } from 'react';
 import PostDetailSidebar from '@/components/Post/PostDetailSidebar';
 import PostContent from '@/components/Post/PostContent';
 import PostAuthorCard from '@/components/Post/PostAuthorCard';
-import { getPostById, toggleLike } from '@/utils/api/postApi';
+import { getPostById, toggleLike, toggleReaction, getReactionSummary } from '@/utils/api/postApi';
 
 export default function PostDetailPage({ params }) {
   const { id } = use(params); // This is the post ID from URL
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [userReactions, setUserReactions] = useState([]);
+  const [reactionSummary, setReactionSummary] = useState({});
   
   useEffect(() => {
     const fetchPost = async () => {
@@ -29,6 +31,8 @@ export default function PostDetailPage({ params }) {
         const result = await getPostById(postId);
         if (result.success && result.data) {
           setPost(result.data);
+          // Set user's current reactions
+          setUserReactions(result.data.userReactions || []);
         } else {
           setError(result.message || 'Post not found');
         }
@@ -45,18 +49,43 @@ export default function PostDetailPage({ params }) {
   
   const handleReaction = async (reactionType) => {
     if (!post) return;
-    
-    console.log('Reaction:', reactionType);
-    // For now, only handle like
-    if (reactionType === 'heart') {
-      const result = await toggleLike(post.id);
-      if (result.success) {
-        // Refresh post data
-        const postId = parseInt(id, 10);
-        const updatedPost = await getPostById(postId);
-        if (updatedPost.success && updatedPost.data) {
-          setPost(updatedPost.data);
+
+    const hasCurrentReaction = userReactions.length > 0;
+    const currentReaction = userReactions[0];
+    const isSameReaction = currentReaction === reactionType;
+
+    let result;
+
+    if (isSameReaction) {
+      // Same reaction clicked - toggle it off
+      result = await toggleReaction(post.id, reactionType);
+    } else {
+      // Different reaction clicked - remove current and add new one
+      if (hasCurrentReaction) {
+        // First remove current reaction
+        await toggleReaction(post.id, currentReaction);
+      }
+      // Then add new reaction
+      result = await toggleReaction(post.id, reactionType);
+    }
+
+    if (result.success) {
+      // Update user's current reactions - only one reaction allowed at a time
+      setUserReactions(prev => {
+        if (isSameReaction) {
+          // Remove reaction if it's the same one
+          return [];
+        } else {
+          // Set new reaction
+          return [reactionType];
         }
+      });
+
+      // Refresh post data to get updated reaction counts
+      const postId = parseInt(id, 10);
+      const updatedPost = await getPostById(postId);
+      if (updatedPost.success && updatedPost.data) {
+        setPost(updatedPost.data);
       }
     }
   };
@@ -91,9 +120,10 @@ export default function PostDetailPage({ params }) {
         <div className="flex gap-6">
           {/* Left Sidebar - Reactions */}
           <div className="hidden lg:block">
-            <PostDetailSidebar 
-              reactions={totalReactions} 
+            <PostDetailSidebar
+              reactions={totalReactions}
               comments={post.comments}
+              userReactions={userReactions}
               onReact={handleReaction}
             />
           </div>

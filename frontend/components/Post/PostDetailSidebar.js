@@ -4,11 +4,11 @@ import { BsBookmark, BsThreeDots } from 'react-icons/bs';
 import { RiChat1Line } from "react-icons/ri";
 import ReactionPicker from './ReactionPicker';
 
-export default function PostDetailSidebar({ reactions = 0, comments = 0, onReact }) {
+export default function PostDetailSidebar({ reactions = 0, comments = 0, userReactions = [], onReact }) {
   return (
     <aside className="sticky top-20 flex flex-col items-center gap-4 w-14">
       {/* Reactions */}
-      <ReactionPicker totalReactions={reactions} onReact={onReact} />
+      <ReactionPicker totalReactions={reactions} userReactions={userReactions} onReact={onReact} />
 
       {/* Comments */}
       <button className="flex flex-col items-center gap-1 p-2 hover:bg-brand-primary/10 rounded-lg transition-colors group">

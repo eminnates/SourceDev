@@ -20,10 +20,13 @@ export default function PostCard({ post, showCover = false }) {
         day: 'numeric'
     }) : '');
 
-    // Handle reactions
-    const reactionTypes = post.reactionTypes && Object.keys(post.reactionTypes).length > 0 
-        ? post.reactionTypes 
-        : (post.likes > 0 ? { heart: post.likes } : {});
+
+    const reactionTypes = post.reactionTypes && Object.keys(post.reactionTypes).length > 0
+        ? post.reactionTypes
+        : post.ReactionTypes && Object.keys(post.ReactionTypes).length > 0
+            ? post.ReactionTypes
+            : (post.likes > 0 ? { heart: post.likes } : {});
+
 
     // Get author initials safely
     const getAuthorInitials = (authorName) => {
@@ -103,10 +106,10 @@ export default function PostCard({ post, showCover = false }) {
                                                 .map(([type, count], index) => {
                                                     const reactionEmojis = {
                                                         heart: '❤️',
-                                                        party: '🎉',
-                                                        wow: '😮',
+                                                        unicorn: '🦄',
+                                                        bookmark: '🔖',
                                                         fire: '🔥',
-                                                        rocket: '🚀',
+                                                        raised_hands: '🙌',
                                                         thinking: '🤔'
                                                     };
                                                     const zIndex = 30 - (index * 10);
