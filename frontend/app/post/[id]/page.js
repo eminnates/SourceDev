@@ -4,7 +4,7 @@ import { use, useState, useEffect } from 'react';
 import PostDetailSidebar from '@/components/Post/PostDetailSidebar';
 import PostContent from '@/components/Post/PostContent';
 import PostAuthorCard from '@/components/Post/PostAuthorCard';
-import { getPostById, toggleLike, toggleReaction, getReactionSummary } from '@/utils/api/postApi';
+import { getPostById, toggleLike, toggleReaction, getReactionSummary, toggleBookmark } from '@/utils/api/postApi';
 
 export default function PostDetailPage({ params }) {
   const { id } = use(params); // This is the post ID from URL
@@ -12,7 +12,7 @@ export default function PostDetailPage({ params }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userReactions, setUserReactions] = useState([]);
-  const [reactionSummary, setReactionSummary] = useState({});
+  const [isBookmarked, setIsBookmarked] = useState(false);
   
   useEffect(() => {
     const fetchPost = async () => {
@@ -33,6 +33,8 @@ export default function PostDetailPage({ params }) {
           setPost(result.data);
           // Set user's current reactions
           setUserReactions(result.data.userReactions || []);
+          // Set bookmark state
+          setIsBookmarked(result.data.bookmarkedByCurrentUser || false);
         } else {
           setError(result.message || 'Post not found');
         }
@@ -89,7 +91,26 @@ export default function PostDetailPage({ params }) {
       }
     }
   };
-  
+
+  const handleBookmark = async () => {
+    if (!post) return;
+
+    try {
+      const result = await toggleBookmark(post.id);
+      if (result.success) {
+        // Toggle bookmark state locally
+        setIsBookmarked(prev => !prev);
+        // Update post bookmark count
+        setPost(prev => prev ? {
+          ...prev,
+          bookmarksCount: prev.bookmarksCount + (isBookmarked ? -1 : 1)
+        } : null);
+      }
+    } catch (error) {
+      console.error('Bookmark toggle failed:', error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-brand-background flex items-center justify-center">
@@ -125,6 +146,9 @@ export default function PostDetailPage({ params }) {
               comments={post.comments}
               userReactions={userReactions}
               onReact={handleReaction}
+              bookmarks={post.bookmarksCount || 0}
+              isBookmarked={isBookmarked}
+              onBookmark={handleBookmark}
             />
           </div>
 

@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import PostCard from '../Post/PostCard';
-import { getRelevantPosts, getLatestPosts, getTopPosts } from '@/utils/api/postApi';
+import { getRelevantPosts, getLatestPosts, getTopPosts, toggleBookmark } from '@/utils/api/postApi';
+import { isAuthenticated } from '@/utils/auth';
 
 export default function PostFeed({ defaultTab = 'relevant' }) {
     const [activeTab, setActiveTab] = useState(defaultTab);
@@ -15,6 +16,34 @@ export default function PostFeed({ defaultTab = 'relevant' }) {
     useEffect(() => {
         setActiveTab(defaultTab);
     }, [defaultTab]);
+
+    // Handle bookmark toggle
+    const handleBookmarkToggle = async (postId) => {
+        if (!isAuthenticated()) {
+            window.location.href = '/login';
+            return;
+        }
+
+        try {
+            const result = await toggleBookmark(postId);
+            if (result.success) {
+                // Update local posts state
+                setPosts(prevPosts =>
+                    prevPosts.map(post =>
+                        post.id === postId
+                            ? {
+                                ...post,
+                                bookmarkedByCurrentUser: !post.bookmarkedByCurrentUser,
+                                bookmarksCount: post.bookmarksCount + (post.bookmarkedByCurrentUser ? -1 : 1)
+                            }
+                            : post
+                    )
+                );
+            }
+        } catch (error) {
+            console.error('Bookmark toggle failed:', error);
+        }
+    };
 
     // Fetch posts based on active tab
     useEffect(() => {
@@ -150,7 +179,12 @@ export default function PostFeed({ defaultTab = 'relevant' }) {
             ) : (
                 <div className="space-y-2">
                     {posts.map((post, index) => (
-                        <PostCard key={post.id} post={post} showCover={index === 0} />
+                        <PostCard
+                            key={post.id}
+                            post={post}
+                            showCover={index === 0}
+                            onBookmarkToggle={handleBookmarkToggle}
+                        />
                     ))}
                 </div>
             )}
