@@ -1,20 +1,38 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { BsBookmark, BsBookmarkFill } from 'react-icons/bs';
 import { RiChat1Line } from "react-icons/ri";
 import { toggleBookmark } from '@/utils/api/postApi';
+import { getCommentCount } from '@/utils/api/commentApi';
 import { isAuthenticated } from '@/utils/auth';
 
 export default function PostCard({ post, showCover = false, onBookmarkToggle }) {
+    const [commentCount, setCommentCount] = useState(0);
+
     const author = post.authorDisplayName;
     const isBookmarked = post.bookmarkedByCurrentUser || false;
     const coverImage = post.coverImageUrl;
     const postUrl = `/post/${post.id}`; // Always use ID for unique identification
-    const comments = post.commentsCount || post.comments || 0;
     const readTime = post.readingTimeMinutes || post.readTime || 5;
     const tags = post.tags || [];
+
+    // Fetch comment count when component mounts
+    useEffect(() => {
+        const fetchCommentCount = async () => {
+            try {
+                const result = await getCommentCount(post.id);
+                if (result.success) {
+                    setCommentCount(result.count);
+                }
+            } catch (error) {
+                console.error('Failed to fetch comment count:', error);
+            }
+        };
+
+        fetchCommentCount();
+    }, [post.id]);
     
     // Format date
     const date = post.date || (post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('en-US', {
@@ -136,7 +154,7 @@ export default function PostCard({ post, showCover = false, onBookmarkToggle }) 
                                 <Link href={`${postUrl}#comments`} className="flex items-center gap-2 hover:bg-gray-100 px-2 py-1 rounded transition-colors">
                                     <RiChat1Line className="w-5 h-5 text-brand-muted" />
                                     <span className="text-sm text-brand-dark">
-                                        {comments > 0 ? `${comments} comments` : 'Add comment'}
+                                       {commentCount > 0 ? `${commentCount} comments` : ' Add comment'}
                                     </span>
                                 </Link>
                             </div>

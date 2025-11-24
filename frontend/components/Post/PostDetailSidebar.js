@@ -13,7 +13,8 @@ export default function PostDetailSidebar({
   onReact,
   bookmarks = 0,
   isBookmarked = false,
-  onBookmark
+  onBookmark,
+  onCommentClick
 }) {
   return (
     <aside className="sticky top-20 flex flex-col items-center gap-4 w-14">
@@ -21,7 +22,10 @@ export default function PostDetailSidebar({
       <ReactionPicker totalReactions={reactions} userReactions={userReactions} onReact={onReact} />
 
       {/* Comments */}
-      <button className="flex flex-col items-center gap-1 p-2 hover:bg-brand-primary/10 rounded-lg transition-colors group">
+      <button
+        onClick={onCommentClick}
+        className="flex flex-col items-center gap-1 p-2 hover:bg-brand-primary/10 rounded-lg transition-colors group"
+      >
         <div className="w-10 h-10 flex items-center justify-center">
           <RiChat1Line className="w-6 h-6 text-brand-muted group-hover:text-brand-primary transition-colors" />
         </div>

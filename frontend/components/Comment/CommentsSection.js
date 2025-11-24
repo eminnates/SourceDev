@@ -12,6 +12,13 @@ export default function CommentsSection({ postId, commentCount, onCommentCountCh
   const [error, setError] = useState(null);
   const currentUser = getUser();
 
+  const scrollToComments = () => {
+    const commentsSection = document.getElementById('comments');
+    if (commentsSection) {
+      commentsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   useEffect(() => {
     fetchComments();
   }, []);
@@ -71,7 +78,7 @@ export default function CommentsSection({ postId, commentCount, onCommentCountCh
   };
 
   return (
-    <div className="bg-white border border-brand-muted/20 rounded-lg p-6 mt-10">
+    <div id="comments" className="bg-white border border-brand-muted/20 rounded-lg p-6 mt-10">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>

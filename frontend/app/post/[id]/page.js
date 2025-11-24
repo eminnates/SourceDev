@@ -136,6 +136,13 @@ export default function PostDetailPage({ params }) {
 
   const totalReactions = post.reactionTypes ? Object.values(post.reactionTypes).reduce((a, b) => a + b, 0) : 0;
 
+  const scrollToComments = () => {
+    const commentsSection = document.getElementById('comments');
+    if (commentsSection) {
+      commentsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-brand-background">
       <main className="mx-16 px-3 py-4">
@@ -150,6 +157,7 @@ export default function PostDetailPage({ params }) {
               bookmarks={post.bookmarksCount || 0}
               isBookmarked={isBookmarked}
               onBookmark={handleBookmark}
+              onCommentClick={scrollToComments}
             />
           </div>
 
