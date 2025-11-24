@@ -245,6 +245,31 @@ export const toggleReaction = async (postId, reactionType) => {
 };
 
 /**
+ * Get user's bookmarked posts
+ * @param {number} [page=1] - Page number
+ * @param {number} [pageSize=20] - Page size
+ * @returns {Promise<Object>} API response
+ */
+export const getBookmarkedPosts = async (page = 1, pageSize = 20) => {
+  try {
+    const response = await apiClient.get('/post/bookmarks', {
+      params: { page, pageSize }
+    });
+
+    return {
+      success: true,
+      data: response.data
+    };
+  } catch (error) {
+    console.error('Get bookmarked posts error:', error);
+    return {
+      success: false,
+      message: error.message || 'Failed to fetch bookmarked posts'
+    };
+  }
+};
+
+/**
  * Get relevant posts (personalized feed)
  * @param {number} [page=1] - Page number
  * @param {number} [pageSize=10] - Page size
