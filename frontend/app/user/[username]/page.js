@@ -8,6 +8,7 @@ import PostCard from '@/components/Post/PostCard';
 import { searchUsers, getUserById, getUserPosts } from '@/utils/api/userApi';
 import { isAuthenticated, getUser as getCurrentUser } from '@/utils/auth';
 import { toggleBookmark } from '@/utils/api/postApi';
+import { getFollowersCount, getFollowingCount } from '@/utils/api/followApi';
 
 export default function UserProfilePage({ params }) {
   const { username } = use(params);
@@ -16,6 +17,8 @@ export default function UserProfilePage({ params }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
 
   useEffect(() => {
     // Fetch user data
@@ -35,6 +38,15 @@ export default function UserProfilePage({ params }) {
           if (postsResult.success) {
             setPosts(postsResult.data || []);
           }
+
+          // Fetch follower/following counts
+          const [followersResult, followingResult] = await Promise.all([
+            getFollowersCount(currentUser.id),
+            getFollowingCount(currentUser.id)
+          ]);
+
+          if (followersResult.success) setFollowersCount(followersResult.count);
+          if (followingResult.success) setFollowingCount(followingResult.count);
         } else {
           // Search for user by username
           const searchResult = await searchUsers(username);
@@ -49,6 +61,15 @@ export default function UserProfilePage({ params }) {
               if (postsResult.success) {
                 setPosts(postsResult.data || []);
               }
+
+              // Fetch follower/following counts
+              const [followersResult, followingResult] = await Promise.all([
+                getFollowersCount(foundUser.id),
+                getFollowingCount(foundUser.id)
+              ]);
+
+              if (followersResult.success) setFollowersCount(followersResult.count);
+              if (followingResult.success) setFollowingCount(followingResult.count);
             } else {
               setError('User not found');
             }
@@ -146,18 +167,26 @@ export default function UserProfilePage({ params }) {
       <main className="mx-16 px-3 py-4">
         <div className="max-w-[1280px] mx-auto">
           {/* Profile Header - Full Width within container */}
-          <ProfileHeader user={user} />
+            <ProfileHeader
+              user={user}
+              onFollowChange={(isNowFollowing) => {
+                // Update follower count when follow status changes
+                setFollowersCount(prev => isNowFollowing ? prev + 1 : Math.max(0, prev - 1));
+              }}
+            />
           
           {/* Content Grid - Sidebar + Posts */}
           <div className="flex gap-6 mt-6">
             {/* Left Sidebar */}
             <div className="hidden lg:block w-80 flex-shrink-0">
-              <ProfileSidebar 
+              <ProfileSidebar
                 stats={stats}
                 badges={badges}
                 skills={skills}
                 learning={learning}
                 availableFor={availableFor}
+                followersCount={followersCount}
+                followingCount={followingCount}
               />
             </div>
 

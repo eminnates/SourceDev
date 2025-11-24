@@ -1,8 +1,8 @@
 "use client";
 
-import { BsFileText, BsChatDots, BsHash } from 'react-icons/bs';
+import { BsFileText, BsChatDots, BsHash, BsPeople, BsPersonCheck } from 'react-icons/bs';
 
-export default function ProfileSidebar({ badges, skills, learning, availableFor, stats }) {
+export default function ProfileSidebar({ badges, skills, learning, availableFor, stats, followersCount, followingCount }) {
   return (
     <div className="space-y-4">
       {/* Stats Card */}
@@ -15,18 +15,18 @@ export default function ProfileSidebar({ badges, skills, learning, availableFor,
                 <strong className="font-semibold">{stats.posts}</strong> posts published
               </span>
             </div>
-            
+
             <div className="flex items-center gap-3">
-              <BsChatDots className="w-6 h-6 text-gray-500" />
+              <BsPeople className="w-6 h-6 text-gray-500" />
               <span className="text-brand-dark">
-                <strong className="font-semibold">{stats.comments}</strong> comments written
+                <strong className="font-semibold">{followersCount || 0}</strong> followers
               </span>
             </div>
-            
+
             <div className="flex items-center gap-3">
-              <BsHash className="w-6 h-6 text-gray-500" />
+              <BsPersonCheck className="w-6 h-6 text-gray-500" />
               <span className="text-brand-dark">
-                <strong className="font-semibold">{stats.tags}</strong> tags followed
+                <strong className="font-semibold">{followingCount || 0}</strong> following
               </span>
             </div>
           </div>

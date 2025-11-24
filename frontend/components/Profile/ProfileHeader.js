@@ -1,32 +1,79 @@
 "use client";
 
+import { useState, useEffect } from 'react';
 import { BsThreeDots } from 'react-icons/bs';
 import { FaGithub, FaEnvelope, FaLink, FaMapMarkerAlt, FaBirthdayCake } from 'react-icons/fa';
 import { isAuthenticated, getUser as getCurrentUser } from '@/utils/auth';
 import { useRouter } from 'next/navigation';
+import { followUser, unfollowUser, checkIfFollowing } from '@/utils/api/followApi';
 
-export default function ProfileHeader({ user }) {
+export default function ProfileHeader({ user, onFollowChange }) {
   const router = useRouter();
   const currentUser = getCurrentUser();
   const isOwnProfile = currentUser && (currentUser.username === user.username || currentUser.id === user.id);
-  
+
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+
   // Backend uses both camelCase (UserDto) and snake_case (User entity)
   const displayName = user.displayName || user.display_name || user.name || user.username;
   const profileImage = user.profileImageUrl || user.profile_img_url;
   const createdDate = user.createdAt || user.created_at;
   const userEmail = user.email || '';
 
+  // Check follow status when component mounts
+  useEffect(() => {
+    const checkFollowStatus = async () => {
+      if (isOwnProfile || !isAuthenticated()) return;
+
+      try {
+        const result = await checkIfFollowing(user.id);
+        if (result.success) {
+          setIsFollowing(result.isFollowing);
+        }
+      } catch (error) {
+        console.error('Failed to check follow status:', error);
+      }
+    };
+
+    checkFollowStatus();
+  }, [user.id, isOwnProfile]);
+
   const handleEditProfile = () => {
     router.push('/settings');
   };
 
-  const handleFollow = () => {
+  const handleFollow = async () => {
     if (!isAuthenticated()) {
       router.push('/login');
       return;
     }
-    // TODO: Implement follow functionality
-    console.log('Follow user:', user.id);
+
+    if (isOwnProfile) return;
+
+    setFollowLoading(true);
+    try {
+      let result;
+      if (isFollowing) {
+        result = await unfollowUser(user.id);
+      } else {
+        result = await followUser(user.id);
+      }
+
+      if (result.success) {
+        setIsFollowing(!isFollowing);
+        // Notify parent component about follow change
+        if (onFollowChange) {
+          onFollowChange(!isFollowing);
+        }
+      } else {
+        console.error('Follow action failed:', result.message);
+      }
+    } catch (error) {
+      console.error('Follow action error:', error);
+    } finally {
+      setFollowLoading(false);
+    }
   };
   
   return (
@@ -66,11 +113,16 @@ export default function ProfileHeader({ user }) {
               Edit Profile
             </button>
           ) : (
-            <button 
+            <button
               onClick={handleFollow}
-              className="px-6 py-2 bg-brand-primary hover:bg-brand-primary-dark text-white font-bold rounded-lg transition-colors"
+              disabled={followLoading}
+              className={`px-6 py-2 font-bold rounded-lg transition-colors ${
+                isFollowing
+                  ? 'bg-gray-200 hover:bg-gray-300 text-gray-800 border border-gray-300'
+                  : 'bg-brand-primary hover:bg-brand-primary-dark text-white'
+              } ${followLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              Follow
+              {followLoading ? 'Loading...' : (isFollowing ? 'Following' : 'Follow')}
             </button>
           )}
         </div>
