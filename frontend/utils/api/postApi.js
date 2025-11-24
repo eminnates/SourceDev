@@ -270,6 +270,82 @@ export const getBookmarkedPosts = async (page = 1, pageSize = 20) => {
 };
 
 /**
+ * Get comments for a post
+ * @param {number} postId - Post ID
+ * @param {number} [page=1] - Page number
+ * @param {number} [pageSize=50] - Page size
+ * @returns {Promise<Object>} API response
+ */
+export const getComments = async (postId, page = 1, pageSize = 50) => {
+  try {
+    const response = await apiClient.get(`/comment/post/${postId}`, {
+      params: { page, pageSize }
+    });
+
+    return {
+      success: true,
+      data: response.data
+    };
+  } catch (error) {
+    console.error('Get comments error:', error);
+    return {
+      success: false,
+      message: error.message || 'Failed to fetch comments'
+    };
+  }
+};
+
+/**
+ * Add a comment to a post
+ * @param {number} postId - Post ID
+ * @param {string} content - Comment content
+ * @param {number} [parentCommentId] - Parent comment ID for replies
+ * @returns {Promise<Object>} API response
+ */
+export const addComment = async (postId, content, parentCommentId = null) => {
+  try {
+    const response = await apiClient.post(`/comment/post/${postId}`, {
+      content,
+      parentCommentId
+    });
+
+    return {
+      success: true,
+      data: response.data
+    };
+  } catch (error) {
+    console.error('Add comment error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'Failed to add comment'
+    };
+  }
+};
+
+/**
+ * Delete a comment
+ * @param {number} commentId - Comment ID
+ * @returns {Promise<Object>} API response
+ */
+export const deleteComment = async (commentId) => {
+  try {
+    const response = await apiClient.delete(`/comment/${commentId}`);
+
+    return {
+      success: true,
+      data: response.data,
+      message: response.data?.message || 'Comment deleted successfully'
+    };
+  } catch (error) {
+    console.error('Delete comment error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'Failed to delete comment'
+    };
+  }
+};
+
+/**
  * Get relevant posts (personalized feed)
  * @param {number} [page=1] - Page number
  * @param {number} [pageSize=10] - Page size

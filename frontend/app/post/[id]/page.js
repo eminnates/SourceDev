@@ -4,6 +4,7 @@ import { use, useState, useEffect } from 'react';
 import PostDetailSidebar from '@/components/Post/PostDetailSidebar';
 import PostContent from '@/components/Post/PostContent';
 import PostAuthorCard from '@/components/Post/PostAuthorCard';
+import CommentsSection from '@/components/Comment/CommentsSection';
 import { getPostById, toggleLike, toggleReaction, getReactionSummary, toggleBookmark } from '@/utils/api/postApi';
 
 export default function PostDetailPage({ params }) {
@@ -13,12 +14,12 @@ export default function PostDetailPage({ params }) {
   const [error, setError] = useState(null);
   const [userReactions, setUserReactions] = useState([]);
   const [isBookmarked, setIsBookmarked] = useState(false);
-  
+
   useEffect(() => {
     const fetchPost = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
         // Convert id to number
         const postId = parseInt(id, 10);
@@ -45,10 +46,10 @@ export default function PostDetailPage({ params }) {
         setLoading(false);
       }
     };
-    
+
     fetchPost();
   }, [id]);
-  
+
   const handleReaction = async (reactionType) => {
     if (!post) return;
 
@@ -121,7 +122,7 @@ export default function PostDetailPage({ params }) {
       </div>
     );
   }
-  
+
   if (error || !post) {
     return (
       <div className="min-h-screen bg-brand-background flex items-center justify-center">
@@ -155,6 +156,19 @@ export default function PostDetailPage({ params }) {
           {/* Main Content */}
           <div className="flex-1 min-w-0">
             <PostContent post={post} />
+            {/* Comments Section */}
+            <div className="pb-8">
+              <CommentsSection
+                postId={post.id}
+                commentCount={post.commentsCount || 0}
+                onCommentCountChange={(updater) => {
+                  setPost(prev => prev ? {
+                    ...prev,
+                    commentsCount: typeof updater === 'function' ? updater(prev.commentsCount || 0) : updater
+                  } : null);
+                }}
+              />
+            </div>
           </div>
 
           {/* Right Sidebar - Author & Trending */}
@@ -167,6 +181,8 @@ export default function PostDetailPage({ params }) {
             />
           </div>
         </div>
+
+
       </main>
     </div>
   );
