@@ -269,15 +269,18 @@ namespace SourceDev.API.Services
             var currentUserId = GetCurrentUserId();
             if (currentUserId.HasValue)
             {
-                var tasks = result.Select(async post =>
-                {
-                    post.UserReactions = await _unitOfWork.Reactions
-                        .Query()
-                        .Where(r => r.post_id == post.Id && r.user_id == currentUserId.Value)
-                        .Select(r => r.reaction_type)
-                        .ToListAsync();
-                }).ToList();
-                await Task.WhenAll(tasks);
+                    foreach (var post in result)
+                    {
+                        post.UserReactions = await _unitOfWork.Reactions
+                            .Query()
+                            .Where(r => r.post_id == post.Id && r.user_id == currentUserId.Value)
+                            .Select(r => r.reaction_type)
+                            .ToListAsync();
+
+                        post.LikedByCurrentUser = post.UserReactions.Contains("like");
+                        post.BookmarkedByCurrentUser = await _unitOfWork.Bookmarks
+                            .AnyAsync(b => b.post_id == post.Id && b.user_id == currentUserId.Value);
+                    }
             }
             _logger.LogInformation("Latest posts fetched. Page: {Page}, Size: {Size}", page, pageSize);
             return result;
@@ -288,15 +291,18 @@ namespace SourceDev.API.Services
             var result = (await _unitOfWork.Posts.GetRelevantDtosAsync(userId, page, pageSize)).ToList();
             if (userId.HasValue)
             {
-                var tasks = result.Select(async post =>
-                {
-                    post.UserReactions = await _unitOfWork.Reactions
-                        .Query()
-                        .Where(r => r.post_id == post.Id && r.user_id == userId.Value)
-                        .Select(r => r.reaction_type)
-                        .ToListAsync();
-                }).ToList();
-                await Task.WhenAll(tasks);
+                    foreach (var post in result)
+                    {
+                        post.UserReactions = await _unitOfWork.Reactions
+                            .Query()
+                            .Where(r => r.post_id == post.Id && r.user_id == userId.Value)
+                            .Select(r => r.reaction_type)
+                            .ToListAsync();
+
+                        post.LikedByCurrentUser = post.UserReactions.Contains("like");
+                        post.BookmarkedByCurrentUser = await _unitOfWork.Bookmarks
+                            .AnyAsync(b => b.post_id == post.Id && b.user_id == userId.Value);
+                    }
             }
             _logger.LogInformation("Relevant posts fetched. UserId: {UserId}, Page: {Page}, Size: {Size}", userId, page, pageSize);
             return result;
@@ -308,15 +314,18 @@ namespace SourceDev.API.Services
             var currentUserId = GetCurrentUserId();
             if (currentUserId.HasValue)
             {
-                var tasks = result.Select(async post =>
-                {
-                    post.UserReactions = await _unitOfWork.Reactions
-                        .Query()
-                        .Where(r => r.post_id == post.Id && r.user_id == currentUserId.Value)
-                        .Select(r => r.reaction_type)
-                        .ToListAsync();
-                }).ToList();
-                await Task.WhenAll(tasks);
+                    foreach (var post in result)
+                    {
+                        post.UserReactions = await _unitOfWork.Reactions
+                            .Query()
+                            .Where(r => r.post_id == post.Id && r.user_id == currentUserId.Value)
+                            .Select(r => r.reaction_type)
+                            .ToListAsync();
+
+                        post.LikedByCurrentUser = post.UserReactions.Contains("like");
+                        post.BookmarkedByCurrentUser = await _unitOfWork.Bookmarks
+                            .AnyAsync(b => b.post_id == post.Id && b.user_id == currentUserId.Value);
+                    }
             }
             _logger.LogInformation("Top posts fetched. Take: {Take}", take);
             return result;

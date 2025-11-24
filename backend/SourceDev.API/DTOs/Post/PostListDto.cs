@@ -14,6 +14,8 @@ namespace SourceDev.API.DTOs.Post
         public string? CoverImageUrl { get; set; }
         public int CommentsCount { get; set; } = 0;
         public long ReadingTimeMinutes { get; set; } = 0;
+        public bool LikedByCurrentUser { get; set; }
+        public bool BookmarkedByCurrentUser { get; set; }
         public Dictionary<string, int> ReactionTypes { get; set; } = new();
         public List<string> UserReactions { get; set; } = new(); // Current user's reactions (types)
         public List<string> Tags { get; set; } = new();
