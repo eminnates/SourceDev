@@ -285,9 +285,7 @@ namespace SourceDev.API.Repositories
                     PublishedAt = pt.Post.published_at,
                     AuthorDisplayName = pt.Post.User != null ? pt.Post.User.display_name : string.Empty,
                     Tags = pt.Post.PostTags.Where(pt2 => pt2.Tag != null).Select(pt2 => pt2.Tag!.name).ToList(),
-                    ReactionTypes = pt.Post.Reactions
-                        .GroupBy(r => r.reaction_type)
-                        .ToDictionary(g => g.Key, g => g.Count())
+                    ReactionTypes = new Dictionary<string, int>() // Will be filled in service layer
                 })
                 .ToListAsync();
         }

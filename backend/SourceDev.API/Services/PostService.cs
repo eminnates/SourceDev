@@ -243,14 +243,62 @@ namespace SourceDev.API.Services
 
         public async Task<IEnumerable<PostListDto>> GetByTagAsync(string tagSlug, int page, int pageSize)
         {
-            var result = await _unitOfWork.Posts.GetByTagDtosAsync(tagSlug, page, pageSize);
+            var result = (await _unitOfWork.Posts.GetByTagDtosAsync(tagSlug, page, pageSize)).ToList();
+            var currentUserId = GetCurrentUserId();
+            foreach (var post in result)
+            {
+                post.ReactionTypes = await _unitOfWork.Reactions
+                    .Query()
+                    .Where(r => r.post_id == post.Id)
+                    .GroupBy(r => r.reaction_type)
+                    .Select(g => new { Type = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(x => x.Type, x => x.Count);
+
+                if (currentUserId.HasValue)
+                {
+                    post.UserReactions = await _unitOfWork.Reactions
+                        .Query()
+                        .Where(r => r.post_id == post.Id && r.user_id == currentUserId.Value)
+                        .Select(r => r.reaction_type)
+                        .ToListAsync();
+                    post.LikedByCurrentUser = post.UserReactions.Contains("like");
+                    post.BookmarkedByCurrentUser = await _unitOfWork.Bookmarks
+                        .AnyAsync(b => b.post_id == post.Id && b.user_id == currentUserId.Value);
+                }
+            }
             _logger.LogInformation("Posts by tag fetched. Tag: {Tag}, Page: {Page}, Size: {Size}", tagSlug, page, pageSize);
             return result;
         }
 
         public async Task<IEnumerable<PostListDto>> GetByUserAsync(int userId, int page, int pageSize)
         {
-            var result = await _unitOfWork.Posts.GetByUserDtosAsync(userId, page, pageSize);
+            var result = (await _unitOfWork.Posts.GetByUserDtosAsync(userId, page, pageSize)).ToList();
+
+            // Populate reaction counts and current user's reactions/bookmarks
+            var currentUserId = GetCurrentUserId();
+            foreach (var post in result)
+            {
+                // Reaction type counts
+                post.ReactionTypes = await _unitOfWork.Reactions
+                    .Query()
+                    .Where(r => r.post_id == post.Id)
+                    .GroupBy(r => r.reaction_type)
+                    .Select(g => new { Type = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(x => x.Type, x => x.Count);
+
+                if (currentUserId.HasValue)
+                {
+                    post.UserReactions = await _unitOfWork.Reactions
+                        .Query()
+                        .Where(r => r.post_id == post.Id && r.user_id == currentUserId.Value)
+                        .Select(r => r.reaction_type)
+                        .ToListAsync();
+                    post.LikedByCurrentUser = post.UserReactions.Contains("like");
+                    post.BookmarkedByCurrentUser = await _unitOfWork.Bookmarks
+                        .AnyAsync(b => b.post_id == post.Id && b.user_id == currentUserId.Value);
+                }
+            }
+
             _logger.LogInformation("Posts by user fetched. UserId: {UserId}, Page: {Page}, Size: {Size}", userId, page, pageSize);
             return result;
         }
