@@ -269,6 +269,22 @@ namespace SourceDev.API.Controllers
             return Ok(results);
         }
 
+        [HttpGet("bookmarks")]
+        [Authorize]
+        public async Task<IActionResult> GetBookmarkedPosts([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        {
+            var currentUserId = User.GetUserId();
+            if (!currentUserId.HasValue)
+                return Unauthorized();
+            if (page < 1 || pageSize < 1)
+                return BadRequest(new { message = "Invalid paging parameters." });
+            if (pageSize > 100)
+                return BadRequest(new { message = "Page size cannot exceed 100." });
+
+            var results = await _postService.GetBookmarkedPostsAsync(currentUserId.Value, page, pageSize);
+            return Ok(results);
+        }
+
 
 
 

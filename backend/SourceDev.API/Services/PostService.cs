@@ -686,5 +686,64 @@ namespace SourceDev.API.Services
             return await _postRepository.SearchInDbAsync(query, userId, page, pageSize);
         }
 
+        // Get posts bookmarked by a user
+        public async Task<IEnumerable<PostListDto>> GetBookmarkedPostsAsync(int userId, int page, int pageSize)
+        {
+            var bookmarkedPostIds = await _unitOfWork.Bookmarks
+                .Query()
+                .Where(b => b.user_id == userId)
+                .OrderByDescending(b => b.created_at)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(b => b.post_id)
+                .ToListAsync();
+
+            var posts = await _unitOfWork.Posts
+                .Query()
+                .Where(p => bookmarkedPostIds.Contains(p.post_id))
+                .Include(p => p.User)
+                .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
+                .ToListAsync();
+
+            var postDtos = posts.Select(p => new PostListDto
+            {
+                Id = p.post_id,
+                Title = p.title ?? "",
+                Slug = p.slug,
+                CoverImageUrl = p.cover_img_url,
+                AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
+                PublishedAt = p.published_at,
+                Likes = p.likes_count,
+                CommentsCount = p.Comments != null ? p.Comments.Count : 0,
+                Views = p.view_count,
+                BookmarksCount = p.bookmarks_count,
+                ReadingTimeMinutes = p.reading_time_minutes,
+                Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
+                ReactionTypes = new Dictionary<string, int>(), // Will be populated below
+                UserReactions = new List<string>(), // Will be populated below
+                LikedByCurrentUser = false,
+                BookmarkedByCurrentUser = true
+            }).ToList();
+
+            foreach (var postDto in postDtos)
+            {
+                postDto.UserReactions = await _unitOfWork.Reactions
+                    .Query()
+                    .Where(r => r.post_id == postDto.Id && r.user_id == userId)
+                    .Select(r => r.reaction_type)
+                    .ToListAsync();
+                postDto.LikedByCurrentUser = postDto.UserReactions.Contains("like");
+                postDto.ReactionTypes = await _unitOfWork.Reactions
+                    .Query()
+                    .Where(r => r.post_id == postDto.Id)
+                    .GroupBy(r => r.reaction_type)
+                    .Select(g => new { Type = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(x => x.Type, x => x.Count);
+            }
+
+            _logger.LogInformation("Bookmarked posts fetched. UserId: {UserId}, Page: {Page}, Size: {Size}", userId, page, pageSize);
+            return postDtos;
+        }
+
     }
 }
