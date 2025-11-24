@@ -126,14 +126,39 @@ export default function CommentsSection({ postId, commentCount, onCommentCountCh
           <p className="text-brand-muted text-center py-4">No comments yet. Start the conversation!</p>
         )}
 
-        {!loading && !error && comments.map(comment => (
-          <CommentItem
-            key={comment.id}
-            comment={comment}
-            onReply={handleAddComment}
-            onDelete={handleDeleteComment}
-          />
-        ))}
+        {!loading && !error && (() => {
+          // Build comment tree structure
+          const buildCommentTree = (parentId = null, depth = 0) => {
+            return comments
+              .filter(comment => comment.parentCommentId === parentId)
+              .map(comment => ({
+                ...comment,
+                depth,
+                replies: buildCommentTree(comment.id, depth + 1)
+              }));
+          };
+
+          const commentTree = buildCommentTree();
+
+          const renderComment = (comment) => (
+            <div key={comment.id}>
+              <CommentItem
+                comment={comment}
+                onReply={handleAddComment}
+                onDelete={handleDeleteComment}
+                isReply={comment.depth > 0}
+              />
+              {/* Render nested replies */}
+              {comment.replies && comment.replies.length > 0 && (
+                <div className="mt-4 space-y-4" style={{ marginLeft: comment.depth < 3 ? '2rem' : '0' }}>
+                  {comment.replies.map(renderComment)}
+                </div>
+              )}
+            </div>
+          );
+
+          return commentTree.map(renderComment);
+        })()}
       </div>
     </div>
   );

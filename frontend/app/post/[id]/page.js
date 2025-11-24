@@ -172,7 +172,8 @@ export default function PostDetailPage({ params }) {
                 onCommentCountChange={(updater) => {
                   setPost(prev => prev ? {
                     ...prev,
-                    commentsCount: typeof updater === 'function' ? updater(prev.commentsCount || 0) : updater
+                    commentsCount: typeof updater === 'function' ? updater(prev.commentsCount || 0) : updater,
+                    comments: typeof updater === 'function' ? updater(prev.commentsCount || 0) : updater
                   } : null);
                 }}
               />
