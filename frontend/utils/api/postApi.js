@@ -252,25 +252,37 @@ export const toggleReaction = async (postId, reactionType) => {
  */
 export const getRelevantPosts = async (page = 1, pageSize = 10) => {
   try {
-    // Create a separate axios instance without Authorization header for this endpoint
-    const axios = require('axios');
-    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5254/api'}/post/relevant`, {
-      params: { page, pageSize },
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      timeout: 30000
-    });
+    // Check if user is authenticated
+    const token = localStorage.getItem('token');
 
-    return {
-      success: true,
-      data: response.data
-    };
+    if (token) {
+      // User is authenticated - use apiClient with Authorization header
+      const response = await apiClient.get('/post/relevant', {
+        params: { page, pageSize }
+      });
+
+      return {
+        success: true,
+        data: response.data
+      };
+    } else {
+      // User is not authenticated - use axios without Authorization header
+      const axios = require('axios');
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5254/api'}/post/relevant`, {
+        params: { page, pageSize },
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        timeout: 30000
+      });
+
+      return {
+        success: true,
+        data: response.data
+      };
+    }
   } catch (error) {
-    console.log('Full error object:', error);
     console.error('Get relevant posts error:', error);
-    console.error('Response status:', error.response?.status);
-    console.error('Response data:', error.response?.data);
     return {
       success: false,
       message: error.message || 'Failed to fetch posts'

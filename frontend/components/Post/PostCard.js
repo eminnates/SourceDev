@@ -2,12 +2,14 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { BsBookmark} from 'react-icons/bs';
+import { BsBookmark, BsBookmarkFill } from 'react-icons/bs';
 import { RiChat1Line } from "react-icons/ri";
+import { toggleBookmark } from '@/utils/api/postApi';
+import { isAuthenticated } from '@/utils/auth';
 
-export default function PostCard({ post, showCover = false }) {
-    // Normalize data from backend to component format
+export default function PostCard({ post, showCover = false, onBookmarkToggle }) {
     const author = post.authorDisplayName;
+    const isBookmarked = post.bookmarkedByCurrentUser || false;
     const coverImage = post.coverImageUrl;
     const postUrl = `/post/${post.id}`; // Always use ID for unique identification
     const comments = post.commentsCount || post.comments || 0;
@@ -142,8 +144,36 @@ export default function PostCard({ post, showCover = false }) {
                             <div className="flex items-center gap-3">
                                 <span className="text-xs">{readTime} min read</span>
 
-                                <button className="hover:text-brand-primary transition-colors cursor-pointer">
-                                    <BsBookmark className="w-4 h-4" />
+                                <button
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+
+                                        if (!isAuthenticated()) {
+                                            // Redirect to login if not authenticated
+                                            window.location.href = '/login';
+                                            return;
+                                        }
+                                        console.log('isBookmarked:', isBookmarked);
+                                        if (onBookmarkToggle) {
+                                            // Use parent handler for instant update
+                                            onBookmarkToggle(post.id);
+                                        } else {
+                                            // Fallback to reload behavior
+                                            toggleBookmark(post.id).then(() => {
+                                                window.location.reload();
+                                            }).catch(error => {
+                                                console.error('Bookmark toggle failed:', error);
+                                            });
+                                        }
+                                    }}
+                                    className="hover:text-brand-primary transition-colors cursor-pointer"
+                                >
+                                    {isBookmarked ? (
+                                        <BsBookmarkFill className="w-4 h-4 text-brand-primary" />
+                                    ) : (
+                                        <BsBookmark className="w-4 h-4" />
+                                    )}
                                 </button>
                             </div>
                         </div>
