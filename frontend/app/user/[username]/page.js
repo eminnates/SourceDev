@@ -7,6 +7,7 @@ import ProfileSidebar from '@/components/Profile/ProfileSidebar';
 import PostCard from '@/components/Post/PostCard';
 import { searchUsers, getUserById, getUserPosts } from '@/utils/api/userApi';
 import { isAuthenticated, getUser as getCurrentUser } from '@/utils/auth';
+import { toggleBookmark } from '@/utils/api/postApi';
 
 export default function UserProfilePage({ params }) {
   const { username } = use(params);
@@ -113,6 +114,33 @@ export default function UserProfilePage({ params }) {
   const learning = user.learning || "";
   const availableFor = user.availableFor || "";
 
+  const handleBookmarkToggle = async (postId) => {
+    if (!isAuthenticated()) {
+      router.push('/login');
+      return;
+    }
+
+    try {
+      const result = await toggleBookmark(postId);
+      if (result.success) {
+        // Update local posts state
+        setPosts(prevPosts =>
+          prevPosts.map(post =>
+            post.id === postId
+              ? {
+                  ...post,
+                  bookmarkedByCurrentUser: !post.bookmarkedByCurrentUser,
+                  bookmarksCount: post.bookmarksCount + (post.bookmarkedByCurrentUser ? -1 : 1)
+                }
+              : post
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Bookmark toggle failed:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-brand-background">
       <main className="mx-16 px-3 py-4">
@@ -136,7 +164,13 @@ export default function UserProfilePage({ params }) {
             {/* Posts Section */}
             <div className="flex-1 min-w-0 space-y-2">
               {posts.map((post) => (
-                <PostCard key={post.id} post={post} showCover={false} />
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  showCover={false}
+                  onBookmarkToggle={handleBookmarkToggle}
+                  userReactions={post.userReactions || []}
+                />
               ))}
             </div>
           </div>
