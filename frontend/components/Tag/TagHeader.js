@@ -28,7 +28,7 @@ export default function TagHeader({ tag, postCount, description, followersCount 
       )}
 
       <div className="flex items-center gap-4 text-brand-muted text-lg">
-        <span>{postCount} posts published</span>
+        <span>{postCount} {postCount === 1 ? 'post' : 'posts'} shown</span>
         {followersCount !== undefined && followersCount !== null && (
           <>
             <span>•</span>

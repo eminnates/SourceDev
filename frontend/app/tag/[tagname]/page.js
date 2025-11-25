@@ -139,7 +139,7 @@ export default function TagPage({ params }) {
           {/* Tag Header */}
           <TagHeader
             tag={tagData?.name || tagname}
-            postCount={tagData?.postCount || posts.length}
+            postCount={posts.length}
             description={tagData?.description}
             followersCount={tagData?.followersCount}
           />
