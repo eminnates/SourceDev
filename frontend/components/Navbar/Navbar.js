@@ -106,7 +106,7 @@ export default function Navbar() {
                                             <hr className="border-gray-200 mb-2" />
                                             <div className="py-1">
                                                 <Link
-                                                    href={`/user/${user.username}`}
+                                                    href="/dashboard"
                                                     className="flex items-center px-4 py-2 text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary transition-colors rounded-md"
                                                     onClick={() => setShowDropdown(false)}
                                                 >
