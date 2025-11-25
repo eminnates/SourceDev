@@ -88,11 +88,6 @@ export default function LoginForm() {
       {/* Social Login Buttons */}
       <div className="flex flex-col gap-3 mb-6">
         <SocialLoginButton
-          provider="Google"
-          icon={FaGoogle}
-          onClick={() => handleSocialLogin("Google")}
-        />
-        <SocialLoginButton
           provider="GitHub"
           icon={FaGithub}
           onClick={() => handleSocialLogin("GitHub")}
