@@ -12,16 +12,26 @@ namespace SourceDev.API.Repositories
 
         public async Task<Tag?> GetByNameAsync(string name)
         {
+            if (string.IsNullOrWhiteSpace(name))
+                return null;
+
+            var normalizedName = name.ToLower();
+
             return await _dbSet
                 .AsNoTracking()
-                .FirstOrDefaultAsync(t => t.name == name.ToLower());
+                .FirstOrDefaultAsync(t => t.name == normalizedName);
         }
 
         public async Task<IEnumerable<Tag>> SearchByNameAsync(string query, int limit = 10)
         {
+            if (string.IsNullOrWhiteSpace(query) || limit <= 0)
+                return Enumerable.Empty<Tag>();
+
+            var normalizedQuery = query.ToLower();
+
             return await _dbSet
                 .AsNoTracking()
-                .Where(t => t.name.Contains(query.ToLower()))
+                .Where(t => t.name.Contains(normalizedQuery))
                 .OrderBy(t => t.name)
                 .Take(limit)
                 .ToListAsync();

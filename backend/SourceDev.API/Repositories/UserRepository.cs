@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using SourceDev.API.Data.Context;
 using SourceDev.API.Models.Entities;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace SourceDev.API.Repositories
 {
@@ -55,6 +57,34 @@ namespace SourceDev.API.Repositories
             return await _context.UserFollows
                 .AsNoTracking()
                 .CountAsync(uf => uf.follower_id == userId);
+        }
+
+        public async Task<Dictionary<int, int>> GetFollowersCountsAsync(IEnumerable<int> userIds)
+        {
+            var ids = userIds.Distinct().ToList();
+            if (!ids.Any())
+                return new Dictionary<int, int>();
+
+            return await _context.UserFollows
+                .AsNoTracking()
+                .Where(uf => ids.Contains(uf.following_id))
+                .GroupBy(uf => uf.following_id)
+                .Select(g => new { UserId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.UserId, x => x.Count);
+        }
+
+        public async Task<Dictionary<int, int>> GetFollowingCountsAsync(IEnumerable<int> userIds)
+        {
+            var ids = userIds.Distinct().ToList();
+            if (!ids.Any())
+                return new Dictionary<int, int>();
+
+            return await _context.UserFollows
+                .AsNoTracking()
+                .Where(uf => ids.Contains(uf.follower_id))
+                .GroupBy(uf => uf.follower_id)
+                .Select(g => new { UserId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.UserId, x => x.Count);
         }
     }
 }

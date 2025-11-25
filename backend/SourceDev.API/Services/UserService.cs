@@ -1,6 +1,7 @@
 using SourceDev.API.DTOs.User;
 using SourceDev.API.Models.Entities;
 using SourceDev.API.Repositories;
+using System.Linq;
 
 namespace SourceDev.API.Services
 {
@@ -20,12 +21,15 @@ namespace SourceDev.API.Services
 
         public async Task<UserDto?> GetUserDtoByIdAsync(int id)
         {
-            var user = await _unitOfWork.Users.GetByIdAsync(id);
+            var userTask = _unitOfWork.Users.GetByIdAsync(id);
+            var followersCountTask = _unitOfWork.Users.GetFollowersCountAsync(id);
+            var followingCountTask = _unitOfWork.Users.GetFollowingCountAsync(id);
+
+            await Task.WhenAll(userTask, followersCountTask, followingCountTask);
+
+            var user = await userTask;
             if (user == null || user.on_deleted)
                 return null;
-
-            var followersCount = await _unitOfWork.Users.GetFollowersCountAsync(id);
-            var followingCount = await _unitOfWork.Users.GetFollowingCountAsync(id);
 
             return new UserDto
             {
@@ -36,8 +40,8 @@ namespace SourceDev.API.Services
                 Bio = user.bio,
                 ProfileImageUrl = user.profile_img_url,
                 CreatedAt = user.created_at,
-                FollowersCount = followersCount,
-                FollowingCount = followingCount
+                FollowersCount = await followersCountTask,
+                FollowingCount = await followingCountTask
             };
         }
 
@@ -53,16 +57,30 @@ namespace SourceDev.API.Services
 
         public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
         {
-            var users = await _unitOfWork.Users.GetAllAsync();
-            var userDtos = new List<UserDto>();
-            
+            var users = (await _unitOfWork.Users.GetAllAsync())
+                .Where(u => !u.on_deleted)
+                .ToList();
+
+            if (!users.Any())
+                return Enumerable.Empty<UserDto>();
+
+            var userIds = users.Select(u => u.Id).ToList();
+
+            var followersCountsTask = _unitOfWork.Users.GetFollowersCountsAsync(userIds);
+            var followingCountsTask = _unitOfWork.Users.GetFollowingCountsAsync(userIds);
+
+            await Task.WhenAll(followersCountsTask, followingCountsTask);
+
+            var followersCounts = await followersCountsTask;
+            var followingCounts = await followingCountsTask;
+
+            var userDtos = new List<UserDto>(users.Count);
+
             foreach (var user in users)
             {
-                if (user.on_deleted) continue;
-                
-                var followersCount = await _unitOfWork.Users.GetFollowersCountAsync(user.Id);
-                var followingCount = await _unitOfWork.Users.GetFollowingCountAsync(user.Id);
-                
+                followersCounts.TryGetValue(user.Id, out var followersCount);
+                followingCounts.TryGetValue(user.Id, out var followingCount);
+
                 userDtos.Add(new UserDto
                 {
                     Id = user.Id,
@@ -75,20 +93,34 @@ namespace SourceDev.API.Services
                     FollowingCount = followingCount
                 });
             }
-            
+
             return userDtos;
         }
 
         public async Task<IEnumerable<UserDto>> GetActiveUsersAsync()
         {
-            var users = await _unitOfWork.Users.GetActiveUsersAsync();
-            var userDtos = new List<UserDto>();
-            
+            var users = (await _unitOfWork.Users.GetActiveUsersAsync()).ToList();
+
+            if (!users.Any())
+                return Enumerable.Empty<UserDto>();
+
+            var userIds = users.Select(u => u.Id).ToList();
+
+            var followersCountsTask = _unitOfWork.Users.GetFollowersCountsAsync(userIds);
+            var followingCountsTask = _unitOfWork.Users.GetFollowingCountsAsync(userIds);
+
+            await Task.WhenAll(followersCountsTask, followingCountsTask);
+
+            var followersCounts = await followersCountsTask;
+            var followingCounts = await followingCountsTask;
+
+            var userDtos = new List<UserDto>(users.Count);
+
             foreach (var user in users)
             {
-                var followersCount = await _unitOfWork.Users.GetFollowersCountAsync(user.Id);
-                var followingCount = await _unitOfWork.Users.GetFollowingCountAsync(user.Id);
-                
+                followersCounts.TryGetValue(user.Id, out var followersCount);
+                followingCounts.TryGetValue(user.Id, out var followingCount);
+
                 userDtos.Add(new UserDto
                 {
                     Id = user.Id,
@@ -101,22 +133,36 @@ namespace SourceDev.API.Services
                     FollowingCount = followingCount
                 });
             }
-            
+
             return userDtos;
         }
 
         public async Task<IEnumerable<UserDto>> SearchUsersAsync(string searchTerm)
         {
-            var users = await _unitOfWork.Users.SearchUsersByDisplayNameAsync(searchTerm);
-            var userDtos = new List<UserDto>();
-            
+            var users = (await _unitOfWork.Users.SearchUsersByDisplayNameAsync(searchTerm))
+                .Where(u => !u.on_deleted)
+                .ToList();
+
+            if (!users.Any())
+                return Enumerable.Empty<UserDto>();
+
+            var userIds = users.Select(u => u.Id).ToList();
+
+            var followersCountsTask = _unitOfWork.Users.GetFollowersCountsAsync(userIds);
+            var followingCountsTask = _unitOfWork.Users.GetFollowingCountsAsync(userIds);
+
+            await Task.WhenAll(followersCountsTask, followingCountsTask);
+
+            var followersCounts = await followersCountsTask;
+            var followingCounts = await followingCountsTask;
+
+            var userDtos = new List<UserDto>(users.Count);
+
             foreach (var user in users)
             {
-                if (user.on_deleted) continue;
-                
-                var followersCount = await _unitOfWork.Users.GetFollowersCountAsync(user.Id);
-                var followingCount = await _unitOfWork.Users.GetFollowingCountAsync(user.Id);
-                
+                followersCounts.TryGetValue(user.Id, out var followersCount);
+                followingCounts.TryGetValue(user.Id, out var followingCount);
+
                 userDtos.Add(new UserDto
                 {
                     Id = user.Id,
@@ -129,7 +175,7 @@ namespace SourceDev.API.Services
                     FollowingCount = followingCount
                 });
             }
-            
+
             return userDtos;
         }
 

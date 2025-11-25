@@ -12,5 +12,7 @@ namespace SourceDev.API.Repositories
         Task<IEnumerable<User>> SearchUsersByDisplayNameAsync(string searchTerm);
         Task<int> GetFollowersCountAsync(int userId);
         Task<int> GetFollowingCountAsync(int userId);
+        Task<Dictionary<int, int>> GetFollowersCountsAsync(IEnumerable<int> userIds);
+        Task<Dictionary<int, int>> GetFollowingCountsAsync(IEnumerable<int> userIds);
     }
 }

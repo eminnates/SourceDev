@@ -245,27 +245,9 @@ namespace SourceDev.API.Services
         {
             var result = (await _unitOfWork.Posts.GetByTagDtosAsync(tagSlug, page, pageSize)).ToList();
             var currentUserId = GetCurrentUserId();
-            foreach (var post in result)
-            {
-                post.ReactionTypes = await _unitOfWork.Reactions
-                    .Query()
-                    .Where(r => r.post_id == post.Id)
-                    .GroupBy(r => r.reaction_type)
-                    .Select(g => new { Type = g.Key, Count = g.Count() })
-                    .ToDictionaryAsync(x => x.Type, x => x.Count);
 
-                if (currentUserId.HasValue)
-                {
-                    post.UserReactions = await _unitOfWork.Reactions
-                        .Query()
-                        .Where(r => r.post_id == post.Id && r.user_id == currentUserId.Value)
-                        .Select(r => r.reaction_type)
-                        .ToListAsync();
-                    post.LikedByCurrentUser = post.UserReactions.Contains("like");
-                    post.BookmarkedByCurrentUser = await _unitOfWork.Bookmarks
-                        .AnyAsync(b => b.post_id == post.Id && b.user_id == currentUserId.Value);
-                }
-            }
+            await PopulateReactionsAndBookmarksAsync(result, currentUserId);
+
             _logger.LogInformation("Posts by tag fetched. Tag: {Tag}, Page: {Page}, Size: {Size}", tagSlug, page, pageSize);
             return result;
         }
@@ -276,28 +258,7 @@ namespace SourceDev.API.Services
 
             // Populate reaction counts and current user's reactions/bookmarks
             var currentUserId = GetCurrentUserId();
-            foreach (var post in result)
-            {
-                // Reaction type counts
-                post.ReactionTypes = await _unitOfWork.Reactions
-                    .Query()
-                    .Where(r => r.post_id == post.Id)
-                    .GroupBy(r => r.reaction_type)
-                    .Select(g => new { Type = g.Key, Count = g.Count() })
-                    .ToDictionaryAsync(x => x.Type, x => x.Count);
-
-                if (currentUserId.HasValue)
-                {
-                    post.UserReactions = await _unitOfWork.Reactions
-                        .Query()
-                        .Where(r => r.post_id == post.Id && r.user_id == currentUserId.Value)
-                        .Select(r => r.reaction_type)
-                        .ToListAsync();
-                    post.LikedByCurrentUser = post.UserReactions.Contains("like");
-                    post.BookmarkedByCurrentUser = await _unitOfWork.Bookmarks
-                        .AnyAsync(b => b.post_id == post.Id && b.user_id == currentUserId.Value);
-                }
-            }
+            await PopulateReactionsAndBookmarksAsync(result, currentUserId);
 
             _logger.LogInformation("Posts by user fetched. UserId: {UserId}, Page: {Page}, Size: {Size}", userId, page, pageSize);
             return result;
@@ -317,18 +278,7 @@ namespace SourceDev.API.Services
             var currentUserId = GetCurrentUserId();
             if (currentUserId.HasValue)
             {
-                    foreach (var post in result)
-                    {
-                        post.UserReactions = await _unitOfWork.Reactions
-                            .Query()
-                            .Where(r => r.post_id == post.Id && r.user_id == currentUserId.Value)
-                            .Select(r => r.reaction_type)
-                            .ToListAsync();
-
-                        post.LikedByCurrentUser = post.UserReactions.Contains("like");
-                        post.BookmarkedByCurrentUser = await _unitOfWork.Bookmarks
-                            .AnyAsync(b => b.post_id == post.Id && b.user_id == currentUserId.Value);
-                    }
+                await PopulateReactionsAndBookmarksAsync(result, currentUserId.Value);
             }
             _logger.LogInformation("Latest posts fetched. Page: {Page}, Size: {Size}", page, pageSize);
             return result;
@@ -339,18 +289,7 @@ namespace SourceDev.API.Services
             var result = (await _unitOfWork.Posts.GetRelevantDtosAsync(userId, page, pageSize)).ToList();
             if (userId.HasValue)
             {
-                    foreach (var post in result)
-                    {
-                        post.UserReactions = await _unitOfWork.Reactions
-                            .Query()
-                            .Where(r => r.post_id == post.Id && r.user_id == userId.Value)
-                            .Select(r => r.reaction_type)
-                            .ToListAsync();
-
-                        post.LikedByCurrentUser = post.UserReactions.Contains("like");
-                        post.BookmarkedByCurrentUser = await _unitOfWork.Bookmarks
-                            .AnyAsync(b => b.post_id == post.Id && b.user_id == userId.Value);
-                    }
+                await PopulateReactionsAndBookmarksAsync(result, userId.Value);
             }
             _logger.LogInformation("Relevant posts fetched. UserId: {UserId}, Page: {Page}, Size: {Size}", userId, page, pageSize);
             return result;
@@ -362,35 +301,104 @@ namespace SourceDev.API.Services
             var currentUserId = GetCurrentUserId();
             if (currentUserId.HasValue)
             {
-                    foreach (var post in result)
-                    {
-                        post.UserReactions = await _unitOfWork.Reactions
-                            .Query()
-                            .Where(r => r.post_id == post.Id && r.user_id == currentUserId.Value)
-                            .Select(r => r.reaction_type)
-                            .ToListAsync();
-
-                        post.LikedByCurrentUser = post.UserReactions.Contains("like");
-                        post.BookmarkedByCurrentUser = await _unitOfWork.Bookmarks
-                            .AnyAsync(b => b.post_id == post.Id && b.user_id == currentUserId.Value);
-                    }
+                await PopulateReactionsAndBookmarksAsync(result, currentUserId.Value);
             }
             _logger.LogInformation("Top posts fetched. Take: {Take}", take);
             return result;
         }
-                // Helper to get current user id from context (if available)
-                private int? GetCurrentUserId()
+        private async Task PopulateReactionsAndBookmarksAsync(IReadOnlyCollection<PostListDto> posts, int? currentUserId)
+        {
+            if (posts == null || posts.Count == 0)
+                return;
+
+            var postIds = posts.Select(p => p.Id).ToList();
+
+            // Reaction type counts for all posts
+            var reactionTypeData = await _unitOfWork.Reactions
+                .Query()
+                .Where(r => postIds.Contains(r.post_id))
+                .GroupBy(r => new { r.post_id, r.reaction_type })
+                .Select(g => new { g.Key.post_id, g.Key.reaction_type, Count = g.Count() })
+                .ToListAsync();
+
+            var reactionTypesByPost = reactionTypeData
+                .GroupBy(x => x.post_id)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.ToDictionary(x => x.reaction_type, x => x.Count)
+                );
+
+            // Set ReactionTypes for each post
+            foreach (var post in posts)
+            {
+                if (reactionTypesByPost.TryGetValue(post.Id, out var types))
                 {
-                    var httpContext = _httpContextAccessor?.HttpContext;
-                    if (httpContext == null || httpContext.User == null)
-                        return null;
-                    var userIdClaim = httpContext.User.Claims.FirstOrDefault(c => c.Type == "sub" || c.Type == "id" || c.Type.EndsWith("nameidentifier", StringComparison.OrdinalIgnoreCase));
-                    if (userIdClaim == null)
-                        return null;
-                    if (int.TryParse(userIdClaim.Value, out int userId))
-                        return userId;
-                    return null;
+                    post.ReactionTypes = types;
                 }
+                else
+                {
+                    post.ReactionTypes = new Dictionary<string, int>();
+                }
+            }
+
+            if (!currentUserId.HasValue)
+                return;
+
+            var userId = currentUserId.Value;
+
+            // User reactions for all posts
+            var userReactionsData = await _unitOfWork.Reactions
+                .Query()
+                .Where(r => r.user_id == userId && postIds.Contains(r.post_id))
+                .Select(r => new { r.post_id, r.reaction_type })
+                .ToListAsync();
+
+            var userReactionsByPost = userReactionsData
+                .GroupBy(x => x.post_id)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(x => x.reaction_type).ToList()
+                );
+
+            // Bookmarks for all posts
+            var bookmarkedPostIds = await _unitOfWork.Bookmarks
+                .Query()
+                .Where(b => b.user_id == userId && postIds.Contains(b.post_id))
+                .Select(b => b.post_id)
+                .ToListAsync();
+
+            var bookmarkedSet = new HashSet<int>(bookmarkedPostIds);
+
+            foreach (var post in posts)
+            {
+                if (userReactionsByPost.TryGetValue(post.Id, out var userReactions))
+                {
+                    post.UserReactions = userReactions;
+                    post.LikedByCurrentUser = userReactions.Contains("like");
+                }
+                else
+                {
+                    post.UserReactions = new List<string>();
+                    post.LikedByCurrentUser = false;
+                }
+
+                post.BookmarkedByCurrentUser = bookmarkedSet.Contains(post.Id);
+            }
+        }
+
+        // Helper to get current user id from context (if available)
+        private int? GetCurrentUserId()
+        {
+            var httpContext = _httpContextAccessor?.HttpContext;
+            if (httpContext == null || httpContext.User == null)
+                return null;
+            var userIdClaim = httpContext.User.Claims.FirstOrDefault(c => c.Type == "sub" || c.Type == "id" || c.Type.EndsWith("nameidentifier", StringComparison.OrdinalIgnoreCase));
+            if (userIdClaim == null)
+                return null;
+            if (int.TryParse(userIdClaim.Value, out int userId))
+                return userId;
+            return null;
+        }
         
 
         public async Task<bool> PublishAsync(int id, int requesterId)
