@@ -55,13 +55,6 @@ export default function PostDetailSidebar({
         </div>
         <span className="text-xs text-brand-muted">{bookmarks}</span>
       </button>
-
-      {/* More Options */}
-      <button className="flex flex-col items-center gap-1 p-2 hover:bg-brand-primary/10 rounded-lg transition-colors group">
-        <div className="w-10 h-10 flex items-center justify-center">
-          <BsThreeDots className="w-6 h-6 text-brand-muted group-hover:text-brand-dark transition-colors" />
-        </div>
-      </button>
     </aside>
   );
 }

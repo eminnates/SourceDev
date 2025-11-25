@@ -52,9 +52,8 @@ export default function Navbar() {
 
                     {/* Search */}
                     <div className="flex-1 items-center">
-                        <div className={`flex items-center justify-center rounded-md border px-3 py-2 bg-white transition-all ${
-                            searchFocused ? 'border-brand-primary outline-1 outline-brand-primary' : 'border-brand-muted/40 hover:border-brand-muted'
-                        }`}>
+                        <div className={`flex items-center justify-center rounded-md border px-3 py-2 bg-white transition-all ${searchFocused ? 'border-brand-primary outline-1 outline-brand-primary' : 'border-brand-muted/40 hover:border-brand-muted'
+                            }`}>
                             <svg className="w-6 h-6 text-brand-dark flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
@@ -73,32 +72,20 @@ export default function Navbar() {
                         {isLoggedIn && user ? (
                             <>
                                 {/* Create Post Button */}
-                                <Link 
-                                    href="/create-post" 
+                                <Link
+                                    href="/create-post"
                                     className="px-4 py-2 text-base font-medium text-brand-primary border-2 border-brand-primary hover:bg-brand-primary hover:text-white rounded-md transition-colors whitespace-nowrap"
                                 >
                                     Create Post
                                 </Link>
-
-                                {/* Notification Bell */}
-                                <button className="relative p-2 text-brand-dark hover:bg-gray-100 rounded-md transition-colors">
-                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                                    </svg>
-                                    {/* Notification Badge */}
-                                    <span className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                                        3
-                                    </span>
-                                </button>
-
                                 {/* Profile Picture & Dropdown */}
                                 <div className="relative profile-dropdown">
-                                    <button 
+                                    <button
                                         onClick={() => setShowDropdown(!showDropdown)}
                                         className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200 hover:border-brand-primary transition-colors"
                                     >
-                                        <img 
-                                            src={user.profileImageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.username)}&background=1ABC9C&color=fff&bold=true`} 
+                                        <img
+                                            src={user.profileImageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.username)}&background=1ABC9C&color=fff&bold=true`}
                                             alt={user.displayName || user.username}
                                             className="w-full h-full object-cover"
                                             onError={(e) => {
@@ -112,8 +99,8 @@ export default function Navbar() {
                                         <div className="absolute right-0 mt-2 w-56 px-2 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
                                             <div className="px-4 py-2 rounded-md hover:bg-brand-primary/20 hover:text-brand-primary transition-colors mb-1 cursor-pointer">
                                                 <Link href={`/user/${user.username}`}>
-                                                <p className="text-base font-semibold text-brand-dark">{user.displayName}</p>
-                                                <p className="text-sm text-brand-muted">@{user.username}</p>
+                                                    <p className="text-base font-semibold text-brand-dark">{user.displayName}</p>
+                                                    <p className="text-sm text-brand-muted">@{user.username}</p>
                                                 </Link>
                                             </div>
                                             <hr className="border-gray-200 mb-2" />
@@ -132,14 +119,14 @@ export default function Navbar() {
                                                 >
                                                     My Drafts
                                                 </Link>
-                                                <Link 
+                                                <Link
                                                     href="/reading-list"
                                                     className="flex items-center px-4 py-2 text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary transition-colors rounded-md"
                                                     onClick={() => setShowDropdown(false)}
                                                 >
                                                     Reading list
                                                 </Link>
-                                                <Link 
+                                                <Link
                                                     href="/settings"
                                                     className="flex items-center px-4 py-2 text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary transition-colors rounded-md"
                                                     onClick={() => setShowDropdown(false)}
@@ -148,7 +135,7 @@ export default function Navbar() {
                                                 </Link>
                                             </div>
                                             <div className="border-t border-gray-200 py-1">
-                                                <button 
+                                                <button
                                                     onClick={handleLogout}
                                                     className="w-full flex items-center text-left px-4 py-2 text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary transition-colors rounded-md"
                                                 >
