@@ -1,4 +1,5 @@
-﻿namespace SourceDev.API.Middlewares
+﻿using System.Linq;
+namespace SourceDev.API.Middlewares
 {
     public class DynamicCorsMiddleware
     {
@@ -11,13 +12,36 @@
 
         public async Task InvokeAsync(HttpContext context)
         {
-            var allowedOrigins = new[] { "http://localhost:3000", "http://localhost:5173" };
+            // Get allowed origins from environment variable or use defaults
+            var allowedOriginsEnv = Environment.GetEnvironmentVariable("ALLOWED_ORIGINS");
+            var allowedOrigins = !string.IsNullOrEmpty(allowedOriginsEnv)
+                ? allowedOriginsEnv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                : new[] { 
+                    "http://localhost:3000", 
+                    "http://localhost:5173",
+                    "https://source-dev.vercel.app"
+                };
+            
             var origin = context.Request.Headers["Origin"].ToString();
 
-            if (!string.IsNullOrEmpty(origin) && allowedOrigins.Contains(origin))
+            // Check if origin matches any allowed origin or is a Vercel domain
+            bool isAllowed = false;
+            if (!string.IsNullOrEmpty(origin))
+            {
+                // Exact match
+                isAllowed = allowedOrigins.Contains(origin);
+                
+                // Also allow any Vercel preview deployment
+                if (!isAllowed && origin.EndsWith(".vercel.app"))
+                {
+                    isAllowed = true;
+                }
+            }
+
+            if (isAllowed)
             {
                 context.Response.Headers["Access-Control-Allow-Origin"] = origin;
-                context.Response.Headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,DELETE,OPTIONS";
+                context.Response.Headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,DELETE,OPTIONS,PATCH";
                 context.Response.Headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization";
                 context.Response.Headers["Access-Control-Allow-Credentials"] = "true";
             }
@@ -32,5 +56,6 @@
             await _next(context);
 
         }
+
     }
 }

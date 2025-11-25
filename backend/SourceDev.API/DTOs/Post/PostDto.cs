@@ -21,7 +21,7 @@ namespace SourceDev.API.DTOs.Post
         public bool LikedByCurrentUser { get; set; }
         public bool BookmarkedByCurrentUser { get; set; }
         public Dictionary<string, int> ReactionTypes { get; set; } = new();
-        public List<string> UserReactions { get; set; } = new(); // Kullanıcının koyduğu reaction tipleri
+        public List<string> UserReactions { get; set; } = new();
         public List<string> Tags { get; set; } = new();
     }
 }
