@@ -67,7 +67,7 @@ export default function CommentItem({ comment, onReply, onDelete, isReply = fals
         <div className="flex-1 min-w-0 border border-brand-muted/10 rounded-md p-4 bg-white ">
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <Link
-              href={`/user/${comment.userDisplayName}`}
+              href={`/user/${comment.userDisplayName.split(' ').join('')}`}
               className="font-semibold text-brand-dark hover:text-brand-primary transition-colors"
             >
               {comment.userDisplayName}

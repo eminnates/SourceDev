@@ -182,12 +182,14 @@ export default function PostDetailPage({ params }) {
 
           {/* Right Sidebar - Author & Trending */}
           <div className="hidden xl:block w-80 flex-shrink-0 space-y-4">
-            <PostAuthorCard
-              author={post.author}
-              authorId={post.authorId}
-              joinDate={post.joinDate}
-              postId={post.id}
-            />
+            {post && post.author && (
+              <PostAuthorCard
+                author={post.author}
+                authorId={post.authorId}
+                joinDate={post.joinDate}
+                postId={post.id}
+              />
+            )}
           </div>
         </div>
 
