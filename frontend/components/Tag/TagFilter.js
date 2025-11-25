@@ -9,9 +9,6 @@ export default function TagFilter({ onFilterChange }) {
 
   const filterOptions = [
     { id: 'latest', label: 'Latest' },
-    { id: 'top', label: 'Top' },
-    { id: 'most_reactions', label: 'Most Reactions' },
-    { id: 'most_comments', label: 'Most Comments' },
   ];
 
   const handleFilterChange = (filterId) => {
@@ -38,7 +35,7 @@ export default function TagFilter({ onFilterChange }) {
 
       {/* Filter Options */}
       <div className="bg-white rounded-lg border border-brand-muted/20 p-6">
-        <h3 className="font-bold text-brand-dark mb-3">Filter Posts</h3>
+        <h3 className="font-bold text-brand-dark mb-3">Posts</h3>
         <div className="space-y-2">
           {filterOptions.map((option) => (
             <button

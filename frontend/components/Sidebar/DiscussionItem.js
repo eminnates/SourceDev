@@ -2,10 +2,13 @@
 
 import Link from 'next/link';
 
-export default function DiscussionItem({ id, title, tag, tagColor, description, badge, badgeColor, comments }) {
+export default function DiscussionItem({ id, slug, title, tag, tagColor, description, badge, badgeColor, comments }) {
+  // Always use ID for discussion posts
+  const postUrl = `/post/${id}`;
+
   return (
     <div className="group py-4 first:pt-0 last:pb-0">
-      <Link href={`/post/${id}`}>
+      <Link href={postUrl}>
         {/* Tag if exists */}
         {tag && (
           <div className="mb-2">

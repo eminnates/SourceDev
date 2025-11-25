@@ -26,7 +26,7 @@ export default function PostAuthorCard({ author, authorId, joinDate, bio, postId
 
   return (
     <div className="bg-white rounded-lg border border-brand-muted/20 p-5">
-      <Link href={`/user/${author || 'anonymous'}`} className="flex items-center gap-3 mb-4">
+      <Link href={`/user/${author.split(' ').join('') || 'anonymous'}`} className="flex items-center gap-3 mb-4">
         <div className="w-12 h-12 bg-gradient-to-br from-brand-primary to-brand-primary-dark rounded-full flex items-center justify-center text-white text-lg font-bold hover:opacity-80 transition-opacity">
           {getAuthorInitials(author)}
         </div>

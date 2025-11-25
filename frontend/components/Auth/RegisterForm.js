@@ -164,6 +164,12 @@ export default function RegisterForm() {
   };
 
   const handleSocialLogin = (provider) => {
+    if (provider === "GitHub") {
+      const redirect = encodeURIComponent('/');
+      window.location.href = `/api/oauth/github?redirect=${redirect}`;
+      return;
+    }
+
     console.log(`Register with ${provider}`);
   };
 

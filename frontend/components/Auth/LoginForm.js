@@ -60,6 +60,12 @@ export default function LoginForm() {
   };
 
   const handleSocialLogin = (provider) => {
+    if (provider === "GitHub") {
+      const redirect = encodeURIComponent('/');
+      window.location.href = `/api/oauth/github?redirect=${redirect}`;
+      return;
+    }
+    
     console.log(`Login with ${provider}`);
   };
 
