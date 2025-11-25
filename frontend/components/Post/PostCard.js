@@ -11,6 +11,7 @@ import { isAuthenticated } from '@/utils/auth';
 export default function PostCard({ post, showCover = false, onBookmarkToggle }) {
     const [commentCount, setCommentCount] = useState(0);
 
+    console.log('post', post);
     const author = post.authorDisplayName;
     const isBookmarked = post.bookmarkedByCurrentUser || false;
     const coverImage = post.coverImageUrl;
@@ -68,19 +69,15 @@ export default function PostCard({ post, showCover = false, onBookmarkToggle }) 
 
             <div className="p-5">
                 <div className="flex gap-2">
-
-                    <Link href={`/user/${author}`} className="flex-shrink-0">
-                        <div className="w-8 h-8 bg-gradient-to-br from-brand-primary to-brand-primary-dark rounded-full flex items-center justify-center text-white text-xs font-bold hover:opacity-80 transition-opacity cursor-pointer">
+                        <div className="w-8 h-8 bg-gradient-to-br from-brand-primary to-brand-primary-dark rounded-full flex items-center justify-center text-white text-xs font-bold hover:opacity-80 transition-opacity">
                             {getAuthorInitials(author)}
                         </div>
-                    </Link>
-
                     {/* Content Area */}
                     <div className="flex-1 min-w-0">
                         <div className="mb-2">
-                            <Link href={`/user/${author}`} className="text-sm font-medium text-brand-dark hover:bg-brand-muted/10 transition-colors px-2 py-1 rounded cursor-pointer">
+                            <p className="text-sm font-medium text-brand-dark px-2 py-1 rounded">
                                 {author}
-                            </Link>
+                            </p>
                             <p className="text-xs text-brand-muted ms-2">{date}</p>
                         </div>
 
