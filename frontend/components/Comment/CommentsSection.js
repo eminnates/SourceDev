@@ -95,17 +95,13 @@ export default function CommentsSection({ postId, commentCount, onCommentCountCh
       </div>
 
       {/* Add comment inline */}
-      <div className="flex items-start gap-3 mb-6">
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-primary to-brand-primary-dark text-white font-semibold flex items-center justify-center">
-          {(currentUser?.displayName || currentUser?.username || 'G').charAt(0).toUpperCase()}
-        </div>
-        <div className="flex-1">
-          <CommentForm
-            postId={postId}
-            onSubmit={handleAddComment}
-            placeholder="Add to the discussion"
-          />
-        </div>
+      <div className="mb-6">
+        <CommentForm
+          postId={postId}
+          onSubmit={handleAddComment}
+          placeholder="Add to the discussion"
+          showAvatar={true}
+        />
       </div>
 
       <div className="border-t border-brand-muted/20 pt-6 space-y-5">

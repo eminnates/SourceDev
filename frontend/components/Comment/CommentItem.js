@@ -1,14 +1,68 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { isAuthenticated, getUser } from '@/utils/auth';
 import CommentForm from './CommentForm';
+import { searchUsers, getUserById } from '@/utils/api/userApi';
 
 export default function CommentItem({ comment, onReply, onDelete, isReply = false }) {
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [authorProfileImage, setAuthorProfileImage] = useState(null);
   const currentUser = getUser();
+
+  // Get author initials safely
+  const getAuthorInitials = (authorName) => {
+    if (!authorName) return 'A';
+    return authorName.charAt(0).toUpperCase();
+  };
+
+  // Fetch author profile image
+  const fetchAuthorProfileImage = async () => {
+    if (!comment.userId && !comment.userDisplayName) return;
+
+    // Check localStorage first (use userId if available, otherwise display name)
+    const cacheKey = comment.userId ? `user_profile_id_${comment.userId}` : `user_profile_${comment.userDisplayName}`;
+    const cachedImage = localStorage.getItem(cacheKey);
+    if (cachedImage) {
+      setAuthorProfileImage(cachedImage);
+      return;
+    }
+
+    try {
+      let user = null;
+
+      // First try to get user by ID if we have userId
+      if (comment.userId) {
+        const result = await getUserById(parseInt(comment.userId));
+        if (result.success && result.data) {
+          user = result.data;
+        }
+      }
+
+      // If we couldn't get user by ID, try search by name
+      if (!user && comment.userDisplayName) {
+        const result = await searchUsers(comment.userDisplayName);
+        if (result.success && result.data && result.data.length > 0) {
+          // Find the user with matching display name
+          user = result.data.find(u => u.displayName === comment.userDisplayName);
+        }
+      }
+
+      if (user && user.profileImageUrl) {
+        setAuthorProfileImage(user.profileImageUrl);
+        // Cache the result
+        localStorage.setItem(cacheKey, user.profileImageUrl);
+      }
+    } catch (error) {
+      console.error('Failed to fetch comment author profile image:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchAuthorProfileImage();
+  }, [comment.userId, comment.userDisplayName]);
 
   // Format date
   const formatDate = (dateString) => {
@@ -60,9 +114,19 @@ export default function CommentItem({ comment, onReply, onDelete, isReply = fals
     <div className={`${isReply ? 'ml-12' : ''}`}>
       <div className="flex gap-3">
         {/* Avatar */}
-        <div className="w-10 h-10 bg-gradient-to-br from-brand-primary to-brand-primary-dark rounded-full flex items-center justify-center text-white text-base font-bold flex-shrink-0 shadow-sm">
-          {comment.userDisplayName.charAt(0).toUpperCase()}
-        </div>
+        <Link href={`/user/${comment.userDisplayName.split(' ').join('')}`}>
+          {authorProfileImage ? (
+            <img
+              src={authorProfileImage}
+              alt={comment.userDisplayName}
+              className="w-10 h-10 rounded-full object-cover flex-shrink-0 shadow-sm hover:opacity-80 transition-opacity cursor-pointer"
+            />
+          ) : (
+            <div className="w-10 h-10 bg-gradient-to-br from-brand-primary to-brand-primary-dark rounded-full flex items-center justify-center text-white text-base font-bold flex-shrink-0 shadow-sm hover:opacity-80 transition-opacity cursor-pointer">
+              {getAuthorInitials(comment.userDisplayName)}
+            </div>
+          )}
+        </Link>
 
         <div className="flex-1 min-w-0 border border-brand-muted/10 rounded-md p-4 bg-white ">
           <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -118,6 +182,7 @@ export default function CommentItem({ comment, onReply, onDelete, isReply = fals
                 onSubmit={handleReply}
                 placeholder={`Reply to ${comment.userDisplayName}...`}
                 parentCommentId={comment.id}
+                showAvatar={false}
               />
             </div>
           )}

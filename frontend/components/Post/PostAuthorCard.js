@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getUser } from '@/utils/auth';
 import { checkIfFollowing, followUser, unfollowUser } from '@/utils/api/followApi';
-import { searchUsers } from '@/utils/api/userApi';
+import { searchUsers, getUserById } from '@/utils/api/userApi';
 import { isAuthenticated } from '@/utils/auth';
 
 export default function PostAuthorCard({ author, authorId, joinDate, bio, postId }) {
@@ -48,10 +48,10 @@ export default function PostAuthorCard({ author, authorId, joinDate, bio, postId
 
     // Fetch author profile image
     const fetchAuthorProfileImage = async () => {
-      if (!author) return;
+      if (!authorId && !author) return;
 
-      // Check localStorage first
-      const cacheKey = `user_profile_${author}`;
+      // Check localStorage first (use authorId if available, otherwise author name)
+      const cacheKey = authorId ? `user_profile_id_${authorId}` : `user_profile_${author}`;
       const cachedImage = localStorage.getItem(cacheKey);
       if (cachedImage) {
         setAuthorProfileImage(cachedImage);
@@ -59,29 +59,53 @@ export default function PostAuthorCard({ author, authorId, joinDate, bio, postId
       }
 
       try {
-        const result = await searchUsers(author);
-        if (result.success && result.data && result.data.length > 0) {
-          // Find the user with matching display name
-          const user = result.data.find(u => u.displayName === author);
-          if (user && user.profileImageUrl) {
-            setAuthorProfileImage(user.profileImageUrl);
-            // Cache the result
-            localStorage.setItem(cacheKey, user.profileImageUrl);
+        let user = null;
+
+        console.log('Fetching author profile image for:', { authorId, author });
+
+        // First try to get user by ID if we have authorId
+        if (authorId) {
+          console.log('Trying to get user by ID:', authorId);
+          const result = await getUserById(parseInt(authorId));
+          console.log('getUserById result:', result);
+          if (result.success && result.data) {
+            user = result.data;
           }
+        }
+
+        // If we couldn't get user by ID, try search by name
+        if (!user && author) {
+          console.log('Trying to search user by name:', author);
+          const result = await searchUsers(author);
+          console.log('searchUsers result:', result);
+          if (result.success && result.data && result.data.length > 0) {
+            // Find the user with matching display name
+            user = result.data.find(u => u.displayName === author);
+            console.log('Found user by name:', user);
+          }
+        }
+
+        if (user && user.profileImageUrl) {
+          console.log('Setting author profile image:', user.profileImageUrl);
+          setAuthorProfileImage(user.profileImageUrl);
+          // Cache the result
+          localStorage.setItem(cacheKey, user.profileImageUrl);
+        } else {
+          console.log('No profile image found for user:', user);
         }
       } catch (error) {
         console.error('Failed to fetch author profile image:', error);
       }
     };
 
-    // Only run when authorId changes
-    if (authorId) {
+    // Run API calls if we have either authorId or author
+    if (authorId || author) {
       checkFollowStatus();
       fetchAuthorProfileImage();
     } else {
-      console.log('authorId is missing, skipping API calls');
+      console.log('Both authorId and author are missing, skipping API calls');
     }
-  }, [authorId, author]);
+  }, [authorId, author]); // Run when authorId or author changes
 
   // Get author initials safely
   const getAuthorInitials = (authorName) => {
