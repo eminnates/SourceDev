@@ -50,6 +50,27 @@ export const searchUsers = async (query) => {
 };
 
 /**
+ * Fetch all users (public endpoint)
+ * @returns {Promise<Object>} API response
+ */
+export const getAllUsers = async () => {
+  try {
+    const response = await apiClient.get('/users');
+    
+    return {
+      success: true,
+      data: response.data
+    };
+  } catch (error) {
+    console.error('Get all users error:', error);
+    return {
+      success: false,
+      message: error.message || 'Failed to fetch users'
+    };
+  }
+};
+
+/**
  * Get current user profile (authenticated)
  * @returns {Promise<Object>} API response
  */

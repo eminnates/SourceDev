@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import ProfileHeader from '@/components/Profile/ProfileHeader';
 import ProfileSidebar from '@/components/Profile/ProfileSidebar';
 import PostCard from '@/components/Post/PostCard';
-import { searchUsers, getUserById, getUserPosts } from '@/utils/api/userApi';
+import { searchUsers, getUserById, getUserPosts, getAllUsers } from '@/utils/api/userApi';
 import { isAuthenticated, getUser as getCurrentUser } from '@/utils/auth';
 import { toggleBookmark } from '@/utils/api/postApi';
 import { getFollowersCount, getFollowingCount } from '@/utils/api/followApi';
@@ -20,6 +20,8 @@ export default function UserProfilePage({ params }) {
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
 
+  const normalizedUsername = (username || '').toLowerCase();
+
   useEffect(() => {
     // Fetch user data
     const fetchUserData = async () => {
@@ -29,7 +31,7 @@ export default function UserProfilePage({ params }) {
       try {
         // Check if viewing own profile
         const currentUser = getCurrentUser();
-        if (currentUser && currentUser.username === username) {
+        if (currentUser && currentUser.username?.toLowerCase() === normalizedUsername) {
           // Use current user data
           setUser(currentUser);
           
@@ -49,30 +51,39 @@ export default function UserProfilePage({ params }) {
           if (followingResult.success) setFollowingCount(followingResult.count);
         } else {
           // Search for user by username
+          const findUserByUsername = (data) => data?.find((u) => u.username?.toLowerCase() === normalizedUsername);
+
           const searchResult = await searchUsers(username);
-          if (searchResult.success && searchResult.data.length > 0) {
-            // Find exact match
-            const foundUser = searchResult.data.find(u => u.username.toLowerCase() === username.toLowerCase());
-            if (foundUser) {
-              setUser(foundUser);
-              
-              // Fetch user posts
-              const postsResult = await getUserPosts(foundUser.id);
-              if (postsResult.success) {
-                setPosts(postsResult.data || []);
-              }
+          let foundUser = searchResult.success ? findUserByUsername(searchResult.data) : null;
 
-              // Fetch follower/following counts
-              const [followersResult, followingResult] = await Promise.all([
-                getFollowersCount(foundUser.id),
-                getFollowingCount(foundUser.id)
-              ]);
-
-              if (followersResult.success) setFollowersCount(followersResult.count);
-              if (followingResult.success) setFollowingCount(followingResult.count);
-            } else {
-              setError('User not found');
+          if (!foundUser) {
+            const allUsersResult = await getAllUsers();
+            if (allUsersResult.success) {
+              foundUser = findUserByUsername(allUsersResult.data);
             }
+          }
+
+          if (foundUser) {
+            if (foundUser.username && foundUser.username !== username) {
+              router.replace(`/user/${foundUser.username}`);
+            }
+
+            setUser(foundUser);
+            
+            // Fetch user posts
+            const postsResult = await getUserPosts(foundUser.id);
+            if (postsResult.success) {
+              setPosts(postsResult.data || []);
+            }
+
+            // Fetch follower/following counts
+            const [followersResult, followingResult] = await Promise.all([
+              getFollowersCount(foundUser.id),
+              getFollowingCount(foundUser.id)
+            ]);
+
+            if (followersResult.success) setFollowersCount(followersResult.count);
+            if (followingResult.success) setFollowingCount(followingResult.count);
           } else {
             setError('User not found');
           }
@@ -87,7 +98,7 @@ export default function UserProfilePage({ params }) {
     };
 
     fetchUserData();
-  }, [username, router]);
+  }, [normalizedUsername, router]);
 
   // Loading state
   if (loading) {
