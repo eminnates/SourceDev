@@ -11,17 +11,10 @@ import PopularTags from './PopularTags';
 export default function LeftSidebar() {
     const menuItems = [
         { icon: <AiOutlineHome className="w-5 h-5" />, label: 'Home', href: '/' },
-        { icon: <MdOutlineEmojiEvents className="w-5 h-5" />, label: 'Challenges', href: '/challenges' },
-        { icon: <BsCode className="w-5 h-5" />, label: 'DEV Showcase', href: '/showcase', emoji: '✨' },
         { icon: <BsInfoCircle className="w-5 h-5" />, label: 'About', href: '/about', emoji: '😎' },
         { icon: <BsEnvelope className="w-5 h-5" />, label: 'Contact', href: '/contact', emoji: '📬' },
     ];
 
-    const otherItems = [
-        { label: 'Code of Conduct', href: '/code-of-conduct', emoji: '👍' },
-        { label: 'Privacy Policy', href: '/privacy', emoji: '🤓' },
-        { label: 'Terms of Use', href: '/terms', emoji: '👀' },
-    ];
 
     return (
         <aside className="w-full">
@@ -38,21 +31,6 @@ export default function LeftSidebar() {
                         />
                     ))}
                 </nav>
-
-                {/* Other Section */}
-                <div className="mt-6">
-                    <h3 className="px-3 text-base font-bold text-brand-dark mb-2">Other</h3>
-                    <nav className="space-y-1">
-                        {otherItems.map((item, index) => (
-                            <MenuLink
-                                key={index}
-                                href={item.href}
-                                emoji={item.emoji}
-                                label={item.label}
-                            />
-                        ))}
-                    </nav>
-                </div>
 
                 {/* Social Media & RSS */}
                 <div className="mt-6">
