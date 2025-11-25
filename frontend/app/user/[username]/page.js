@@ -63,27 +63,27 @@ export default function UserProfilePage({ params }) {
             }
           }
 
-          if (foundUser) {
+            if (foundUser) {
             if (foundUser.username && foundUser.username !== username) {
               router.replace(`/user/${foundUser.username}`);
             }
 
-            setUser(foundUser);
-            
-            // Fetch user posts
-            const postsResult = await getUserPosts(foundUser.id);
-            if (postsResult.success) {
-              setPosts(postsResult.data || []);
-            }
+              setUser(foundUser);
+              
+              // Fetch user posts
+              const postsResult = await getUserPosts(foundUser.id);
+              if (postsResult.success) {
+                setPosts(postsResult.data || []);
+              }
 
-            // Fetch follower/following counts
-            const [followersResult, followingResult] = await Promise.all([
-              getFollowersCount(foundUser.id),
-              getFollowingCount(foundUser.id)
-            ]);
+              // Fetch follower/following counts
+              const [followersResult, followingResult] = await Promise.all([
+                getFollowersCount(foundUser.id),
+                getFollowingCount(foundUser.id)
+              ]);
 
-            if (followersResult.success) setFollowersCount(followersResult.count);
-            if (followingResult.success) setFollowingCount(followingResult.count);
+              if (followersResult.success) setFollowersCount(followersResult.count);
+              if (followingResult.success) setFollowingCount(followingResult.count);
           } else {
             setError('User not found');
           }

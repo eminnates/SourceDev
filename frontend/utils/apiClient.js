@@ -31,16 +31,16 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      
+
       if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
         window.location.href = '/login';
       }
     }
 
-    const errorMessage = 
-      error.response?.data?.message || 
+    const errorMessage =
+      error.response?.data?.message ||
       error.response?.data?.Message ||
-      error.message || 
+      error.message ||
       'An error occurred';
 
     return Promise.reject({

@@ -106,14 +106,21 @@ export const logout = async () => {
 export const getProfile = async () => {
   try {
     const response = await apiClient.get('/auth/profile');
-    
-    if (response.data.success && response.data.user) {
-      setUser(response.data.user);
+
+    const rawData = response.data;
+    const profile =
+      (rawData && typeof rawData === 'object'
+        ? rawData.user || rawData.profile || rawData
+        : null) || null;
+
+    if (profile && profile.username) {
+      setUser(profile);
     }
-    
+
     return {
       success: true,
-      data: response.data
+      data: profile,
+      raw: rawData
     };
   } catch (error) {
     console.error('Get profile error:', error);
