@@ -6,10 +6,12 @@ import { BsBookmark, BsBookmarkFill } from 'react-icons/bs';
 import { RiChat1Line } from "react-icons/ri";
 import { toggleBookmark } from '@/utils/api/postApi';
 import { getCommentCount } from '@/utils/api/commentApi';
+import { searchUsers } from '@/utils/api/userApi';
 import { isAuthenticated } from '@/utils/auth';
 
 export default function PostCard({ post, showCover = false, onBookmarkToggle }) {
     const [commentCount, setCommentCount] = useState(0);
+    const [authorProfileImage, setAuthorProfileImage] = useState(null);
 
     console.log('post', post);
     const author = post.authorDisplayName;
@@ -34,7 +36,39 @@ export default function PostCard({ post, showCover = false, onBookmarkToggle }) 
 
         fetchCommentCount();
     }, [post.id]);
-    
+
+    // Fetch author profile image
+    useEffect(() => {
+        const fetchAuthorProfileImage = async () => {
+            if (!author) return;
+
+            // Check localStorage first
+            const cacheKey = `user_profile_${author}`;
+            const cachedImage = localStorage.getItem(cacheKey);
+            if (cachedImage) {
+                setAuthorProfileImage(cachedImage);
+                return;
+            }
+
+            try {
+                const result = await searchUsers(author);
+                if (result.success && result.data && result.data.length > 0) {
+                    // Find the user with matching display name
+                    const user = result.data.find(u => u.displayName === author);
+                    if (user && user.profileImageUrl) {
+                        setAuthorProfileImage(user.profileImageUrl);
+                        // Cache the result
+                        localStorage.setItem(cacheKey, user.profileImageUrl);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to fetch author profile image:', error);
+            }
+        };
+
+        fetchAuthorProfileImage();
+    }, [author]);
+
     // Format date
     const date = post.date || (post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('en-US', {
         month: 'short',
@@ -69,9 +103,17 @@ export default function PostCard({ post, showCover = false, onBookmarkToggle }) 
 
             <div className="p-5">
                 <div className="flex gap-2">
-                        <div className="w-8 h-8 bg-gradient-to-br from-brand-primary to-brand-primary-dark rounded-full flex items-center justify-center text-white text-xs font-bold hover:opacity-80 transition-opacity">
-                            {getAuthorInitials(author)}
-                        </div>
+                        {authorProfileImage ? (
+                            <img
+                                src={authorProfileImage}
+                                alt={author}
+                                className="w-8 h-8 rounded-full object-cover hover:opacity-80 transition-opacity"
+                            />
+                        ) : (
+                            <div className="w-8 h-8 bg-gradient-to-br from-brand-primary to-brand-primary-dark rounded-full flex items-center justify-center text-white text-xs font-bold hover:opacity-80 transition-opacity">
+                                {getAuthorInitials(author)}
+                            </div>
+                        )}
                     {/* Content Area */}
                     <div className="flex-1 min-w-0">
                         <div className="mb-2">
