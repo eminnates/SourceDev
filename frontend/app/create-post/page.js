@@ -137,12 +137,12 @@ export default function CreatePostPage() {
     const newTags = [...selectedTags, tagName];
     setSelectedTags(newTags);
     setTagInput('');
-    
+
     // Clear tags error if it exists
     if (errors.tags) {
       setErrors({ ...errors, tags: null });
     }
-    
+
     // If we've reached 4 tags, close suggestions
     if (newTags.length >= 4) {
       setShowSuggestions(false);
@@ -165,28 +165,22 @@ export default function CreatePostPage() {
     if (e.key === 'Enter') {
       e.preventDefault();
       const trimmedInput = tagInput.trim();
-      
+
       if (trimmedInput.length > 0) {
         handleAddTag(trimmedInput);
       }
     }
   };
 
-  const handleCoverImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setCoverImage(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
+  // Update cover image URL directly
+  const handleCoverImageUrlChange = (e) => {
+    setCoverImage(e.target.value);
   };
 
   // Validate form
   const validateForm = () => {
     const newErrors = {};
-    
+
     // Title validation (30-300 characters)
     if (!title.trim()) {
       newErrors.title = 'Title is required';
@@ -452,21 +446,19 @@ export default function CreatePostPage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsPreview(false)}
-                className={`px-4 py-2 text-base font-medium rounded-md transition-colors ${
-                  !isPreview
+                className={`px-4 py-2 text-base font-medium rounded-md transition-colors ${!isPreview
                     ? 'text-brand-primary bg-brand-primary/10'
                     : 'text-brand-dark hover:bg-gray-100'
-                }`}
+                  }`}
               >
                 Edit
               </button>
               <button
                 onClick={() => setIsPreview(true)}
-                className={`px-4 py-2 text-base font-medium rounded-md transition-colors ${
-                  isPreview
+                className={`px-4 py-2 text-base font-medium rounded-md transition-colors ${isPreview
                     ? 'text-brand-primary bg-brand-primary/10'
                     : 'text-brand-dark hover:bg-gray-100'
-                }`}
+                  }`}
               >
                 Preview
               </button>
@@ -493,192 +485,186 @@ export default function CreatePostPage() {
             {!isPreview ? (
               /* Edit Mode */
               <div className="space-y-6">
-              {/* Cover Image */}
-              <div className="flex gap-4">
-                {!coverImage && (
-                <label 
-                  className="px-4 py-2 border-2 border-gray-300 rounded-md cursor-pointer hover:border-brand-primary transition-colors text-brand-dark font-medium"
-                  onFocus={() => setActiveSection('coverImage')}
-                  onClick={() => setActiveSection('coverImage')}
-                >
-                  Upload Cover Image
+                {/* Cover Image */}
+                <div className="flex flex-col gap-2">
+                  {/* URL Input */}
+                  <label className="text-sm font-medium text-brand-dark">Cover Image URL</label>
                   <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleCoverImageUpload}
+                    type="text"
+                    placeholder="https://example.com/cover.jpg"
+                    value={coverImage || ''}
+                    onChange={(e) => setCoverImage(e.target.value)}
                     onFocus={() => setActiveSection('coverImage')}
-                    className="hidden"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-brand-primary"
                   />
-                </label>
-                  )}
-              </div>
-
-              {coverImage && (
-                <div className="relative">
-                  <img src={coverImage} alt="Cover" className="w-full h-64 object-cover rounded-lg" />
-                  <button
-                    onClick={() => setCoverImage(null)}
-                    className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors cursor-pointer"
-                  >
-                    <MdClose className="w-4 h-4" />
-                  </button>
                 </div>
-              )}
 
-              {/* Title */}
-              <textarea
-                ref={titleTextareaRef}
-                value={title}
-                onChange={(e) => {
-                  setTitle(e.target.value);
-                  if (errors.title) {
-                    setErrors({ ...errors, title: null });
-                  }
-                  // Auto-resize textarea
-                  e.target.style.height = 'auto';
-                  e.target.style.height = e.target.scrollHeight + 'px';
-                }}
-                onFocus={() => setActiveSection('title')}
-                placeholder="New post title here..."
-                className={`w-full text-5xl font-bold text-brand-dark placeholder-gray-400 resize-none border-none outline-none overflow-hidden ${errors.title ? 'border-b-2 border-red-500' : ''}`}
-                rows={1}
-                style={{ minHeight: '1.2em', maxHeight: '2.4em' }}
-              />
-              {errors.title && (
-                <p className="text-red-600 text-sm mt-1 mb-2">{errors.title}</p>
-              )}
-
-              {/* Tags */}
-              <div className='mb-2'>
-                {/* Selected Tags */}
-                {selectedTags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {selectedTags.map((tag, index) => (
-                      <span
-                        key={index}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-brand-primary/10 text-brand-primary rounded-lg text-sm font-medium"
-                      >
-                        #{tag}
-                        <button
-                          onClick={() => handleRemoveTag(tag)}
-                          className="hover:text-red-600 transition-colors"
-                        >
-                          <MdClose className="w-4 h-4" />
-                        </button>
-                      </span>
-                    ))}
+                {coverImage && (
+                  <div className="relative">
+                    <img src={coverImage} alt="Cover" className="w-full h-64 object-cover rounded-lg" />
+                    <button
+                      onClick={() => setCoverImage(null)}
+                      className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors cursor-pointer"
+                    >
+                      <MdClose className="w-4 h-4" />
+                    </button>
                   </div>
                 )}
 
-                {/* Tag Input */}
-                {selectedTags.length < 4 && (
-                  <input
-                    ref={tagInputRef}
-                    type="text"
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onFocus={() => {
-                      setShowSuggestions(true);
-                      setActiveSection('tags');
-                    }}
-                    onBlur={() => {
-                      // Delay to allow click events to fire first
-                      setTimeout(() => setShowSuggestions(false), 150);
-                    }}
-                    onKeyDown={handleTagInputKeyDown}
-                    placeholder={selectedTags.length === 0 ? "Add up to 4 tags..." : "Add another tag..."}
-                    className="w-full text-base text-brand-dark placeholder-gray-400 border-none outline-none mb-2"
-                  />
+                {/* Title */}
+                <textarea
+                  ref={titleTextareaRef}
+                  value={title}
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    if (errors.title) {
+                      setErrors({ ...errors, title: null });
+                    }
+                    // Auto-resize textarea
+                    e.target.style.height = 'auto';
+                    e.target.style.height = e.target.scrollHeight + 'px';
+                  }}
+                  onFocus={() => setActiveSection('title')}
+                  placeholder="New post title here..."
+                  className={`w-full text-5xl font-bold text-brand-dark placeholder-gray-400 resize-none border-none outline-none overflow-hidden ${errors.title ? 'border-b-2 border-red-500' : ''}`}
+                  rows={1}
+                  style={{ minHeight: '1.2em', maxHeight: '2.4em' }}
+                />
+                {errors.title && (
+                  <p className="text-red-600 text-sm mt-1 mb-2">{errors.title}</p>
                 )}
 
-                {selectedTags.length >= 4 && (
-                  <p className="text-sm text-green-600 font-medium">✓ All 4 tags added</p>
-                )}
-              </div>
-              
-              {/* Tags Error */}
-              {errors.tags && (
-                <p className="text-red-600 text-sm mb-2">{errors.tags}</p>
-              )}
-              
-              {/* Tag Suggestions Dropdown - Directly below input */}
-              {showSuggestions && (tagSuggestions.length > 0 || tagInput.trim().length > 0) && (
-                <div className="bg-white border border-gray-200 rounded-lg shadow-lg overflow-y-auto mb-4" style={{ maxHeight: '180px' }}>
-                  {/* Existing tags */}
-                  {tagSuggestions
-                    .filter(tag => !selectedTags.includes(tag.name || tag)) // Filter out already selected tags
-                    .slice(0, 10)
-                    .map((tag, index) => (
-                      <button
-                        key={index}
-                        onMouseDown={(e) => {
-                          e.preventDefault(); // Prevent input blur
-                          handleAddTag(tag.name || tag);
-                        }}
-                        className="w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors"
-                      >
-                        <span className="text-brand-dark font-medium">#{tag.name || tag}</span>
-                      </button>
-                    ))}
-                  
-                  {/* Create new tag option */}
-                  {tagInput.trim().length >= 2 && 
-                   !tagSuggestions.some(tag => (tag.name || tag).toLowerCase() === tagInput.trim().toLowerCase()) &&
-                   !selectedTags.includes(tagInput.trim()) && (
-                    <button
-                      onMouseDown={(e) => {
-                        e.preventDefault(); // Prevent input blur
-                        handleAddTag(tagInput.trim());
-                      }}
-                      className="w-full text-left px-4 py-2 hover:bg-brand-primary/10 transition-colors border-t border-gray-200"
-                    >
-                      <span className="text-brand-primary font-medium">
-                        Create new tag: <span className="font-bold">#{tagInput.trim()}</span>
-                      </span>
-                    </button>
-                  )}
-                  
-                  {/* No results message */}
-                  {tagSuggestions.filter(tag => !selectedTags.includes(tag.name || tag)).length === 0 && 
-                   tagInput.trim().length < 2 && (
-                    <div className="px-4 py-2 text-sm text-brand-muted">
-                      Type at least 2 characters to create a new tag
+                {/* Tags */}
+                <div className='mb-2'>
+                  {/* Selected Tags */}
+                  {selectedTags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {selectedTags.map((tag, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center gap-2 px-3 py-1.5 bg-brand-primary/10 text-brand-primary rounded-lg text-sm font-medium"
+                        >
+                          #{tag}
+                          <button
+                            onClick={() => handleRemoveTag(tag)}
+                            className="hover:text-red-600 transition-colors"
+                          >
+                            <MdClose className="w-4 h-4" />
+                          </button>
+                        </span>
+                      ))}
                     </div>
                   )}
-                </div>
-              )}
 
-              {/* Markdown Editor */}
-              <div 
-                className="markdown-editor"
-                onFocus={() => setActiveSection('content')}
-                onClick={() => setActiveSection('content')}
-              >
-                <SimpleMDE
-                  key="markdown-editor"
-                  value={content}
-                  onChange={(value) => {
-                    setContent(value);
-                    if (errors.content) {
-                      setErrors({ ...errors, content: null });
-                    }
-                  }}
-                  options={editorOptions}
-                />
-              </div>
-              
-              {/* Content Error */}
-              {errors.content && (
-                <p className="text-red-600 text-sm mt-2">{errors.content}</p>
-              )}
-              
-              {/* Submit Error */}
-              {errors.submit && (
-                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-red-600 text-sm">{errors.submit}</p>
+                  {/* Tag Input */}
+                  {selectedTags.length < 4 && (
+                    <input
+                      ref={tagInputRef}
+                      type="text"
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onFocus={() => {
+                        setShowSuggestions(true);
+                        setActiveSection('tags');
+                      }}
+                      onBlur={() => {
+                        // Delay to allow click events to fire first
+                        setTimeout(() => setShowSuggestions(false), 150);
+                      }}
+                      onKeyDown={handleTagInputKeyDown}
+                      placeholder={selectedTags.length === 0 ? "Add up to 4 tags..." : "Add another tag..."}
+                      className="w-full text-base text-brand-dark placeholder-gray-400 border-none outline-none mb-2"
+                    />
+                  )}
+
+                  {selectedTags.length >= 4 && (
+                    <p className="text-sm text-green-600 font-medium">✓ All 4 tags added</p>
+                  )}
                 </div>
-              )}
-            </div>
+
+                {/* Tags Error */}
+                {errors.tags && (
+                  <p className="text-red-600 text-sm mb-2">{errors.tags}</p>
+                )}
+
+                {/* Tag Suggestions Dropdown - Directly below input */}
+                {showSuggestions && (tagSuggestions.length > 0 || tagInput.trim().length > 0) && (
+                  <div className="bg-white border border-gray-200 rounded-lg shadow-lg overflow-y-auto mb-4" style={{ maxHeight: '180px' }}>
+                    {/* Existing tags */}
+                    {tagSuggestions
+                      .filter(tag => !selectedTags.includes(tag.name || tag)) // Filter out already selected tags
+                      .slice(0, 10)
+                      .map((tag, index) => (
+                        <button
+                          key={index}
+                          onMouseDown={(e) => {
+                            e.preventDefault(); // Prevent input blur
+                            handleAddTag(tag.name || tag);
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors"
+                        >
+                          <span className="text-brand-dark font-medium">#{tag.name || tag}</span>
+                        </button>
+                      ))}
+
+                    {/* Create new tag option */}
+                    {tagInput.trim().length >= 2 &&
+                      !tagSuggestions.some(tag => (tag.name || tag).toLowerCase() === tagInput.trim().toLowerCase()) &&
+                      !selectedTags.includes(tagInput.trim()) && (
+                        <button
+                          onMouseDown={(e) => {
+                            e.preventDefault(); // Prevent input blur
+                            handleAddTag(tagInput.trim());
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-brand-primary/10 transition-colors border-t border-gray-200"
+                        >
+                          <span className="text-brand-primary font-medium">
+                            Create new tag: <span className="font-bold">#{tagInput.trim()}</span>
+                          </span>
+                        </button>
+                      )}
+
+                    {/* No results message */}
+                    {tagSuggestions.filter(tag => !selectedTags.includes(tag.name || tag)).length === 0 &&
+                      tagInput.trim().length < 2 && (
+                        <div className="px-4 py-2 text-sm text-brand-muted">
+                          Type at least 2 characters to create a new tag
+                        </div>
+                      )}
+                  </div>
+                )}
+
+                {/* Markdown Editor */}
+                <div
+                  className="markdown-editor"
+                  onFocus={() => setActiveSection('content')}
+                  onClick={() => setActiveSection('content')}
+                >
+                  <SimpleMDE
+                    key="markdown-editor"
+                    value={content}
+                    onChange={(value) => {
+                      setContent(value);
+                      if (errors.content) {
+                        setErrors({ ...errors, content: null });
+                      }
+                    }}
+                    options={editorOptions}
+                  />
+                </div>
+
+                {/* Content Error */}
+                {errors.content && (
+                  <p className="text-red-600 text-sm mt-2">{errors.content}</p>
+                )}
+
+                {/* Submit Error */}
+                {errors.submit && (
+                  <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-red-600 text-sm">{errors.submit}</p>
+                  </div>
+                )}
+              </div>
             ) : (
               /* Preview Mode */
               <div className="space-y-6">
@@ -725,7 +711,7 @@ export default function CreatePostPage() {
                 <h3 className="text-base font-bold text-brand-dark mb-3">
                   {helpContent[activeSection].title}
                 </h3>
-                
+
                 <ul className="space-y-1.5 mb-3">
                   {helpContent[activeSection].tips.map((tip, index) => (
                     <li key={index} className="flex items-start gap-2 text-xs text-brand-muted">
@@ -767,9 +753,8 @@ export default function CreatePostPage() {
             <button
               onClick={handlePublish}
               disabled={isLoading}
-              className={`w-full px-6 py-3 bg-brand-primary hover:bg-brand-primary-dark text-white font-bold rounded-lg transition-colors mb-3 ${
-                isLoading ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
+              className={`w-full px-6 py-3 bg-brand-primary hover:bg-brand-primary-dark text-white font-bold rounded-lg transition-colors mb-3 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
             >
               {isLoading ? (isEditMode ? 'Updating...' : 'Publishing...') : (isEditMode ? 'Update & Publish' : 'Publish')}
             </button>
@@ -785,9 +770,8 @@ export default function CreatePostPage() {
               <button
                 onClick={handleDelete}
                 disabled={isLoading}
-                className={`w-full px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-colors mt-3 ${
-                  isLoading ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
+                className={`w-full px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-colors mt-3 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
               >
                 {isLoading ? 'Deleting...' : 'Delete Post'}
               </button>
