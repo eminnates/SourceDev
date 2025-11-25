@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import SearchSidebar from '@/components/Search/SearchSidebar';
 import SearchResults from '@/components/Search/SearchResults';
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
   const category = searchParams.get('category') || 'posts';
@@ -93,5 +93,17 @@ export default function SearchPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-brand-background flex items-center justify-center">
+        <div className="text-brand-muted">Loading...</div>
+      </div>
+    }>
+      <SearchContent />
+    </Suspense>
   );
 }

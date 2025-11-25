@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { setToken, setUser } from "@/utils/auth";
 
@@ -20,7 +20,7 @@ const decodePayload = (payload) => {
   }
 };
 
-export default function GitHubSuccessPage() {
+function GitHubSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [statusMessage, setStatusMessage] = useState("Finishing GitHub sign-in...");
@@ -47,6 +47,20 @@ export default function GitHubSuccessPage() {
         <p className="text-brand-muted text-sm">You can close this tab if nothing happens.</p>
       </div>
     </div>
+  );
+}
+
+export default function GitHubSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center space-y-4">
+          <p className="text-lg font-semibold text-brand-dark">Loading...</p>
+        </div>
+      </div>
+    }>
+      <GitHubSuccessContent />
+    </Suspense>
   );
 }
 

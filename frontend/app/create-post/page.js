@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -15,7 +15,7 @@ import 'easymde/dist/easymde.min.css';
 // Dynamic import to avoid SSR issues
 const SimpleMDE = dynamic(() => import('react-simplemde-editor'), { ssr: false });
 
-export default function CreatePostPage() {
+function CreatePostContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editPostId = searchParams.get('edit');
@@ -808,6 +808,18 @@ export default function CreatePostPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function CreatePostPage() {
+  return (
+    <Suspense fallback={
+      <div className="h-screen bg-brand-background flex items-center justify-center">
+        <div className="text-brand-muted">Loading...</div>
+      </div>
+    }>
+      <CreatePostContent />
+    </Suspense>
   );
 }
 

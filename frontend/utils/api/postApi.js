@@ -353,35 +353,15 @@ export const deleteComment = async (commentId) => {
  */
 export const getRelevantPosts = async (page = 1, pageSize = 10) => {
   try {
-    // Check if user is authenticated
-    const token = localStorage.getItem('token');
+    // Use apiClient - it will automatically add Authorization header if token exists
+    const response = await apiClient.get('/post/relevant', {
+      params: { page, pageSize }
+    });
 
-    if (token) {
-      // User is authenticated - use apiClient with Authorization header
-      const response = await apiClient.get('/post/relevant', {
-        params: { page, pageSize }
-      });
-
-      return {
-        success: true,
-        data: response.data
-      };
-    } else {
-      // User is not authenticated - use axios without Authorization header
-      const axios = require('axios');
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5254/api'}/post/relevant`, {
-        params: { page, pageSize },
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        timeout: 30000
-      });
-
-      return {
-        success: true,
-        data: response.data
-      };
-    }
+    return {
+      success: true,
+      data: response.data
+    };
   } catch (error) {
     console.error('Get relevant posts error:', error);
     return {
