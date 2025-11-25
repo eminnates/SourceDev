@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import DiscussionItem from './DiscussionItem';
 import { getPostsByTag } from '@/utils/api/postApi';
+import { getCommentCount } from '@/utils/api/commentApi';
 
 export default function DiscussSection() {
   const [discussions, setDiscussions] = useState([]);
@@ -26,13 +27,22 @@ export default function DiscussSection() {
             posts = postsData;
           }
 
+          // Fetch comment counts for each post
+          const postsWithComments = await Promise.all(posts.map(async (post) => {
+            const commentResponse = await getCommentCount(post.Id || post.id);
+            return {
+              ...post,
+              realCommentCount: commentResponse.success ? commentResponse.count : 0
+            };
+          }));
+
           // Transform posts to discussion format
-          const transformedDiscussions = posts.map(post => ({
-            id: post.id,
-            slug: post.slug,
-            title: post.title,
-            comments: post.commentsCount || post.comments || 0,
-            badge: post.status === 'Published' && isNewPost(post.publishedAt) ? 'New' : null,
+          const transformedDiscussions = postsWithComments.map(post => ({
+            id: post.Id || post.id,
+            slug: post.Slug || post.slug,
+            title: post.Title || post.title,
+            comments: post.realCommentCount,
+            badge: (post.Status === 'Published' || post.status === 'Published') && isNewPost(post.PublishedAt || post.publishedAt) ? 'New' : null,
             badgeColor: 'bg-yellow-400 text-yellow-900'
           }));
 
