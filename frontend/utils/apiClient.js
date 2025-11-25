@@ -1,6 +1,17 @@
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5254/api';
+// In production (Vercel), use relative path to proxy through Next.js
+// In development, use the full backend URL
+const getApiUrl = () => {
+  // If NEXT_PUBLIC_API_URL is set and starts with /, use it as relative path (production)
+  if (process.env.NEXT_PUBLIC_API_URL?.startsWith('/')) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  // Otherwise use the full URL (development or if explicitly set)
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5254/api';
+};
+
+const API_URL = getApiUrl();
 
 const apiClient = axios.create({
   baseURL: API_URL,
