@@ -116,6 +116,8 @@ namespace SourceDev.API.Repositories
                     EmailConfirmed = u.EmailConfirmed,
                     OnDeleted = u.on_deleted,
                     CreatedAt = u.created_at,
+                    LockoutEnd = u.LockoutEnd,              // ⭐ EKLENDİ
+                    LockoutEnabled = u.LockoutEnabled,      // ⭐ EKLENDİ
                     Roles = _context.UserRoles
                         .Where(ur => ur.UserId == u.Id)
                         .Join(_context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name ?? string.Empty)

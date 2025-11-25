@@ -11,14 +11,15 @@ namespace SourceDev.API.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<PostService> _logger;
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly PostRepository _postRepository;
+        private readonly IPostRepository _postRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        public PostService(IUnitOfWork unitOfWork, ILogger<PostService> logger, IServiceScopeFactory scopeFactory, IHttpContextAccessor httpContextAccessor)
+        public PostService(IUnitOfWork unitOfWork, ILogger<PostService> logger, IServiceScopeFactory scopeFactory, IHttpContextAccessor httpContextAccessor, IPostRepository postRepository)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
             _scopeFactory = scopeFactory;
             _httpContextAccessor = httpContextAccessor;
+            _postRepository = postRepository;
         }
         private void QueueIncrementViewCount(int postId)
         {
@@ -654,7 +655,9 @@ namespace SourceDev.API.Services
             {
                 tag = new Models.Entities.Tag
                 {
-                    name = tagName
+                    name = tagName,
+                    slug = GenerateSlug(tagName),
+                    post_count = 0
                 };
                 await _unitOfWork.Tags.AddAsync(tag);
                 await _unitOfWork.SaveChangesAsync();

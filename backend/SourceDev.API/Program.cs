@@ -65,7 +65,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPostRepository, PostRepository>();
 builder.Services.AddScoped<ITagRepository, TagRepository>();
 builder.Services.AddScoped<IAdminRepository, AdminRepository>();
-
+builder.Services.AddScoped<IPostRepository, PostRepository>();
 // Services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -76,6 +76,7 @@ builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<IReactionService, ReactionService>();
+
 
 // Identity Configuration
 builder.Services.AddIdentity<User, IdentityRole<int>>(options =>

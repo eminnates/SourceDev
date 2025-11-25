@@ -1,0 +1,16 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\.next",
+    "\\.next\\dev",
+    "\\.next\\dev\\server",
+    "\\.next\\dev\\server\\vendor-chunks",
+    "\\frontend",
+    "\\frontend\\.next",
+    "\\frontend\\.next\\dev",
+    "\\frontend\\.next\\dev\\server",
+    "\\frontend\\.next\\dev\\server\\vendor-chunks"
+  ],
+  "SelectedNode": "\\.next\\dev\\lock",
+  "PreviewInSolutionExplorer": false
+}

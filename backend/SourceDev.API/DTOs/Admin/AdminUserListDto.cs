@@ -13,5 +13,9 @@
         public int PostCount { get; set; }
         public int FollowerCount { get; set; }
         public int FollowingCount { get; set; }
+
+        // ⭐ YENİ: Ban bilgileri
+        public DateTimeOffset? LockoutEnd { get; set; }
+        public bool LockoutEnabled { get; set; }
     }
 }

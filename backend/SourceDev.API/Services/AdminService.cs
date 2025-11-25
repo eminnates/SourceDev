@@ -67,16 +67,28 @@ namespace SourceDev.API.Services
         public async Task<bool> BanUserAsync(int userId)
         {
             _logger.LogWarning("Banning user {UserId}", userId);
-            return await _adminRepository.ToggleUserDeleteStatusAsync(userId);
+
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null) return false;
+
+            // 100 yıl lockout (permanent ban)
+            await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.UtcNow.AddYears(100));
+            await _userManager.SetLockoutEnabledAsync(user, true);
+
+            return true;
         }
 
         public async Task<bool> UnbanUserAsync(int userId)
         {
             _logger.LogInformation("Unbanning user {UserId}", userId);
-            var user = await _adminRepository.GetUserByIdAsync(userId);
-            if (user == null || !user.on_deleted) return false;
 
-            return await _adminRepository.ToggleUserDeleteStatusAsync(userId);
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null) return false;
+
+            // Lockout'u kaldır
+            await _userManager.SetLockoutEndDateAsync(user, null);
+
+            return true;
         }
 
         public async Task<bool> AssignRoleAsync(int userId, string roleName)

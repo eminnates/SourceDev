@@ -1,7 +1,8 @@
 using AutoMapper;
+using SourceDev.API.DTOs.Admin;
 using SourceDev.API.DTOs.Auth;
-using SourceDev.API.DTOs.User;
 using SourceDev.API.DTOs.Post;
+using SourceDev.API.DTOs.User;
 using SourceDev.API.Models.Entities;
 
 namespace SourceDev.API.Mappings
@@ -30,6 +31,20 @@ namespace SourceDev.API.Mappings
                 .ForMember(dest => dest.ProfileImageUrl, opt => opt.MapFrom(src => src.profile_img_url))
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.created_at))
                 .ForMember(dest => dest.FollowersCount, opt => opt.MapFrom(src => src.Followers.Count))
+                .ForMember(dest => dest.FollowingCount, opt => opt.MapFrom(src => src.Following.Count));
+            
+            // User -> AdminUserListDto
+            CreateMap<User, AdminUserListDto>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.UserName))
+                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
+                .ForMember(dest => dest.DisplayName, opt => opt.MapFrom(src => src.display_name))
+                .ForMember(dest => dest.EmailConfirmed, opt => opt.MapFrom(src => src.EmailConfirmed))
+                .ForMember(dest => dest.OnDeleted, opt => opt.MapFrom(src => src.on_deleted))
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.created_at))
+                .ForMember(dest => dest.LockoutEnd, opt => opt.MapFrom(src => src.LockoutEnd))
+                .ForMember(dest => dest.LockoutEnabled, opt => opt.MapFrom(src => src.LockoutEnabled))
+                .ForMember(dest => dest.FollowerCount, opt => opt.MapFrom(src => src.Followers.Count))
                 .ForMember(dest => dest.FollowingCount, opt => opt.MapFrom(src => src.Following.Count));
 
             // Post mappings

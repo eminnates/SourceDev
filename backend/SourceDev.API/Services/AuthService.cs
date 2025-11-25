@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -80,6 +80,7 @@ namespace SourceDev.API.Services
                 on_deleted = false
             };
 
+            var token = await GenerateJwtToken(user);
             var result = await _userManager.CreateAsync(user, registerDto.Password);
 
             if (!result.Succeeded)
@@ -92,7 +93,7 @@ namespace SourceDev.API.Services
             }
 
             // Generate token
-            var token = GenerateJwtToken(user);
+         
             var expiration = DateTime.UtcNow.AddMinutes(_jwtExpiration);
 
             return new AuthResponseDto
@@ -131,6 +132,7 @@ namespace SourceDev.API.Services
             }
 
             // Check password
+            var token = await GenerateJwtToken(user);
             var result = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false);
 
             if (!result.Succeeded)
@@ -143,7 +145,7 @@ namespace SourceDev.API.Services
             }
 
             // Generate token
-            var token = GenerateJwtToken(user);
+       
             var expiration = DateTime.UtcNow.AddMinutes(_jwtExpiration);
 
             return new AuthResponseDto
@@ -253,30 +255,38 @@ namespace SourceDev.API.Services
             }
         }
 
-        private string GenerateJwtToken(User user)
+        private async Task<string> GenerateJwtToken(User user)
         {
-            var claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email!),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.UserName!),
-                new Claim("DisplayName", user.display_name)
-            };
+            var claims = new List<Claim>
+    {
+        new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+        new Claim(JwtRegisteredClaimNames.Email, user.Email!),
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+        new Claim(ClaimTypes.Name, user.UserName!),
+        new Claim("DisplayName", user.display_name)
+    };
 
+            // ⭐ YENİ: Rolleri ekle
+            var roles = await _userManager.GetRolesAsync(user);
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
+
+            // ⬇️ BUNLAR AYNI KALIYOR:
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSecret));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var token = new JwtSecurityToken(
-                issuer: _jwtIssuer,
-                audience: _jwtAudience,
-                claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(_jwtExpiration),
-                signingCredentials: creds
-            );
+            var jwtToken = new JwtSecurityToken(
+       issuer: _jwtIssuer,
+       audience: _jwtAudience,
+       claims: claims,
+       expires: DateTime.UtcNow.AddMinutes(_jwtExpiration),
+       signingCredentials: creds
+   );
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            return new JwtSecurityTokenHandler().WriteToken(jwtToken);
         }
     }
 }
