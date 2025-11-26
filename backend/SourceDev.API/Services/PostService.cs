@@ -83,7 +83,8 @@ namespace SourceDev.API.Services
                 updated_at = DateTime.UtcNow,
                 likes_count = 0,
                 bookmarks_count = 0,
-                view_count = 0
+                view_count = 0,
+                reading_time_minutes = CalculateReadingTimeMinutes(dto.Content)
             };
             await _unitOfWork.Posts.AddAsync(post);
             await _unitOfWork.SaveChangesAsync();
@@ -498,7 +499,10 @@ namespace SourceDev.API.Services
 
             // Update Content
             if (!string.IsNullOrWhiteSpace(dto.Content))
+            {
                 post.content_markdown = dto.Content;
+                post.reading_time_minutes = CalculateReadingTimeMinutes(dto.Content);
+            }
 
             // Update Cover Image
             if (!string.IsNullOrWhiteSpace(dto.CoverImageUrl))
@@ -554,6 +558,29 @@ namespace SourceDev.API.Services
             _logger.LogInformation("Post updated. PostId: {PostId}, UserId: {UserId}, Title: {Title}, Tags: {TagCount}", 
                 id, requesterId, post.title, dto.Tags?.Count ?? 0);
             return true;
+        }
+
+        private long CalculateReadingTimeMinutes(string content)
+        {
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                return 0;
+            }
+
+            var words = content
+                .Split(new[] { ' ', '\n', '\r', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+
+            var wordCount = words.Length;
+
+            if (wordCount == 0)
+            {
+                return 0;
+            }
+
+            const int wordsPerMinute = 200;
+            var minutes = (int)Math.Ceiling(wordCount / (double)wordsPerMinute);
+
+            return minutes < 1 ? 1 : minutes;
         }
 
         private string GenerateSlug(string title)
