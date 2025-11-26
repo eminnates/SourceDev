@@ -426,11 +426,11 @@ function CreatePostContent() {
   }), []);
 
   return (
-    <div className="h-screen bg-brand-background flex flex-col">
+    <div className="min-h-screen bg-brand-background flex flex-col">
       {/* Header - Fixed - Matching Navbar */}
       <header className="bg-white border-b border-brand-muted/30 flex-shrink-0">
         <div className="w-full px-3">
-          <div className="flex items-center justify-between h-14 mx-16">
+          <div className="flex items-center justify-between h-14 mx-auto sm:mx-16">
             {/* Left: Logo + Title */}
             <div className="flex items-center gap-2">
               <Link href="/" className="text-2xl font-bold text-brand-dark hover:text-brand-primary transition-colors">
@@ -478,10 +478,10 @@ function CreatePostContent() {
       </header>
 
       {/* Main Content - Scrollable */}
-      <main className="flex-1 flex relative">
-        {/* Left Content Area - Full Width */}
-        <div className="flex-2 ps-16 py-8">
-          <div className="max-w-[900px] bg-white rounded-lg p-12">
+      <main className="flex-1 flex flex-col lg:flex-row relative">
+        {/* Left Content Area */}
+        <div className="w-full lg:flex-[2] lg:ps-16 py-8 px-4 lg:px-0">
+          <div className="max-w-[900px] bg-white rounded-lg p-6 lg:p-12 mx-auto">
             {!isPreview ? (
               /* Edit Mode */
               <div className="space-y-6">
@@ -703,9 +703,9 @@ function CreatePostContent() {
           </div>
         </div>
 
-        {/* Right Sidebar - Help Panel Always Visible */}
-        <aside className="flex-1 flex items-center">
-          <div className="w-full max-w-sm ">
+        {/* Right Sidebar - Help Panel (hidden on small screens) */}
+        <aside className="hidden lg:flex flex-1 items-center pr-8">
+          <div className="w-full max-w-sm">
             {activeSection && helpContent[activeSection] ? (
               <div className="">
                 <h3 className="text-base font-bold text-brand-dark mb-3">
@@ -747,9 +747,9 @@ function CreatePostContent() {
           </div>
         </aside>
 
-        {/* Action Buttons - Absolute Position Top Right */}
-        <div className="absolute right-0 top-6 w-64 z-10">
-          <div className="p-4">
+        {/* Action Buttons - Bottom on mobile, fixed on desktop */}
+        <div className="w-full lg:w-64 lg:absolute lg:right-0 lg:top-6 lg:z-10">
+          <div className="p-4 lg:p-4">
             <button
               onClick={handlePublish}
               disabled={isLoading}
