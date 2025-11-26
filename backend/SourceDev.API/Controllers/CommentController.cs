@@ -97,6 +97,26 @@ namespace SourceDev.API.Controllers
                 return Forbid(ex.Message);
             }
         }
+
+        /// <summary>
+        /// Search comments by content
+        /// </summary>
+        [HttpGet("search")]
+        [AllowAnonymous]
+        public async Task<IActionResult> SearchComments([FromQuery] string q, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
+        {
+            if (string.IsNullOrWhiteSpace(q))
+                return BadRequest(new { message = "Search query cannot be empty." });
+
+            if (page < 1 || pageSize < 1)
+                return BadRequest(new { message = "Invalid paging parameters." });
+
+            if (pageSize > 100)
+                return BadRequest(new { message = "Page size cannot exceed 100." });
+
+            var results = await _commentService.SearchCommentsAsync(q, page, pageSize);
+            return Ok(results);
+        }
     }
 }
 

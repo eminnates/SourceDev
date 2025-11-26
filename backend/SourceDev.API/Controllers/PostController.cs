@@ -264,7 +264,7 @@ namespace SourceDev.API.Controllers
                 return BadRequest(new { message = "Page size cannot exceed 100." });
 
             var currentUserId = User.GetUserId();
-            var results = await _postService.SearchAsync(query, currentUserId, page, pageSize);
+            var results = await _postService.SearchPostsAsync(query, currentUserId, page, pageSize);
 
             return Ok(results);
         }

@@ -118,5 +118,45 @@ namespace SourceDev.API.Services
         {
             return await _unitOfWork.Comments.Query().CountAsync(c => c.post_id == postId);
         }
+
+        public async Task<IEnumerable<CommentDto>> SearchCommentsAsync(string query, int page = 1, int pageSize = 50)
+        {
+            if (string.IsNullOrWhiteSpace(query) || page < 1 || pageSize < 1)
+            {
+                return Enumerable.Empty<CommentDto>();
+            }
+
+            var normalizedQuery = query.Trim();
+
+            var commentsQuery = _unitOfWork.Comments
+                .Query()
+                .Include(c => c.User)
+                .Where(c => c.content.Contains(normalizedQuery))
+                .OrderByDescending(c => c.created_at);
+
+            var comments = await commentsQuery
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            if (!comments.Any())
+            {
+                return Enumerable.Empty<CommentDto>();
+            }
+
+            var commentDtos = comments.Select(c => new CommentDto
+            {
+                Id = c.comment_id,
+                PostId = c.post_id,
+                UserId = c.user_id,
+                Content = c.content,
+                CreatedAt = c.created_at,
+                ParentCommentId = c.parent_comment_id,
+                UserDisplayName = c.User != null ? c.User.display_name : string.Empty,
+                RepliesCount = 0
+            });
+
+            return commentDtos;
+        }
     }
 }

@@ -467,8 +467,9 @@ namespace SourceDev.API.Repositories
             var postsQuery = _dbSet
                 .AsQueryable()
                 .Where(p => p.status)
-                .Where(p => p.slug.ToLower().Contains(normalizedQuery) ||
-                            p.content_markdown.ToLower().Contains(normalizedQuery));
+                // NOTE: For performance reasons, search only in slug and title for now
+                .Where(p => p.slug.ToLower().Contains(normalizedQuery)
+                            || (p.title != null && p.title.ToLower().Contains(normalizedQuery)));
 
             // E�er kullan�c� giri� yapt�ysa, takip ettiklerini �ne ��kar
             if (userId.HasValue)

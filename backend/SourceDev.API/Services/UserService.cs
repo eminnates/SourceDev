@@ -66,13 +66,9 @@ namespace SourceDev.API.Services
 
             var userIds = users.Select(u => u.Id).ToList();
 
-            var followersCountsTask = _unitOfWork.Users.GetFollowersCountsAsync(userIds);
-            var followingCountsTask = _unitOfWork.Users.GetFollowingCountsAsync(userIds);
-
-            await Task.WhenAll(followersCountsTask, followingCountsTask);
-
-            var followersCounts = await followersCountsTask;
-            var followingCounts = await followingCountsTask;
+            // Run follower/following count queries sequentially to avoid DbContext concurrency issues
+            var followersCounts = await _unitOfWork.Users.GetFollowersCountsAsync(userIds);
+            var followingCounts = await _unitOfWork.Users.GetFollowingCountsAsync(userIds);
 
             var userDtos = new List<UserDto>(users.Count);
 
@@ -106,13 +102,9 @@ namespace SourceDev.API.Services
 
             var userIds = users.Select(u => u.Id).ToList();
 
-            var followersCountsTask = _unitOfWork.Users.GetFollowersCountsAsync(userIds);
-            var followingCountsTask = _unitOfWork.Users.GetFollowingCountsAsync(userIds);
-
-            await Task.WhenAll(followersCountsTask, followingCountsTask);
-
-            var followersCounts = await followersCountsTask;
-            var followingCounts = await followingCountsTask;
+            // Run follower/following count queries sequentially to avoid DbContext concurrency issues
+            var followersCounts = await _unitOfWork.Users.GetFollowersCountsAsync(userIds);
+            var followingCounts = await _unitOfWork.Users.GetFollowingCountsAsync(userIds);
 
             var userDtos = new List<UserDto>(users.Count);
 

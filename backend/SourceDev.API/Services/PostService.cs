@@ -763,10 +763,11 @@ namespace SourceDev.API.Services
             return true;
         }
 
-        //search
-        public async Task<IEnumerable<PostListDto>> SearchAsync(string query, int? userId, int page = 1, int pageSize = 20)
+        //search posts
+        public async Task<IEnumerable<PostListDto>> SearchPostsAsync(string query, int? userId, int page = 1, int pageSize = 20)
         {
-            return await _postRepository.SearchInDbAsync(query, userId, page, pageSize);
+            // Use repository from UnitOfWork to avoid null reference issues
+            return await _unitOfWork.Posts.SearchInDbAsync(query, userId, page, pageSize);
         }
 
         // Get posts bookmarked by a user
