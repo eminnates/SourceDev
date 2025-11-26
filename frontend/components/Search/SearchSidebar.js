@@ -5,8 +5,7 @@ import Link from 'next/link';
 export default function SearchSidebar({ query = '', currentCategory = 'posts' }) {
   const categories = [
     { id: 'posts', label: 'Posts' },
-    { id: 'people', label: 'People' },
-    { id: 'organizations', label: 'Organizations' },
+    { id: 'users', label: 'Users' },
     { id: 'tags', label: 'Tags' },
     { id: 'comments', label: 'Comments' },
   ];
@@ -17,7 +16,7 @@ export default function SearchSidebar({ query = '', currentCategory = 'posts' })
       <nav className="space-y-2">
         {categories.map((category) => {
           const isActive = currentCategory === category.id;
-          const isTag = category.id === 'tags';
+          const isTag = category.id === 'posts';
           
           return (
             <Link
@@ -37,17 +36,6 @@ export default function SearchSidebar({ query = '', currentCategory = 'posts' })
         })}
       </nav>
 
-      {/* Powered by Algolia */}
-      <div>
-        <Link
-          href="https://www.algolia.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-brand-primary hover:text-brand-primary-dark text-base font-medium"
-        >
-          Powered by Algolia
-        </Link>
-      </div>
     </div>
   );
 }

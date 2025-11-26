@@ -4,14 +4,13 @@ import PostCard from '@/components/Post/PostCard';
 
 export default function SearchResults({ results, sortBy, onSortChange }) {
   const sortOptions = [
-    { id: 'relevant', label: 'Most Relevant' },
     { id: 'newest', label: 'Newest' },
     { id: 'oldest', label: 'Oldest' },
   ];
 
   return (
     <div className="space-y-4">
-      {/* Sort Options */}
+
       <div className="flex justify-end gap-4">
         {sortOptions.map((option) => (
           <button
@@ -28,7 +27,6 @@ export default function SearchResults({ results, sortBy, onSortChange }) {
         ))}
       </div>
 
-      {/* Results List */}
       <div className="space-y-2">
         {results && results.length > 0 ? (
           results.map((post) => (

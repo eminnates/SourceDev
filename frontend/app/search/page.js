@@ -9,7 +9,7 @@ function SearchContent() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
   const category = searchParams.get('category') || 'posts';
-  const [sortBy, setSortBy] = useState('relevant');
+  const [sortBy, setSortBy] = useState('newest');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -65,7 +65,7 @@ function SearchContent() {
 
   return (
     <div className="min-h-screen bg-brand-background">
-      <main className="mx-16 px-3 py-4">
+      <main className="mx-4 md:mx-8 lg:mx-16 px-3 py-4">
         <div className="max-w-[1024px] mx-auto">
           {/* Search Header */}
           <div className="mb-6">
@@ -75,9 +75,9 @@ function SearchContent() {
           </div>
           
           {/* Content Grid - Sidebar + Results */}
-          <div className="flex gap-12">
-            {/* Left Sidebar - Categories */}
-            <div className="hidden lg:block w-52 flex-shrink-0">
+          <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
+            {/* Left Sidebar - Categories (visible on all screens, stacked on mobile) */}
+            <div className="w-full lg:w-52 lg:flex-shrink-0 mb-4 lg:mb-0">
               <SearchSidebar query={query} currentCategory={category} />
             </div>
 
