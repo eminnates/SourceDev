@@ -8,6 +8,7 @@ import InputField from "./InputField";
 import Checkbox from "./Checkbox";
 import { login } from "@/utils/api/authApi";
 import { isAuthenticated } from "@/utils/auth";
+import Link from "next/link";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -77,16 +78,14 @@ export default function LoginForm() {
     <div className="w-full max-w-[520px] mx-auto">
       {/* Header */}
       <div className="text-center mb-8">
+        <Link href="/">
         <div className="inline-block bg-black text-white px-6 py-3 rounded-lg mb-6">
           <span className="text-3xl font-bold">SourceDev</span>
         </div>
+        </Link>
         <h1 className="text-brand-dark text-3xl font-bold mb-3">
-          Join the SourceDev Community
+          Log in to your account
         </h1>
-        <p className="text-brand-dark text-lg">
-          SourceDev Community is a community of{" "}
-          <span className="font-semibold">amazing</span> developers
-        </p>
       </div>
 
       {/* Social Login Buttons */}

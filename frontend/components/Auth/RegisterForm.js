@@ -8,6 +8,7 @@ import InputField from "./InputField";
 import TextArea from "./TextArea";
 import { register } from "@/utils/api/authApi";
 import { isAuthenticated } from "@/utils/auth";
+import Link from "next/link";
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -177,9 +178,11 @@ export default function RegisterForm() {
     <div className="w-full max-w-[520px] mx-auto">
       {/* Header */}
       <div className="text-center mb-8">
+        <Link href="/">
         <div className="inline-block bg-black text-white px-6 py-3 rounded-lg mb-6">
           <span className="text-3xl font-bold">SourceDev</span>
         </div>
+        </Link>
         <h1 className="text-brand-dark text-3xl font-bold mb-3">
           Create your account
         </h1>
