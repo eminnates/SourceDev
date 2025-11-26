@@ -6,10 +6,9 @@ import { FaRss } from 'react-icons/fa';
 
 export default function SocialLinks() {
   const socialLinks = [
-    { icon: BsTwitter, href: "https://twitter.com", external: true },
-    { icon: BsFacebook, href: "https://facebook.com", external: true },
-    { icon: BsGithub, href: "https://github.com", external: true },
-    { icon: BsInstagram, href: "https://instagram.com", external: true },
+    { icon: BsTwitter, href: "https://x.com/ErsaGunTosun", external: true },
+    { icon: BsGithub, href: "https://github.com/eminnates/SourceDev", external: true },
+    { icon: BsInstagram, href: "https://www.instagram.com/muammersnmz_/", external: true },
     { icon: FaRss, href: "/rss", external: false },
   ];
 
