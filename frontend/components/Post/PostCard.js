@@ -8,10 +8,12 @@ import { toggleBookmark } from '@/utils/api/postApi';
 import { getCommentCount } from '@/utils/api/commentApi';
 import { searchUsers } from '@/utils/api/userApi';
 import { isAuthenticated } from '@/utils/auth';
+import { getUsernameFromDisplayName } from '@/utils/userUtils';
 
 export default function PostCard({ post, showCover = false, onBookmarkToggle }) {
     const [commentCount, setCommentCount] = useState(0);
     const [authorProfileImage, setAuthorProfileImage] = useState(null);
+    const [authorUsername, setAuthorUsername] = useState(null);
 
     console.log('post', post);
     const author = post.authorDisplayName;
@@ -69,6 +71,19 @@ export default function PostCard({ post, showCover = false, onBookmarkToggle }) 
         fetchAuthorProfileImage();
     }, [author]);
 
+    // Fetch username from display name
+    useEffect(() => {
+        const fetchUsername = async () => {
+            if (author) {
+                const username = await getUsernameFromDisplayName(author);
+                if (username) {
+                    setAuthorUsername(username);
+                }
+            }
+        };
+        fetchUsername();
+    }, [author]);
+
     // Format date
     const date = post.date || (post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('en-US', {
         month: 'short',
@@ -103,23 +118,28 @@ export default function PostCard({ post, showCover = false, onBookmarkToggle }) 
 
             <div className="p-5">
                 <div className="flex gap-2">
-                        {authorProfileImage ? (
-                            <img
-                                src={authorProfileImage}
-                                alt={author}
-                                className="w-8 h-8 rounded-full object-cover hover:opacity-80 transition-opacity"
-                            />
-                        ) : (
-                            <div className="w-8 h-8 bg-gradient-to-br from-brand-primary to-brand-primary-dark rounded-full flex items-center justify-center text-white text-xs font-bold hover:opacity-80 transition-opacity">
-                                {getAuthorInitials(author)}
-                            </div>
-                        )}
+                        <Link href={authorUsername ? `/user/${authorUsername}` : '#'}>
+                            {authorProfileImage ? (
+                                <img
+                                    src={authorProfileImage}
+                                    alt={author}
+                                    className="w-8 h-8 rounded-full object-cover hover:opacity-80 transition-opacity cursor-pointer"
+                                />
+                            ) : (
+                                <div className="w-8 h-8 bg-gradient-to-br from-brand-primary to-brand-primary-dark rounded-full flex items-center justify-center text-white text-xs font-bold hover:opacity-80 transition-opacity cursor-pointer">
+                                    {getAuthorInitials(author)}
+                                </div>
+                            )}
+                        </Link>
                     {/* Content Area */}
                     <div className="flex-1 min-w-0">
                         <div className="mb-2">
-                            <p className="text-sm font-medium text-brand-dark px-2 py-1 rounded">
+                            <Link 
+                                href={authorUsername ? `/user/${authorUsername}` : '#'}
+                                className="text-sm font-medium text-brand-dark hover:text-brand-primary transition-colors px-2 py-1 rounded"
+                            >
                                 {author}
-                            </p>
+                            </Link>
                             <p className="text-xs text-brand-muted ms-2">{date}</p>
                         </div>
 

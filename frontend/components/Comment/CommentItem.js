@@ -5,11 +5,13 @@ import Link from 'next/link';
 import { isAuthenticated, getUser } from '@/utils/auth';
 import CommentForm from './CommentForm';
 import { searchUsers, getUserById } from '@/utils/api/userApi';
+import { getUsernameFromDisplayName } from '@/utils/userUtils';
 
 export default function CommentItem({ comment, onReply, onDelete, isReply = false }) {
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [authorProfileImage, setAuthorProfileImage] = useState(null);
+  const [authorUsername, setAuthorUsername] = useState(null);
   const currentUser = getUser();
 
   // Get author initials safely
@@ -59,6 +61,19 @@ export default function CommentItem({ comment, onReply, onDelete, isReply = fals
       console.error('Failed to fetch comment author profile image:', error);
     }
   };
+
+  // Fetch username from display name
+  useEffect(() => {
+    const fetchUsername = async () => {
+      if (comment.userDisplayName) {
+        const username = await getUsernameFromDisplayName(comment.userDisplayName);
+        if (username) {
+          setAuthorUsername(username);
+        }
+      }
+    };
+    fetchUsername();
+  }, [comment.userDisplayName]);
 
   useEffect(() => {
     fetchAuthorProfileImage();
@@ -120,7 +135,7 @@ export default function CommentItem({ comment, onReply, onDelete, isReply = fals
     <div className={`${isReply ? 'ml-12' : ''}`}>
       <div className="flex gap-3">
         {/* Avatar */}
-        <Link href={`/user/${comment.userDisplayName.split(' ').join('')}`}>
+        <Link href={authorUsername ? `/user/${authorUsername}` : '#'}>
           {authorProfileImage ? (
             <img
               src={authorProfileImage}
@@ -137,7 +152,7 @@ export default function CommentItem({ comment, onReply, onDelete, isReply = fals
         <div className="flex-1 min-w-0 border border-brand-muted/10 rounded-md p-4 bg-white ">
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <Link
-              href={`/user/${comment.userDisplayName.split(' ').join('')}`}
+              href={authorUsername ? `/user/${authorUsername}` : '#'}
               className="font-semibold text-brand-dark hover:text-brand-primary transition-colors"
             >
               {comment.userDisplayName}

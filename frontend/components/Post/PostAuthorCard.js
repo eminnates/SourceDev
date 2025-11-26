@@ -6,6 +6,7 @@ import { getUser } from '@/utils/auth';
 import { checkIfFollowing, followUser, unfollowUser } from '@/utils/api/followApi';
 import { searchUsers, getUserById } from '@/utils/api/userApi';
 import { isAuthenticated } from '@/utils/auth';
+import { getUsernameFromDisplayName } from '@/utils/userUtils';
 
 export default function PostAuthorCard({ author, authorId, joinDate, bio, postId }) {
   console.log('PostAuthorCard props:', { author, authorId, joinDate, bio, postId });
@@ -14,6 +15,7 @@ export default function PostAuthorCard({ author, authorId, joinDate, bio, postId
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [authorProfileImage, setAuthorProfileImage] = useState(null);
+  const [authorUsername, setAuthorUsername] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -107,6 +109,19 @@ export default function PostAuthorCard({ author, authorId, joinDate, bio, postId
     }
   }, [authorId, author]); // Run when authorId or author changes
 
+  // Fetch username from display name
+  useEffect(() => {
+    const fetchUsername = async () => {
+      if (author) {
+        const username = await getUsernameFromDisplayName(author);
+        if (username) {
+          setAuthorUsername(username);
+        }
+      }
+    };
+    fetchUsername();
+  }, [author]);
+
   // Get author initials safely
   const getAuthorInitials = (authorName) => {
     if (!authorName) return 'A';
@@ -150,7 +165,7 @@ export default function PostAuthorCard({ author, authorId, joinDate, bio, postId
 
   return (
     <div className="bg-white rounded-lg border border-brand-muted/20 p-5">
-      <Link href={`/user/${author.split(' ').join('') || 'anonymous'}`} className="flex items-center gap-3 mb-4">
+      <Link href={authorUsername ? `/user/${authorUsername}` : '#'} className="flex items-center gap-3 mb-4">
         {authorProfileImage ? (
           <img
             src={authorProfileImage}

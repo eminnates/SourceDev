@@ -4,9 +4,11 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import MarkdownContent from './MarkdownContent';
 import { searchUsers, getUserById } from '@/utils/api/userApi';
+import { getUsernameFromDisplayName } from '@/utils/userUtils';
 
 export default function PostContent({ post }) {
   const [authorProfileImage, setAuthorProfileImage] = useState(null);
+  const [authorUsername, setAuthorUsername] = useState(null);
 
   // Get author initials safely
   const getAuthorInitials = (authorName) => {
@@ -56,6 +58,19 @@ export default function PostContent({ post }) {
     }
   };
 
+  // Fetch username from display name
+  useEffect(() => {
+    const fetchUsername = async () => {
+      if (post.author) {
+        const username = await getUsernameFromDisplayName(post.author);
+        if (username) {
+          setAuthorUsername(username);
+        }
+      }
+    };
+    fetchUsername();
+  }, [post.author]);
+
   useEffect(() => {
     fetchAuthorProfileImage();
   }, [post.authorId, post.author]);
@@ -74,7 +89,7 @@ export default function PostContent({ post }) {
       <div className="p-12">
         {/* Author and Date */}
         <div className="flex items-center gap-3 mb-6">
-          <Link href={`/user/${post.author.split(' ').join('') || 'anonymous'}`}>
+          <Link href={authorUsername ? `/user/${authorUsername}` : '#'}>
             {authorProfileImage ? (
               <img
                 src={authorProfileImage}
@@ -88,7 +103,10 @@ export default function PostContent({ post }) {
             )}
           </Link>
           <div>
-            <Link href={`/user/${post.author}`} className="font-bold text-brand-dark hover:text-brand-primary transition-colors">
+            <Link 
+              href={authorUsername ? `/user/${authorUsername}` : '#'} 
+              className="font-bold text-brand-dark hover:text-brand-primary transition-colors"
+            >
               {post.author}
             </Link>
             <p className="text-sm text-brand-muted">Posted on {post.date}</p>
