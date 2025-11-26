@@ -74,7 +74,7 @@ export default function Navbar() {
                                 {/* Create Post Button */}
                                 <Link
                                     href="/create-post"
-                                    className="px-4 py-2 text-base font-medium text-brand-primary border-2 border-brand-primary hover:bg-brand-primary hover:text-white rounded-md transition-colors whitespace-nowrap"
+                                    className="px-4 py-2 text-base font-medium text-brand-primary border-2 border-brand-primary hover:bg-brand-primary hover:text-white rounded-md transition-colors whitespace-nowrap hidden sm:block"
                                 >
                                     Create Post
                                 </Link>
@@ -105,6 +105,12 @@ export default function Navbar() {
                                             </div>
                                             <hr className="border-gray-200 mb-2" />
                                             <div className="py-1">
+                                                <Link href="/create-post" 
+                                                className="flex items-center px-4 py-2 text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary transition-colors rounded-md sm:hidden"
+                                                onClick={() => setShowDropdown(false)}
+                                                >
+                                                    Create Post
+                                                </Link>
                                                 <Link
                                                     href="/dashboard"
                                                     className="flex items-center px-4 py-2 text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary transition-colors rounded-md"
