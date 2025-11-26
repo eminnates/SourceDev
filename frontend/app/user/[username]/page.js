@@ -175,7 +175,7 @@ export default function UserProfilePage({ params }) {
 
   return (
     <div className="min-h-screen bg-brand-background">
-      <main className="mx-16 px-3 py-4">
+      <main className="mx-4 md:mx-8 lg:mx-16 px-3 py-4">
         <div className="max-w-[1280px] mx-auto">
           {/* Profile Header - Full Width within container */}
             <ProfileHeader

@@ -77,12 +77,12 @@ export default function ProfileHeader({ user, onFollowChange }) {
   };
   
   return (
-    <div className="bg-white rounded-lg border border-brand-muted/20 relative">
+    <div className="bg-white rounded-lg border border-brand-muted/20">
       {/* Cover Background - Black */}
       <div className="h-24 bg-black rounded-t-lg"></div>
       
       {/* Profile Content */}
-      <div className="px-8 pb-6 relative">
+      <div className="px-4 sm:px-8 pb-6">
         {/* Avatar - Centered and overlapping */}
         <div className="flex justify-center">
           <div className="relative -mt-16">
@@ -103,8 +103,7 @@ export default function ProfileHeader({ user, onFollowChange }) {
           </div>
         </div>
 
-        {/* Action Buttons - Top Right */}
-        <div className="absolute top-6 right-8 flex gap-2">
+        <div className="mt-4 flex justify-center gap-2">
           {isOwnProfile ? (
             <button 
               onClick={handleEditProfile}
