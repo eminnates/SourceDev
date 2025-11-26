@@ -78,7 +78,7 @@ export default function CommentsSection({ postId, commentCount, onCommentCountCh
   };
 
   return (
-    <div id="comments" className="bg-white border border-brand-muted/20 rounded-lg p-6 mt-10">
+    <div id="comments" className="bg-white border border-brand-muted/20 rounded-lg p-6 mt-4">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>

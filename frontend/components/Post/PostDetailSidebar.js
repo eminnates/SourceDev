@@ -17,7 +17,7 @@ export default function PostDetailSidebar({
   onCommentClick
 }) {
   return (
-    <aside className="sticky top-20 flex flex-col items-center gap-4 w-14">
+    <aside className="flex flex-row items-center justify-between gap-4 w-full md:sticky md:top-20 md:flex-col md:items-center md:w-14">
       {/* Reactions */}
       <ReactionPicker totalReactions={reactions} userReactions={userReactions} onReact={onReact} />
 

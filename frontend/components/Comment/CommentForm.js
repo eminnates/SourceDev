@@ -114,12 +114,12 @@ export default function CommentForm({ postId, onSubmit, placeholder = "Write a c
           />
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-brand-muted">
             {content.length}/3000 • Press Ctrl + Enter to submit
           </p>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 self-end sm:self-auto">
             <button
               type="button"
               onClick={() => setContent('')}

@@ -86,7 +86,7 @@ export default function PostContent({ post }) {
       )}
 
       {/* Content */}
-      <div className="p-12">
+      <div className="p-4 md:p-12">
         {/* Author and Date */}
         <div className="flex items-center gap-3 mb-6">
           <Link href={authorUsername ? `/user/${authorUsername}` : '#'}>

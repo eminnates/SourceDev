@@ -145,13 +145,13 @@ export default function PostDetailPage({ params }) {
 
   return (
     <div className="min-h-screen bg-brand-background">
-      <main className="mx-16 px-3 py-4">
-        <div className="flex gap-6">
+      <main className="mx-4 md:mx-8 lg:mx-16 px-0 py-4">
+        <div className="flex flex-col md:flex-row gap-6">
           {/* Left Sidebar - Reactions */}
-          <div className="hidden lg:block">
+          <div className="hidden md:block">
             <PostDetailSidebar
               reactions={totalReactions}
-              comments={post.comments}
+              comments={post.commentsCount || 0}
               userReactions={userReactions}
               onReact={handleReaction}
               bookmarks={post.bookmarksCount || 0}
@@ -164,6 +164,21 @@ export default function PostDetailPage({ params }) {
           {/* Main Content */}
           <div className="flex-1 min-w-0">
             <PostContent post={post} />
+
+            {/* Reactions & stats sidebar for mobile - below content, above comments */}
+            <div className="mt-4 md:hidden">
+              <PostDetailSidebar
+                reactions={totalReactions}
+                comments={post.commentsCount || 0}
+                userReactions={userReactions}
+                onReact={handleReaction}
+                bookmarks={post.bookmarksCount || 0}
+                isBookmarked={isBookmarked}
+                onBookmark={handleBookmark}
+                onCommentClick={scrollToComments}
+              />
+            </div>
+
             {/* Comments Section */}
             <div className="pb-8">
               <CommentsSection
