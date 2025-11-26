@@ -124,7 +124,7 @@ export default function DraftsPage() {
 
   return (
     <div className="min-h-screen bg-brand-background flex justify-center">
-      <main className="mx-16 px-4 py-4 w-full">
+      <main className="mx-4 md:mx-8 lg:mx-16 px-4 py-4 w-full">
         <div className="flex gap-4">
           {/* Left Sidebar */}
           <div className="hidden lg:block w-80 flex-shrink-0 space-y-4">
@@ -161,7 +161,7 @@ export default function DraftsPage() {
               <div className="space-y-4">
                 {drafts.map((draft, index) => (
                   <div key={draft.id} className="bg-white rounded-lg border border-gray-200 p-6">
-                    <div className="flex justify-between items-start mb-4">
+                    <div className="flex flex-col gap-4 mb-4 sm:flex-row sm:items-start sm:justify-between">
                       <div className="flex-1">
                         <h3 className="text-xl font-semibold text-brand-dark mb-2 line-clamp-2">
                           {draft.title || 'Untitled Draft'}
@@ -180,7 +180,7 @@ export default function DraftsPage() {
                         )}
                       </div>
 
-                      <div className="flex gap-2 ml-4">
+                      <div className="flex gap-2 sm:ml-4 justify-end">
                         <button
                           onClick={() => handleEditDraft(draft.id)}
                           className="px-4 py-2 bg-gray-100 text-brand-dark rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
