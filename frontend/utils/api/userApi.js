@@ -12,17 +12,24 @@ import apiClient from '../apiClient';
  */
 export const getUserById = async (userId) => {
   try {
-    const response = await apiClient.get(`/users/${userId}`);
+    const numericId = Number(userId);
+    if (!numericId || Number.isNaN(numericId)) {
+      return {
+        success: false,
+        message: 'Invalid user id'
+      };
+    }
+
+    const response = await apiClient.get(`/users/${numericId}`);
     
     return {
       success: true,
       data: response.data
     };
   } catch (error) {
-    console.error('Get user by ID error:', error);
     return {
       success: false,
-      message: error.message || 'Failed to fetch user profile'
+      message: error.response?.data?.message || error.message || 'Failed to fetch user profile'
     };
   }
 };
@@ -34,7 +41,16 @@ export const getUserById = async (userId) => {
  */
 export const searchUsers = async (query) => {
   try {
-    const response = await apiClient.get(`/users/search?q=${encodeURIComponent(query)}`);
+    if (!query || !query.trim()) {
+      return {
+        success: false,
+        message: 'Search term is required'
+      };
+    }
+
+    const response = await apiClient.get('/users/search', {
+      params: { query }
+    });
     
     return {
       success: true,

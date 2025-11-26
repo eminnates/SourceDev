@@ -66,9 +66,9 @@ export const searchTags = async (query, limit = 10) => {
     }
 
     const response = await apiClient.get('/tag/search', {
-      params: { 
-        q: query.trim(),
-        limit 
+      params: {
+        query: query.trim(),
+        limit
       }
     });
     

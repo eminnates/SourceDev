@@ -2,12 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { isAuthenticated, getUser, logout } from '@/utils/auth';
 
 export default function Navbar() {
     const router = useRouter();
+    const pathname = usePathname();
     const [searchFocused, setSearchFocused] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [user, setUser] = useState(null);
     const [showDropdown, setShowDropdown] = useState(false);
@@ -17,6 +19,13 @@ export default function Navbar() {
         setIsLoggedIn(isAuthenticated());
         setUser(getUser());
     }, []);
+
+    // Clear search input when leaving search page (e.g. going back to home)
+    useEffect(() => {
+        if (pathname !== '/search') {
+            setSearchQuery('');
+        }
+    }, [pathname]);
 
     useEffect(() => {
         // Close dropdown when clicking outside
@@ -62,8 +71,17 @@ export default function Navbar() {
                                     type="text"
                                     placeholder="Search..."
                                     className="flex-1 bg-transparent outline-none text-sm sm:text-base text-brand-dark placeholder-brand-dark ml-2"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
                                     onFocus={() => setSearchFocused(true)}
                                     onBlur={() => setSearchFocused(false)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            const trimmed = searchQuery.trim();
+                                            if (trimmed.length === 0) return;
+                                            router.push(`/search?q=${encodeURIComponent(trimmed)}&category=posts`);
+                                        }
+                                    }}
                                 />
                             </div>
                         </div>

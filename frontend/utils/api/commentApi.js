@@ -95,3 +95,33 @@ export const deleteComment = async (commentId) => {
     };
   }
 };
+
+/**
+ * Search comments by query
+ * @param {string} query - Search term
+ * @param {number} page - Page number (default: 1)
+ * @param {number} pageSize - Page size (default: 10)
+ * @returns {Promise<Object>} API response
+ */
+export const searchComments = async (query, page = 1, pageSize = 10) => {
+  try {
+    if (!query || !query.trim()) {
+      return { success: true, data: [] };
+    }
+
+    const response = await apiClient.get('/comment/search', {
+      params: { query, page, pageSize }
+    });
+
+    return {
+      success: true,
+      data: response.data || []
+    };
+  } catch (error) {
+    console.error('Search comments error:', error);
+    return {
+      success: false,
+      message: error.message || 'Failed to search comments'
+    };
+  }
+};
