@@ -41,7 +41,7 @@ export default function LoginForm() {
       });
       
       if (result.success) {
-        setSuccessMessage(result.message);
+        setSuccessMessage(result.message || 'Login successful!');
         
         // Redirect to home and reload to update navbar
         setTimeout(() => {
@@ -49,11 +49,15 @@ export default function LoginForm() {
           window.location.reload();
         }, 300);
       } else {
-        setError(result.message);
+        // Hata mesajını göster - eğer mesaj yoksa varsayılan mesaj kullan
+        const errorMsg = result.message || result.error || 'Invalid email or password. Please try again.';
+        setError(errorMsg);
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError('An unexpected error occurred. Please try again.');
+      // Beklenmeyen hatalar için (network hatası vs.)
+      const errorMsg = err?.message || err?.response?.data?.message || 'An unexpected error occurred. Please try again.';
+      setError(errorMsg);
     } finally {
       setIsLoading(false);
     }

@@ -43,21 +43,48 @@ apiClient.interceptors.response.use(
       localStorage.removeItem('token');
       localStorage.removeItem('user');
 
+      // Login sayfasında isek redirect yapma
       if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
         window.location.href = '/login';
       }
     }
 
-    const errorMessage =
-      error.response?.data?.message ||
-      error.response?.data?.Message ||
-      error.message ||
-      'An error occurred';
+    // Hata mesajını çeşitli kaynaklardan al
+    let errorMessage = 'An error occurred';
+    
+    if (error.response?.data) {
+      const data = error.response.data;
+      
+      // Backend'den dönen hata mesajı (camelCase veya PascalCase)
+      errorMessage = data.message || 
+                     data.Message || 
+                     data.error ||
+                     data.Error;
+      
+      // ModelState veya validation hataları için
+      if (!errorMessage && data.errors) {
+        const errorMessages = Object.values(data.errors).flat();
+        errorMessage = errorMessages.length > 0 
+          ? errorMessages.join(', ') 
+          : errorMessage;
+      }
+      
+      // FluentValidation hataları için
+      if (!errorMessage && Array.isArray(data.errors)) {
+        errorMessage = data.errors.map(e => e.message || e).join(', ');
+      }
+    }
+    
+    // Eğer hala mesaj yoksa, axios'un varsayılan mesajını kullan
+    if (!errorMessage || errorMessage === 'An error occurred') {
+      errorMessage = error.message || errorMessage;
+    }
 
     return Promise.reject({
       message: errorMessage,
       status: error.response?.status,
-      data: error.response?.data
+      data: error.response?.data,
+      response: error.response
     });
   }
 );

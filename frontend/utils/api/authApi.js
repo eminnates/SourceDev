@@ -31,7 +31,6 @@ export const register = async (registerData) => {
       message: response.data.message || 'Registration successful!'
     };
   } catch (error) {
-    console.error('Register error:', error);
     return {
       success: false,
       message: error.message || 'An error occurred during registration',
@@ -63,10 +62,23 @@ export const login = async (loginData) => {
       message: response.data.message || 'Login successful!'
     };
   } catch (error) {
-    console.error('Login error:', error);
+    
+    // Hata mesajını çeşitli kaynaklardan al
+    let errorMessage = 'An error occurred during login';
+    
+    if (error.status === 401) {
+      errorMessage = "Email or password is incorrect";
+    } else if (error.status === 400) {
+      errorMessage = "Email or password is incorrect";
+    } else if (error.status === 500) {
+      errorMessage = "An error occurred during login";
+    } else {
+      errorMessage = "An error occurred during login";
+    }
+    
     return {
       success: false,
-      message: error.message || 'An error occurred during login'
+      message: errorMessage
     };
   }
 };
@@ -87,14 +99,21 @@ export const logout = async () => {
       message: 'Logout successful!'
     };
   } catch (error) {
-    console.error('Logout error:', error);
+    let errorMessage = 'An error occurred during logout';
+    if (error.status === 401) {
+      errorMessage = "Invalid token";
+    } else if (error.status === 500) {
+      errorMessage = "An error occurred during logout";
+    } else {
+      errorMessage = "An error occurred during logout";
+    }
     
     removeToken();
     removeUser();
     
     return {
       success: false,
-      message: error.message || 'An error occurred during logout'
+      message: errorMessage
     };
   }
 };
@@ -124,6 +143,7 @@ export const getProfile = async () => {
     };
   } catch (error) {
     console.error('Get profile error:', error);
+
     return {
       success: false,
       message: error.message || 'Failed to fetch profile information'
@@ -151,9 +171,16 @@ export const updateProfile = async (updateData) => {
     };
   } catch (error) {
     console.error('Update profile error:', error);
+    if (error.status === 401) {
+      errorMessage = "Invalid token";
+    } else if (error.status === 500) {
+      errorMessage = "An error occurred while updating profile";
+    } else {
+      errorMessage = "An error occurred while updating profile";
+    }
     return {
       success: false,
-      message: error.message || 'An error occurred while updating profile'
+      message: errorMessage
     };
   }
 };
@@ -175,10 +202,17 @@ export const changePassword = async (passwordData) => {
       message: response.data.message || 'Password changed successfully!'
     };
   } catch (error) {
-    console.error('Change password error:', error);
+    let errorMessage = 'An error occurred while changing password';
+    if (error.status === 401) {
+      errorMessage = "Invalid token";
+    } else if (error.status === 500) {
+      errorMessage = "An error occurred while changing password";
+    } else {
+      errorMessage = "An error occurred while changing password";
+    }
     return {
       success: false,
-      message: error.message || 'An error occurred while changing password'
+      message: errorMessage
     };
   }
 };
