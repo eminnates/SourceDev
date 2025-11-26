@@ -5,7 +5,7 @@ import DiscussSection from '@/components/Sidebar/DiscussSection';
 export default function Home() {
   return (
     <div className="min-h-screen bg-brand-background flex justify-center">
-      <main className="mx-16 px-4 py-4 w-full">
+      <main className="mx-4 md:mx-8 lg:mx-16 px-4 py-4 w-full">
         <div className="flex gap-4">
           {/* Left Sidebar with Discuss Section */}
           <div className="hidden lg:block w-80 flex-shrink-0 space-y-4">

@@ -152,7 +152,7 @@ export default function PostFeed({ defaultTab = 'relevant' }) {
     }
 
     return (
-        <div className="w-full">
+        <div className="w-full m-0 p-0">
             {/* Page Header */}
             <nav className="flex gap-2 mb-2">
                 {tabs.map((tab) => (

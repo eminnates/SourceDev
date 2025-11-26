@@ -144,7 +144,7 @@ export default function PostCard({ post, showCover = false, onBookmarkToggle }) 
                         </div>
 
                         <Link href={postUrl}>
-                            <h2 className="text-2xl font-bold text-black mb-2 hover:text-brand-primary cursor-pointer transition-colors">
+                            <h2 className="text-xl sm:text-2xl font-bold text-black mb-2 hover:text-brand-primary cursor-pointer transition-colors">
                                 {post.title}
                             </h2>
                         </Link>
@@ -174,7 +174,7 @@ export default function PostCard({ post, showCover = false, onBookmarkToggle }) 
                             })}
                         </div>
 
-                        <div className="flex items-center justify-between text-sm text-brand-muted">
+                        <div className="flex flex-col gap-4 text-sm text-brand-muted w-full sm:flex-row sm:items-center sm:justify-between">
                             <div className="flex items-center gap-4">
                                 {reactionTypes && Object.keys(reactionTypes).length > 0 && (
                                     <button className="flex items-center gap-2 hover:bg-gray-100 px-2 py-1 rounded transition-colors">
@@ -212,13 +212,13 @@ export default function PostCard({ post, showCover = false, onBookmarkToggle }) 
                                 
                                 <Link href={`${postUrl}#comments`} className="flex items-center gap-2 hover:bg-gray-100 px-2 py-1 rounded transition-colors">
                                     <RiChat1Line className="w-5 h-5 text-brand-muted" />
-                                    <span className="text-sm text-brand-dark">
+                                    <span className="text-sm text-center gap-2 text-brand-dark">
                                        {commentCount > 0 ? `${commentCount} comments` : ' Add comment'}
                                     </span>
                                 </Link>
                             </div>
 
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3 self-end text-right sm:justify-end sm:text-left">
                                 <span className="text-xs">{readTime} min read</span>
 
                                 <button
