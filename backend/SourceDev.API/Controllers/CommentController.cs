@@ -103,9 +103,9 @@ namespace SourceDev.API.Controllers
         /// </summary>
         [HttpGet("search")]
         [AllowAnonymous]
-        public async Task<IActionResult> SearchComments([FromQuery] string q, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
+        public async Task<IActionResult> SearchComments([FromQuery] string query, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
         {
-            if (string.IsNullOrWhiteSpace(q))
+            if (string.IsNullOrWhiteSpace(query))
                 return BadRequest(new { message = "Search query cannot be empty." });
 
             if (page < 1 || pageSize < 1)
@@ -114,7 +114,7 @@ namespace SourceDev.API.Controllers
             if (pageSize > 100)
                 return BadRequest(new { message = "Page size cannot exceed 100." });
 
-            var results = await _commentService.SearchCommentsAsync(q, page, pageSize);
+            var results = await _commentService.SearchCommentsAsync(query, page, pageSize);
             return Ok(results);
         }
     }

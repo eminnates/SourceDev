@@ -33,12 +33,12 @@ namespace SourceDev.API.Controllers
 
         [HttpGet("search")]
         [AllowAnonymous]
-        public async Task<IActionResult> SearchUsers([FromQuery] string q)
+        public async Task<IActionResult> SearchUsers([FromQuery] string query)
         {
-            if (string.IsNullOrWhiteSpace(q))
+            if (string.IsNullOrWhiteSpace(query))
                 return BadRequest(new { message = "Search term is required" });
 
-            var users = await _userService.SearchUsersAsync(q);
+            var users = await _userService.SearchUsersAsync(query);
             return Ok(users);
         }
 

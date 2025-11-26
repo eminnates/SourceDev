@@ -38,18 +38,18 @@ namespace SourceDev.API.Controllers
             return Ok(tags);
         }
 
-        // GET: api/tag/search?q=react
+        // GET: api/tag/search?query=react
         [HttpGet("search")]
         [AllowAnonymous]
-        public async Task<IActionResult> SearchTags([FromQuery] string q, [FromQuery] int limit = 10)
+        public async Task<IActionResult> SearchTags([FromQuery] string query, [FromQuery] int limit = 10)
         {
-            if (string.IsNullOrWhiteSpace(q))
+            if (string.IsNullOrWhiteSpace(query))
                 return BadRequest(new { message = "Search query cannot be empty" });
 
             if (limit < 1 || limit > 50)
                 return BadRequest(new { message = "Limit must be between 1 and 50" });
 
-            var tags = await _tagService.SearchTagsAsync(q, limit);
+            var tags = await _tagService.SearchTagsAsync(query, limit);
             return Ok(tags);
         }
 
