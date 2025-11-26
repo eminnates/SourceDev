@@ -32,7 +32,7 @@ export default function DraftsPage() {
 
     try {
       const result = await getUserDrafts(1, 50); // Get more drafts for the dedicated page
-
+      console.log('Drafts:', result);
       if (result.success && result.data) {
         setDrafts(result.data);
       } else {
@@ -166,12 +166,6 @@ export default function DraftsPage() {
                         <h3 className="text-xl font-semibold text-brand-dark mb-2 line-clamp-2">
                           {draft.title || 'Untitled Draft'}
                         </h3>
-                        <div className="flex items-center gap-4 text-sm text-brand-muted">
-                          <span>Created {new Date(draft.createdAt).toLocaleDateString()}</span>
-                          {draft.updatedAt !== draft.createdAt && (
-                            <span>Last edited {new Date(draft.updatedAt).toLocaleDateString()}</span>
-                          )}
-                        </div>
                         {draft.tags && draft.tags.length > 0 && (
                           <div className="flex flex-wrap gap-2 mt-2">
                             {draft.tags.map((tag, tagIndex) => (
