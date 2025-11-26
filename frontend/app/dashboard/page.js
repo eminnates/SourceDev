@@ -160,7 +160,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-brand-background">
-        <main className="mx-16 px-3 py-8">
+        <main className="mx-4 md:mx-8 lg:mx-16 px-3 py-8">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-center justify-center py-20">
               <div className="text-center">
@@ -177,7 +177,7 @@ export default function DashboardPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-brand-background">
-        <main className="mx-16 px-3 py-8">
+        <main className="mx-4 md:mx-8 lg:mx-16 px-3 py-8">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-center justify-center py-20">
               <div className="text-center">
@@ -198,7 +198,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-brand-background">
-      <main className="mx-16 px-3 py-8">
+      <main className="mx-4 md:mx-8 lg:mx-16 px-3 py-8">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="mb-8">
@@ -207,28 +207,28 @@ export default function DashboardPage() {
           </div>
 
           {/* Stats Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-lg border border-brand-muted/20 p-6">
-              <div className="text-3xl font-bold text-brand-dark">{posts.length}</div>
-              <div className="text-brand-muted">Total Posts</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+            <div className="bg-white rounded-lg border border-brand-muted/20 p-4 md:p-6 flex flex-col items-center text-center">
+              <div className="text-2xl md:text-3xl font-bold text-brand-dark">{posts.length}</div>
+              <div className="mt-1 text-sm md:text-base text-brand-muted">Total Posts</div>
             </div>
-            <div className="bg-white rounded-lg border border-brand-muted/20 p-6">
-              <div className={`text-3xl font-bold ${statsLoading ? 'animate-pulse text-gray-400' : 'text-brand-dark'}`}>
+            <div className="bg-white rounded-lg border border-brand-muted/20 p-4 md:p-6 flex flex-col items-center text-center">
+              <div className={`text-2xl md:text-3xl font-bold ${statsLoading ? 'animate-pulse text-gray-400' : 'text-brand-dark'}`}>
                 {statsLoading ? '...' : posts.reduce((sum, post) => sum + (post.views || 0), 0)}
               </div>
-              <div className="text-brand-muted">Total Views</div>
+              <div className="mt-1 text-sm md:text-base text-brand-muted">Total Views</div>
             </div>
-            <div className="bg-white rounded-lg border border-brand-muted/20 p-6">
-              <div className={`text-3xl font-bold ${statsLoading ? 'animate-pulse text-gray-400' : 'text-brand-dark'}`}>
+            <div className="bg-white rounded-lg border border-brand-muted/20 p-4 md:p-6 flex flex-col items-center text-center">
+              <div className={`text-2xl md:text-3xl font-bold ${statsLoading ? 'animate-pulse text-gray-400' : 'text-brand-dark'}`}>
                 {statsLoading ? '...' : posts.reduce((sum, post) => sum + (post.likesCount || 0), 0)}
               </div>
-              <div className="text-brand-muted">Total Likes</div>
+              <div className="mt-1 text-sm md:text-base text-brand-muted">Total Likes</div>
             </div>
-            <div className="bg-white rounded-lg border border-brand-muted/20 p-6">
-              <div className={`text-3xl font-bold ${statsLoading ? 'animate-pulse text-gray-400' : 'text-brand-dark'}`}>
+            <div className="bg-white rounded-lg border border-brand-muted/20 p-4 md:p-6 flex flex-col items-center text-center">
+              <div className={`text-2xl md:text-3xl font-bold ${statsLoading ? 'animate-pulse text-gray-400' : 'text-brand-dark'}`}>
                 {statsLoading ? '...' : posts.reduce((sum, post) => sum + (post.commentsCount || 0), 0)}
               </div>
-              <div className="text-brand-muted">Total Comments</div>
+              <div className="mt-1 text-sm md:text-base text-brand-muted">Total Comments</div>
             </div>
           </div>
 
@@ -252,7 +252,7 @@ export default function DashboardPage() {
               <div className="divide-y divide-brand-muted/20">
                 {posts.map((post) => (
                   <div key={post.id} className="px-6 py-6 hover:bg-gray-50 transition-colors">
-                    <div className="flex justify-between items-start">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start">
                       <div className="flex-1 min-w-0">
                         <Link href={`/post/${post.id}`}>
                           <h3 className="text-xl font-semibold text-brand-dark hover:text-brand-primary transition-colors mb-2 line-clamp-2">
@@ -299,7 +299,7 @@ export default function DashboardPage() {
                       </div>
 
                       {/* Actions */}
-                      <div className="flex items-center gap-2 ml-6">
+                      <div className="flex items-center gap-2 sm:ml-6 justify-end">
                         <Link
                           href={`/create-post?edit=${post.id}`}
                           className="px-4 py-2 text-sm font-medium text-brand-primary border border-brand-primary rounded-lg hover:bg-brand-primary hover:text-white transition-colors"
