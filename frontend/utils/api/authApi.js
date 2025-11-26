@@ -203,13 +203,27 @@ export const changePassword = async (passwordData) => {
     };
   } catch (error) {
     let errorMessage = 'An error occurred while changing password';
-    if (error.status === 401) {
-      errorMessage = "Invalid token";
-    } else if (error.status === 500) {
-      errorMessage = "An error occurred while changing password";
-    } else {
-      errorMessage = "An error occurred while changing password";
+    
+    // Backend'den gelen hata mesajını al
+    if (error.response?.data) {
+      errorMessage = error.response.data.message || 
+                     error.response.data.Message || 
+                     error.response.data.error ||
+                     errorMessage;
+    } else if (error.message) {
+      errorMessage = error.message;
     }
+    
+    // Status code'a göre özel mesajlar
+    if (error.status === 401 || error.response?.status === 401) {
+      errorMessage = errorMessage || "Invalid token. Please log in again.";
+    } else if (error.status === 400 || error.response?.status === 400) {
+      // Backend'den gelen mesajı kullan, yoksa varsayılan
+      if (!error.response?.data?.message && !error.response?.data?.Message) {
+        errorMessage = "Invalid password or password requirements not met.";
+      }
+    }
+    
     return {
       success: false,
       message: errorMessage

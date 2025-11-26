@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { updateProfile } from '@/utils/api/authApi';
 import { getUserById } from '@/utils/api/userApi';
 import { getUser } from '@/utils/auth';
@@ -9,6 +10,7 @@ const getFallbackAvatar = (seed = 'User') =>
     `https://ui-avatars.com/api/?name=${encodeURIComponent(seed)}&background=1ABC9C&color=fff&bold=true`;
 
 export default function SettingsPage() {
+    const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -231,6 +233,31 @@ export default function SettingsPage() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+
+                {/* Security Section */}
+                <div className="bg-white shadow rounded-lg overflow-hidden mt-6">
+                    <div className="p-6">
+                        <h2 className="text-xl font-semibold text-brand-dark mb-6">Security</h2>
+                        
+                        <div className="border-t border-gray-200 pt-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-lg font-medium text-brand-dark">Password</h3>
+                                    <p className="text-sm text-brand-muted mt-1">
+                                        Change your password to keep your account secure
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => router.push('/change-password')}
+                                    className="px-6 py-2.5 bg-brand-primary text-white font-medium rounded-md shadow-sm hover:bg-brand-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-colors"
+                                >
+                                    Change Password
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
