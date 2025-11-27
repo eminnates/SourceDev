@@ -15,7 +15,7 @@ SourceDev; geliştiricilerin blog yazıları yayınlayıp etkileşim kurabildiğ
 | --- | --- |
 | Frontend | Next.js 16 (App Router), React 19, Tailwind CSS 4, Axios |
 | Backend | ASP.NET Core 9.0, Entity Framework Core 9, ASP.NET Identity, AutoMapper, FluentValidation |
-| Veri | SQL Server, EF Core Code First + göçler (`Migrations/`) |
+| Veri | SQL Server, EF Core Code First + migration’lar (`Migrations/`) |
 | DevOps | DotNetEnv ile `.env`, OpenAPI (development’ta `/swagger`), JWT tabanlı auth |
 
 ## Klasör Yapısı
