@@ -1,16 +1,25 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import PostCard from '../Post/PostCard';
 import { getRelevantPosts, getLatestPosts, getTopPosts, toggleBookmark } from '@/utils/api/postApi';
 import { isAuthenticated } from '@/utils/auth';
 
+const PAGE_SIZES = {
+    relevant: 10,
+    latest: 10,
+    top: 20
+};
+
 export default function PostFeed({ defaultTab = 'relevant' }) {
     const [activeTab, setActiveTab] = useState(defaultTab);
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [error, setError] = useState(null);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
     const router = useRouter();
 
     useEffect(() => {
@@ -46,45 +55,83 @@ export default function PostFeed({ defaultTab = 'relevant' }) {
     };
 
     // Fetch posts based on active tab
-    useEffect(() => {
-        const fetchPosts = async () => {
-            setLoading(true);
+    const fetchPosts = useCallback(
+        async (pageToLoad = 1, append = false) => {
+            if (append) {
+                setIsLoadingMore(true);
+            } else {
+                setLoading(true);
+            }
             setError(null);
 
             try {
                 let result;
+                const pageSize = PAGE_SIZES[activeTab] || 10;
+
                 switch (activeTab) {
                     case 'latest':
-                        result = await getLatestPosts(1, 20);
+                        result = await getLatestPosts(pageToLoad, pageSize);
                         break;
                     case 'top':
-                        result = await getTopPosts(20);
+                        result = await getTopPosts(pageSize);
                         break;
                     case 'relevant':
                     default:
-                        result = await getRelevantPosts(1, 10);
+                        result = await getRelevantPosts(pageToLoad, pageSize);
                         break;
                 }
 
                 if (result.success && result.data) {
-                    // Backend data is already in the correct format (PostListDto)
-                    // PostCard will normalize it internally
-                    setPosts(result.data);
+                    const fetchedPosts = Array.isArray(result.data) ? result.data : [];
+
+                    if (append) {
+                        setPosts((prev) => [...prev, ...fetchedPosts]);
+                    } else {
+                        setPosts(fetchedPosts);
+                    }
+
+                    setPage(pageToLoad);
+                    if (activeTab === 'top') {
+                        setHasMore(false);
+                    } else {
+                    setHasMore(fetchedPosts.length === pageSize);
+                    }
+ 
                 } else {
                     setError(result.message || 'Failed to load posts');
-                    setPosts([]);
+                    if (!append) {
+                        setPosts([]);
+                    }
                 }
             } catch (err) {
                 console.error('Error fetching posts:', err);
                 setError('Failed to load posts');
-                setPosts([]);
+                if (!append) {
+                    setPosts([]);
+                }
             } finally {
-                setLoading(false);
+                if (append) {
+                    setIsLoadingMore(false);
+                } else {
+                    setLoading(false);
+                }
             }
-        };
+        },
+        [activeTab]
+    );
 
-        fetchPosts();
-    }, [activeTab]);
+    useEffect(() => {
+        setPosts([]);
+        setPage(1);
+        setHasMore(true);
+        fetchPosts(1, false);
+    }, [activeTab, fetchPosts]);
+
+    const handleLoadMore = () => {
+        if (isLoadingMore || !hasMore) return;
+        const nextPage = page + 1;
+        fetchPosts(nextPage, true);
+    };
 
     const tabs = [
         { id: 'relevant', label: 'Relevant', path: '/' },
@@ -177,16 +224,33 @@ export default function PostFeed({ defaultTab = 'relevant' }) {
                     <p className="text-sm text-brand-muted mt-2">Be the first to create a post!</p>
                 </div>
             ) : (
-                <div className="space-y-2">
-                    {posts.map((post, index) => (
-                        <PostCard
-                            key={post.id}
-                            post={post}
-                            showCover={index === 0}
-                            onBookmarkToggle={handleBookmarkToggle}
-                        />
-                    ))}
-                </div>
+                <>
+                    <div className="space-y-2">
+                        {posts.map((post, index) => (
+                            <PostCard
+                                key={`${post.id}-${index}`}
+                                post={post}
+                                showCover={index === 0}
+                                onBookmarkToggle={handleBookmarkToggle}
+                            />
+                        ))}
+                    </div>
+                    {posts.length > 0 && (
+                        <div className="flex justify-center mt-6">
+                            {hasMore ? (
+                                <button
+                                    onClick={handleLoadMore}
+                                    disabled={isLoadingMore}
+                                    className="px-6 py-2 rounded-md border border-brand-primary text-brand-primary hover:bg-brand-primary hover:text-white transition disabled:opacity-50"
+                                >
+                                    {isLoadingMore ? 'Loading...' : 'Load more'}
+                                </button>
+                            ) : (
+                                <p className="text-sm text-brand-muted">No more posts</p>
+                            )}
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );

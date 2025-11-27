@@ -173,7 +173,7 @@ export const getPostBySlug = async (slug) => {
  * @param {number} [pageSize=20] - Page size
  * @returns {Promise<Object>} API response
  */
-export const getLatestPosts = async (page = 1, pageSize = 20) => {
+export const getLatestPosts = async (page = 1, pageSize = 10) => {
   try {
     const response = await apiClient.get('/post/latest', {
       params: { page, pageSize }
