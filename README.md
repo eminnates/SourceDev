@@ -174,18 +174,6 @@ Tüm uçlar `api/<controller>` kalıbıyla versiyonlanmamış REST uçlarıdır.
 | GET | `/search?query=` | Kullanıcı araması |
 | GET | `/{id}` | Kullanıcı profili DTO |
 
-### AdminController (`/api/admin`) *(Yalnızca `Admin` rolü)*
-
-| HTTP | Route | Açıklama |
-| --- | --- | --- |
-| GET | `/stats` | Dashboard metrikleri |
-| GET | `/posts` | Moderasyon listesi (paging, durum filtresi) |
-| PUT | `/posts/{id}/approve|reject` | Post durumunu değiştir |
-| DELETE | `/posts/{id}` | Kalıcı silme |
-| GET | `/users` | Kullanıcı listesi |
-| PUT | `/users/{id}/ban|unban` | Ban yönetimi |
-| POST | `/users/{id}/roles` | Rol atama (`UpdateUserRoleDto`) |
-| DELETE | `/users/{id}/roles/{role}` | Rol kaldırma |
 
 ## Ön Uç Route’ları (App Router)
 
@@ -201,22 +189,4 @@ Tüm uçlar `api/<controller>` kalıbıyla versiyonlanmamış REST uçlarıdır.
 
 App Router yapısı sayesinde route segmentleri server component olarak render edilir; `utils/api/apiClient.js` dosyası Axios instance’ını `NEXT_PUBLIC_API_URL` üzerinden yapılandırır.
 
-## Kalite ve Geliştirme Notları
-
-- FluentValidation tüm DTO’lara otomatik uygulanır (`builder.Services.AddFluentValidationAutoValidation()`).
-- Repository/Service katmanı test yazmayı kolaylaştıracak şekilde soyutlanmıştır (`IUnitOfWork`, `IUserRepository`, vb.).
-- `DynamicCorsMiddleware` `.env`’deki `ALLOWED_ORIGINS` değerini runtime’da okuyarak çoklu domain desteği sağlar.
-- `TokenBlacklistService` bellek içi çalışır; üretimde dağıtık bir store (Redis) önerilir.
-- Migration’lar zaten ekli; yeni değişiklikler için `dotnet ef migrations add <Name>` kullanabilirsiniz.
-
-## Katkı Rehberi
-
-1. Yeni özellik için issue açın veya mevcut bir issue’yu sahiplenin.
-2. Backend’de yeni uç eklerken DTO + Validator + Service + Controller katmanlarını beraber güncelleyin.
-3. Frontend’de API çağrılarını `utils/api` altına ekleyin, tip güvenliği için ortak yanıt modellerini paylaşın.
-4. PR açıklamasında test adımlarını ve ilgili ekran görüntülerini paylaşın.
-
-## Lisans
-
-Bu depo henüz lisanslanmadı. Açık kaynak yapmak istiyorsanız uygun bir lisans dosyası eklemeyi unutmayın.
 
