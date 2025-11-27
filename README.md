@@ -83,7 +83,6 @@ dotnet run                  # API varsayılan olarak http://localhost:5000
 
 - EF Core `AppDbContext` SQL Server’a bağlanır, global `NoTracking` ve 60 sn komut timeout’u aktiftir.
 - `MiddlewareExtensions` üzerinden logging, hata ve dinamik CORS sırasıyla devreye alınır.
-- Development ortamında `app.MapOpenApi()` ile Swagger/OpenAPI yayına çıkar.
 
 ### 4. Frontend’i Çalıştırma
 
