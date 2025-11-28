@@ -18,7 +18,7 @@ const teamMembers = [
   },
   {
     id: 3,
-    name: "Muammer Sönmez",
+    name: "Muammer SÖNMEZ",
     role: "Project Manager",
     email: "223301032@ogr.selcuk.edu.tr"
   },
