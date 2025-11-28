@@ -12,7 +12,7 @@ const PAGE_SIZES = {
     top: 20
 };
 
-export default function PostFeed({ defaultTab = 'relevant' }) {
+export default function PostFeed({ defaultTab = 'home' }) {
     const [activeTab, setActiveTab] = useState(defaultTab);
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -75,7 +75,7 @@ export default function PostFeed({ defaultTab = 'relevant' }) {
                     case 'top':
                         result = await getTopPosts(pageSize);
                         break;
-                    case 'relevant':
+                    case 'home':
                     default:
                         result = await getRelevantPosts(pageToLoad, pageSize);
                         break;
@@ -134,7 +134,7 @@ export default function PostFeed({ defaultTab = 'relevant' }) {
     };
 
     const tabs = [
-        { id: 'relevant', label: 'Relevant', path: '/' },
+        { id: 'home', label: 'Home', path: '/' },
         { id: 'latest', label: 'Latest', path: '/latest' },
         { id: 'top', label: 'Top', path: '/top' },
     ];
