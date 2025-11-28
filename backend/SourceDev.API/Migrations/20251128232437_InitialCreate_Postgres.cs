@@ -1,26 +1,26 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
 namespace SourceDev.API.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreateWithCascadeRules : Migration
+    public partial class InitialCreate_Postgres : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-
             migrationBuilder.CreateTable(
                 name: "Roles",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    NormalizedName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    ConcurrencyStamp = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    NormalizedName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -31,9 +31,9 @@ namespace SourceDev.API.Migrations
                 name: "Tags",
                 columns: table => new
                 {
-                    tag_id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    name = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false)
+                    tag_id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -41,43 +41,31 @@ namespace SourceDev.API.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "UserFollows",
-                columns: table => new
-                {
-                    follower_id = table.Column<int>(type: "int", nullable: false),
-                    following_id = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_UserFollows", x => new { x.follower_id, x.following_id });
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
                 {
-                    user_id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    display_name = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    bio = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    profile_img_url = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    updated_at = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    on_deleted = table.Column<bool>(type: "bit", nullable: false),
-                    UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    NormalizedEmail = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    EmailConfirmed = table.Column<bool>(type: "bit", nullable: false),
-                    PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    SecurityStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ConcurrencyStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PhoneNumberConfirmed = table.Column<bool>(type: "bit", nullable: false),
-                    TwoFactorEnabled = table.Column<bool>(type: "bit", nullable: false),
-                    LockoutEnd = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    LockoutEnabled = table.Column<bool>(type: "bit", nullable: false),
-                    AccessFailedCount = table.Column<int>(type: "int", nullable: false)
+                    user_id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    display_name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    bio = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    profile_img_url = table.Column<string>(type: "text", nullable: true),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    on_deleted = table.Column<bool>(type: "boolean", nullable: false),
+                    UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    NormalizedEmail = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    EmailConfirmed = table.Column<bool>(type: "boolean", nullable: false),
+                    PasswordHash = table.Column<string>(type: "text", nullable: true),
+                    SecurityStamp = table.Column<string>(type: "text", nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "text", nullable: true),
+                    PhoneNumber = table.Column<string>(type: "text", nullable: true),
+                    PhoneNumberConfirmed = table.Column<bool>(type: "boolean", nullable: false),
+                    TwoFactorEnabled = table.Column<bool>(type: "boolean", nullable: false),
+                    LockoutEnd = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LockoutEnabled = table.Column<bool>(type: "boolean", nullable: false),
+                    AccessFailedCount = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -88,11 +76,11 @@ namespace SourceDev.API.Migrations
                 name: "RoleClaims",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    RoleId = table.Column<int>(type: "int", nullable: false),
-                    ClaimType = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    RoleId = table.Column<int>(type: "integer", nullable: false),
+                    ClaimType = table.Column<string>(type: "text", nullable: true),
+                    ClaimValue = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -109,20 +97,23 @@ namespace SourceDev.API.Migrations
                 name: "Posts",
                 columns: table => new
                 {
-                    post_id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    user_id = table.Column<int>(type: "int", nullable: false),
-                    slug = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    content_markdown = table.Column<string>(type: "nvarchar(max)", maxLength: 30000, nullable: false),
-                    cover_img_url = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    status = table.Column<bool>(type: "bit", nullable: false),
+                    post_id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    user_id = table.Column<int>(type: "integer", nullable: false),
+                    slug = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    content_markdown = table.Column<string>(type: "character varying(30000)", maxLength: 30000, nullable: false),
+                    cover_img_url = table.Column<string>(type: "text", nullable: true),
+                    status = table.Column<bool>(type: "boolean", nullable: false),
                     view_count = table.Column<long>(type: "bigint", nullable: false),
                     reading_time_minutes = table.Column<long>(type: "bigint", nullable: false),
-                    likes_count = table.Column<int>(type: "int", nullable: false),
-                    bookmarks_count = table.Column<int>(type: "int", nullable: false),
-                    published_at = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    updated_at = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    likes_count = table.Column<int>(type: "integer", nullable: false),
+                    comments_count = table.Column<int>(type: "integer", nullable: false),
+                    bookmarks_count = table.Column<int>(type: "integer", nullable: false),
+                    published_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    deleted_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -139,11 +130,11 @@ namespace SourceDev.API.Migrations
                 name: "UserClaims",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    ClaimType = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserId = table.Column<int>(type: "integer", nullable: false),
+                    ClaimType = table.Column<string>(type: "text", nullable: true),
+                    ClaimValue = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -157,13 +148,38 @@ namespace SourceDev.API.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "UserFollows",
+                columns: table => new
+                {
+                    follower_id = table.Column<int>(type: "integer", nullable: false),
+                    following_id = table.Column<int>(type: "integer", nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserFollows", x => new { x.follower_id, x.following_id });
+                    table.ForeignKey(
+                        name: "FK_UserFollows_Users_follower_id",
+                        column: x => x.follower_id,
+                        principalTable: "Users",
+                        principalColumn: "user_id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_UserFollows_Users_following_id",
+                        column: x => x.following_id,
+                        principalTable: "Users",
+                        principalColumn: "user_id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UserLogins",
                 columns: table => new
                 {
-                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ProviderKey = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ProviderDisplayName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    UserId = table.Column<int>(type: "int", nullable: false)
+                    LoginProvider = table.Column<string>(type: "text", nullable: false),
+                    ProviderKey = table.Column<string>(type: "text", nullable: false),
+                    ProviderDisplayName = table.Column<string>(type: "text", nullable: true),
+                    UserId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -180,8 +196,8 @@ namespace SourceDev.API.Migrations
                 name: "UserRoles",
                 columns: table => new
                 {
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    RoleId = table.Column<int>(type: "int", nullable: false)
+                    UserId = table.Column<int>(type: "integer", nullable: false),
+                    RoleId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -204,10 +220,10 @@ namespace SourceDev.API.Migrations
                 name: "UserTokens",
                 columns: table => new
                 {
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Value = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    UserId = table.Column<int>(type: "integer", nullable: false),
+                    LoginProvider = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Value = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -224,9 +240,9 @@ namespace SourceDev.API.Migrations
                 name: "Bookmarks",
                 columns: table => new
                 {
-                    user_id = table.Column<int>(type: "int", nullable: false),
-                    post_id = table.Column<int>(type: "int", nullable: false),
-                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    user_id = table.Column<int>(type: "integer", nullable: false),
+                    post_id = table.Column<int>(type: "integer", nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -249,17 +265,23 @@ namespace SourceDev.API.Migrations
                 name: "Comments",
                 columns: table => new
                 {
-                    comment_id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    post_id = table.Column<int>(type: "int", nullable: false),
-                    user_id = table.Column<int>(type: "int", nullable: false),
-                    parent_comment_id = table.Column<int>(type: "int", nullable: true),
-                    content = table.Column<string>(type: "nvarchar(3000)", maxLength: 3000, nullable: false),
-                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    comment_id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    post_id = table.Column<int>(type: "integer", nullable: false),
+                    user_id = table.Column<int>(type: "integer", nullable: false),
+                    parent_comment_id = table.Column<int>(type: "integer", nullable: true),
+                    content = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Comments", x => x.comment_id);
+                    table.ForeignKey(
+                        name: "FK_Comments_Comments_parent_comment_id",
+                        column: x => x.parent_comment_id,
+                        principalTable: "Comments",
+                        principalColumn: "comment_id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Comments_Posts_post_id",
                         column: x => x.post_id,
@@ -278,8 +300,8 @@ namespace SourceDev.API.Migrations
                 name: "PostTags",
                 columns: table => new
                 {
-                    tag_id = table.Column<int>(type: "int", nullable: false),
-                    post_id = table.Column<int>(type: "int", nullable: false)
+                    tag_id = table.Column<int>(type: "integer", nullable: false),
+                    post_id = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -302,12 +324,12 @@ namespace SourceDev.API.Migrations
                 name: "Reactions",
                 columns: table => new
                 {
-                    reaction_id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    user_id = table.Column<int>(type: "int", nullable: false),
-                    post_id = table.Column<int>(type: "int", nullable: false),
-                    reaction_type = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    reaction_id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    user_id = table.Column<int>(type: "integer", nullable: false),
+                    post_id = table.Column<int>(type: "integer", nullable: false),
+                    reaction_type = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -332,6 +354,11 @@ namespace SourceDev.API.Migrations
                 column: "post_id");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Comments_parent_comment_id",
+                table: "Comments",
+                column: "parent_comment_id");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Comments_post_id",
                 table: "Comments",
                 column: "post_id");
@@ -342,6 +369,16 @@ namespace SourceDev.API.Migrations
                 column: "user_id");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Posts_slug",
+                table: "Posts",
+                column: "slug");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Posts_slug_status",
+                table: "Posts",
+                columns: new[] { "slug", "status" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Posts_user_id",
                 table: "Posts",
                 column: "user_id");
@@ -350,12 +387,6 @@ namespace SourceDev.API.Migrations
                 name: "IX_PostTags_post_id",
                 table: "PostTags",
                 column: "post_id");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_posts_slug_unique",
-                table: "posts",
-                column: "slug",
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Reactions_post_id",
@@ -376,13 +407,17 @@ namespace SourceDev.API.Migrations
                 name: "RoleNameIndex",
                 table: "Roles",
                 column: "NormalizedName",
-                unique: true,
-                filter: "[NormalizedName] IS NOT NULL");
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserClaims_UserId",
                 table: "UserClaims",
                 column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserFollows_following_id",
+                table: "UserFollows",
+                column: "following_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserLogins_UserId",
@@ -403,17 +438,12 @@ namespace SourceDev.API.Migrations
                 name: "UserNameIndex",
                 table: "Users",
                 column: "NormalizedUserName",
-                unique: true,
-                filter: "[NormalizedUserName] IS NOT NULL");
+                unique: true);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "IX_posts_slug_unique",
-                table: "posts");
-
             migrationBuilder.DropTable(
                 name: "Bookmarks");
 

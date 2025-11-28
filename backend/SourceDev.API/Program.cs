@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using SourceDev.API.Configuration;
 using SourceDev.API.Data.Context;
 using SourceDev.API.Extensions;
 using SourceDev.API.Models.Entities;
@@ -43,7 +42,7 @@ Console.WriteLine("============================");
 // Database Context Configuration
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    options.UseSqlServer(connectionString, sqlOptions =>
+    options.UseNpgsql(connectionString, sqlOptions =>
     {
         sqlOptions.CommandTimeout(60); // 60 saniye timeout (default 30)
     });

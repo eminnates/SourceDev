@@ -11,7 +11,6 @@ namespace SourceDev.API.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<PostService> _logger;
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly PostRepository _postRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
         public PostService(IUnitOfWork unitOfWork, ILogger<PostService> logger, IServiceScopeFactory scopeFactory, IHttpContextAccessor httpContextAccessor)
         {
