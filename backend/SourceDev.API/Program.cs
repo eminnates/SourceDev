@@ -15,29 +15,40 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 
-DotNetEnv.Env.Load();
+// Load .env file only in Development
+if (builder.Environment.IsDevelopment())
+{
+    DotNetEnv.Env.Load();
+}
 
-var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
+// Get environment variables (works for both local .env and Railway environment variables)
+var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING") 
+    ?? Environment.GetEnvironmentVariable("DATABASE_URL"); // Railway PostgreSQL uses DATABASE_URL
 var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET_KEY");
 var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
 var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
 var jwtExpiration = int.TryParse(Environment.GetEnvironmentVariable("JWT_EXPIRATION_MINUTES"), out var exp) ? exp : 60;
 
+// Validate required environment variables
 if (string.IsNullOrWhiteSpace(connectionString))
-    throw new InvalidOperationException("CONNECTION_STRING not found in .env file!");
+    throw new InvalidOperationException("CONNECTION_STRING or DATABASE_URL not found in environment variables!");
 if (string.IsNullOrWhiteSpace(jwtSecret))
-    throw new InvalidOperationException("JWT_SECRET_KEY not found in .env file!");
+    throw new InvalidOperationException("JWT_SECRET_KEY not found in environment variables!");
 if (string.IsNullOrWhiteSpace(jwtIssuer))
-    throw new InvalidOperationException("JWT_ISSUER not found in .env file!");
+    throw new InvalidOperationException("JWT_ISSUER not found in environment variables!");
 if (string.IsNullOrWhiteSpace(jwtAudience))
-    throw new InvalidOperationException("JWT_AUDIENCE not found in .env file!");
+    throw new InvalidOperationException("JWT_AUDIENCE not found in environment variables!");
 
-Console.WriteLine("=== CONFIGURATION LOADED ===");
-Console.WriteLine($"JWT Issuer: {jwtIssuer}");
-Console.WriteLine($"JWT Audience: {jwtAudience}");
-Console.WriteLine($"JWT Expiration: {jwtExpiration} minutes");
-Console.WriteLine($"Connection String: {connectionString?.Substring(0, Math.Min(50, connectionString.Length))}...");
-Console.WriteLine("============================");
+// Only log configuration details in Development
+if (builder.Environment.IsDevelopment())
+{
+    Console.WriteLine("=== CONFIGURATION LOADED ===");
+    Console.WriteLine($"JWT Issuer: {jwtIssuer}");
+    Console.WriteLine($"JWT Audience: {jwtAudience}");
+    Console.WriteLine($"JWT Expiration: {jwtExpiration} minutes");
+    Console.WriteLine($"Connection String: {connectionString?.Substring(0, Math.Min(50, connectionString.Length))}...");
+    Console.WriteLine("============================");
+}
 
 // Database Context Configuration
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -47,8 +58,13 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         sqlOptions.CommandTimeout(60); // 60 saniye timeout (default 30)
     });
     options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking); // Global NoTracking
-    options.EnableSensitiveDataLogging(); // Debug için
-    options.LogTo(Console.WriteLine, LogLevel.Information); // SQL logları
+    
+    // Only enable sensitive logging in Development
+    if (builder.Environment.IsDevelopment())
+    {
+        options.EnableSensitiveDataLogging();
+        options.LogTo(Console.WriteLine, LogLevel.Information);
+    }
 });
 
 // AutoMapper Configuration
@@ -135,6 +151,10 @@ builder.Services.AddAuthentication(options =>
 // Add Controllers
 builder.Services.AddControllers();
 
+// Add Health Checks for Railway
+builder.Services.AddHealthChecks()
+    .AddNpgSql(connectionString!, name: "postgresql", timeout: TimeSpan.FromSeconds(3));
+
 // AFTER THAT IS DYNAMIC
 var app = builder.Build();
 
@@ -143,6 +163,9 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+// Health check endpoint for Railway
+app.MapHealthChecks("/health");
 
 // MIDDLEWARE
 app.UseLoggingMiddleware();
