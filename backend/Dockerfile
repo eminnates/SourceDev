@@ -2,12 +2,14 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-# Copy csproj and restore dependencies
-COPY ["SourceDev.API.csproj", "./"]
+# Copy solution and project files
+COPY ["SourceDev.API.sln", "./"]
+COPY ["SourceDev.API/SourceDev.API.csproj", "SourceDev.API/"]
 RUN dotnet restore
 
 # Copy everything else and build
 COPY . .
+WORKDIR /src/SourceDev.API
 RUN dotnet publish -c Release -o /app/publish
 
 # Runtime stage
