@@ -2,10 +2,9 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-# Copy solution and project files
-COPY ["SourceDev.API.sln", "./"]
+# Copy project file and restore (skip solution file - direct csproj restore)
 COPY ["SourceDev.API/SourceDev.API.csproj", "SourceDev.API/"]
-RUN dotnet restore
+RUN dotnet restore "SourceDev.API/SourceDev.API.csproj"
 
 # Copy everything else and build
 COPY . .
