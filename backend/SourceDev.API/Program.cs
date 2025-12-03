@@ -153,7 +153,7 @@ builder.Services.AddControllers();
 
 // Add Health Checks for Railway
 builder.Services.AddHealthChecks()
-    .AddNpgSql(connectionString!, name: "postgresql", timeout: TimeSpan.FromSeconds(3));
+    .AddNpgSql(connectionString!, name: "postgresql", timeout: TimeSpan.FromSeconds(30));
 
 // AFTER THAT IS DYNAMIC
 var app = builder.Build();
