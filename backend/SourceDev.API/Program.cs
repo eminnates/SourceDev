@@ -29,6 +29,22 @@ var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
 var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
 var jwtExpiration = int.TryParse(Environment.GetEnvironmentVariable("JWT_EXPIRATION_MINUTES"), out var exp) ? exp : 60;
 
+// Convert Railway PostgreSQL URL to Npgsql format if needed
+// Railway: postgresql://user:pass@host:port/db
+// Npgsql:  Host=host;Port=port;Database=db;Username=user;Password=pass
+if (!string.IsNullOrEmpty(connectionString) && connectionString.StartsWith("postgresql://"))
+{
+    var uri = new Uri(connectionString);
+    var userInfo = uri.UserInfo.Split(':');
+    var username = userInfo[0];
+    var password = userInfo.Length > 1 ? userInfo[1] : "";
+    var host = uri.Host;
+    var port = uri.Port > 0 ? uri.Port : 5432;
+    var database = uri.AbsolutePath.TrimStart('/');
+    
+    connectionString = $"Host={host};Port={port};Database={database};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true";
+}
+
 // Validate required environment variables
 if (string.IsNullOrWhiteSpace(connectionString))
     throw new InvalidOperationException("CONNECTION_STRING or DATABASE_URL not found in environment variables!");
