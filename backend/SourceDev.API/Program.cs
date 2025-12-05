@@ -175,4 +175,22 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
+// OTOMATİK MIGRATION KODU BAŞLANGICI
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<AppDbContext>();
+        // Veritabanı yoksa oluşturur, varsa eksik migrationları uygular
+        context.Database.Migrate(); 
+        Console.WriteLine("--> Veritabanı migrationları başarıyla uygulandı.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"--> Migration sırasında hata oluştu: {ex.Message}");
+    }
+}
+// OTOMATİK MIGRATION KODU BİTİŞİ
+
 app.Run();
