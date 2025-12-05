@@ -20,12 +20,13 @@ namespace SourceDev.API.Services
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ITokenBlacklistService _tokenBlacklistService;
+        private readonly ILogger<AuthService> _logger;
         private readonly string _jwtSecret;
         private readonly string _jwtIssuer;
         private readonly string _jwtAudience;
         private readonly int _jwtExpiration;
 
-        public AuthService(UserManager<User> userManager, IConfiguration configuration, SignInManager<User> signInManager, IMapper mapper, IUnitOfWork unitOfWork, ITokenBlacklistService tokenBlacklistService)
+        public AuthService(UserManager<User> userManager, IConfiguration configuration, SignInManager<User> signInManager, IMapper mapper, IUnitOfWork unitOfWork, ITokenBlacklistService tokenBlacklistService, ILogger<AuthService> logger)
         {
             _userManager = userManager;
             _configuration = configuration;
@@ -33,6 +34,7 @@ namespace SourceDev.API.Services
             _mapper = mapper;
             _unitOfWork = unitOfWork;
             _tokenBlacklistService = tokenBlacklistService;
+            _logger = logger;
             _jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
             ?? throw new InvalidOperationException("JWT_SECRET_KEY not found!");
             _jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER")
@@ -51,6 +53,7 @@ namespace SourceDev.API.Services
             var existingUser = await _userManager.FindByEmailAsync(registerDto.Email);
             if (existingUser != null)
             {
+                _logger.LogWarning("Registration failed: Email already registered. Email: {Email}", registerDto.Email);
                 return new AuthResponseDto
                 {
                     Success = false,
@@ -61,6 +64,7 @@ namespace SourceDev.API.Services
             existingUser = await _userManager.FindByNameAsync(registerDto.Username);
             if (existingUser != null)
             {
+                _logger.LogWarning("Registration failed: Username already taken. Username: {Username}", registerDto.Username);
                 return new AuthResponseDto
                 {
                     Success = false,
@@ -84,16 +88,20 @@ namespace SourceDev.API.Services
 
             if (!result.Succeeded)
             {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                _logger.LogError("Registration failed: User creation error. Errors: {Errors}", errors);
                 return new AuthResponseDto
                 {
                     Success = false,
-                    Message = string.Join(", ", result.Errors.Select(e => e.Description))
+                    Message = errors
                 };
             }
 
             // Generate token
             var token = GenerateJwtToken(user);
             var expiration = DateTime.UtcNow.AddMinutes(_jwtExpiration);
+
+            _logger.LogInformation("User registered successfully. UserId: {UserId}, Username: {Username}", user.Id, user.UserName);
 
             return new AuthResponseDto
             {
@@ -113,6 +121,7 @@ namespace SourceDev.API.Services
 
             if (user == null)
             {
+                _logger.LogWarning("Login failed: User not found. Input: {Input}", loginDto.EmailOrUsername);
                 return new AuthResponseDto
                 {
                     Success = false,
@@ -123,6 +132,7 @@ namespace SourceDev.API.Services
             // Check if deleted
             if (user.on_deleted)
             {
+                _logger.LogWarning("Login failed: Account deleted. UserId: {UserId}", user.Id);
                 return new AuthResponseDto
                 {
                     Success = false,
@@ -135,6 +145,7 @@ namespace SourceDev.API.Services
 
             if (!result.Succeeded)
             {
+                _logger.LogWarning("Login failed: Invalid password. UserId: {UserId}", user.Id);
                 return new AuthResponseDto
                 {
                     Success = false,
@@ -145,6 +156,8 @@ namespace SourceDev.API.Services
             // Generate token
             var token = GenerateJwtToken(user);
             var expiration = DateTime.UtcNow.AddMinutes(_jwtExpiration);
+
+            _logger.LogInformation("User logged in successfully. UserId: {UserId}", user.Id);
 
             return new AuthResponseDto
             {
