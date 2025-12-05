@@ -3,6 +3,7 @@ using SourceDev.API.Models.Entities;
 using SourceDev.API.Repositories;
 using SourceDev.API.Models;
 using Microsoft.EntityFrameworkCore;
+using SourceDev.API.Services.Background;
 
 namespace SourceDev.API.Services
 {
@@ -12,37 +13,17 @@ namespace SourceDev.API.Services
         private readonly ILogger<PostService> _logger;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        public PostService(IUnitOfWork unitOfWork, ILogger<PostService> logger, IServiceScopeFactory scopeFactory, IHttpContextAccessor httpContextAccessor)
+        private readonly IViewCountQueue _viewCountQueue;
+
+        public PostService(IUnitOfWork unitOfWork, ILogger<PostService> logger, IServiceScopeFactory scopeFactory, IHttpContextAccessor httpContextAccessor, IViewCountQueue viewCountQueue)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
             _scopeFactory = scopeFactory;
             _httpContextAccessor = httpContextAccessor;
+            _viewCountQueue = viewCountQueue;
         }
-        private void QueueIncrementViewCount(int postId)
-        {
-            _ = Task.Run(async () =>
-            {
-                using var scope = _scopeFactory.CreateScope();
-                var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-                var logger = scope.ServiceProvider.GetRequiredService<ILogger<PostService>>();
 
-                try
-                {
-                    var post = await uow.Posts.GetByIdAsync(postId);
-                    if (post != null)
-                    {
-                        post.view_count++;
-                        uow.Posts.Update(post);
-                        await uow.SaveChangesAsync();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "Error incrementing view count. PostId: {PostId}", postId);
-                }
-            });
-        }
         public async Task<PostDto> CreateAsync(CreatePostDto dto, int authorId)
         {
             if (string.IsNullOrWhiteSpace(dto.Content))
@@ -91,10 +72,7 @@ namespace SourceDev.API.Services
             // Add tags by name if provided
             if (dto.Tags != null && dto.Tags.Any())
             {
-                foreach (var tagName in dto.Tags)
-                {
-                    await AddTagToPostInternalAsync(post.post_id, tagName);
-                }
+                await AddTagsToPostBatchAsync(post.post_id, dto.Tags);
             }
 
             // Add tags by ID if provided
@@ -183,17 +161,7 @@ namespace SourceDev.API.Services
             }
 
             // View count artır (fire-and-forget - performans için asenkron)
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    QueueIncrementViewCount(id);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error incrementing view count. PostId: {PostId}", id);
-                }
-            });
+            _ = _viewCountQueue.QueueViewCountAsync(id);
 
             _logger.LogInformation("Post retrieved. PostId: {PostId}, UserId: {UserId}", id, currentUserId);
 
@@ -224,17 +192,7 @@ namespace SourceDev.API.Services
                     .AnyAsync(b => b.post_id == postDto.Id && b.user_id == currentUserId.Value);
             }
 
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    QueueIncrementViewCount(postDto.Id);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error incrementing view count. PostId: {PostId}", postDto.Id);
-                }
-            });
+            _ = _viewCountQueue.QueueViewCountAsync(postDto.Id);
 
             _logger.LogInformation("Post retrieved. Slug: {Slug}, PostId: {PostId}, UserId: {UserId}", slug, postDto.Id, currentUserId);
 
@@ -520,13 +478,7 @@ namespace SourceDev.API.Services
                 await _unitOfWork.SaveChangesAsync();
 
                 // Add new tags
-                foreach (var tagName in dto.Tags)
-                {
-                    if (!string.IsNullOrWhiteSpace(tagName))
-                    {
-                        await AddTagToPostInternalAsync(id, tagName);
-                    }
-                }
+                await AddTagsToPostBatchAsync(id, dto.Tags);
             }
 
             // Update Publish Status
@@ -711,6 +663,63 @@ namespace SourceDev.API.Services
 
             _logger.LogInformation("Tag added to post. PostId: {PostId}, Tag: {TagName}", postId, tagName);
             return true;
+        }
+
+        private async Task AddTagsToPostBatchAsync(int postId, List<string> tagNames)
+        {
+            if (tagNames == null || !tagNames.Any()) return;
+
+            var normalizedTags = tagNames
+                .Where(t => !string.IsNullOrWhiteSpace(t))
+                .Select(t => t.Trim().ToLowerInvariant())
+                .Distinct()
+                .ToList();
+
+            if (!normalizedTags.Any()) return;
+
+            // 1. Find existing tags
+            var existingTags = await _unitOfWork.Tags
+                .Query()
+                .Where(t => normalizedTags.Contains(t.name))
+                .ToListAsync();
+
+            var existingTagNames = existingTags.Select(t => t.name).ToList();
+            var newTagNames = normalizedTags.Except(existingTagNames).ToList();
+
+            // 2. Create missing tags
+            if (newTagNames.Any())
+            {
+                var newTags = newTagNames.Select(name => new Models.Entities.Tag { name = name }).ToList();
+                await _unitOfWork.Tags.AddRangeAsync(newTags);
+                await _unitOfWork.SaveChangesAsync();
+                existingTags.AddRange(newTags);
+            }
+
+            // 3. Get all tag IDs
+            var tagIds = existingTags.Select(t => t.tag_id).ToList();
+
+            // 4. Find existing links to avoid duplicates
+            var existingLinks = await _unitOfWork.PostTags
+                .Query()
+                .Where(pt => pt.post_id == postId && tagIds.Contains(pt.tag_id))
+                .Select(pt => pt.tag_id)
+                .ToListAsync();
+
+            // 5. Create new links
+            var newLinks = tagIds
+                .Except(existingLinks)
+                .Select(tagId => new Models.Entities.PostTag
+                {
+                    post_id = postId,
+                    tag_id = tagId
+                })
+                .ToList();
+
+            if (newLinks.Any())
+            {
+                await _unitOfWork.PostTags.AddRangeAsync(newLinks);
+                await _unitOfWork.SaveChangesAsync();
+            }
         }
 
         private async Task<bool> AddTagToPostByIdInternalAsync(int postId, int tagId)

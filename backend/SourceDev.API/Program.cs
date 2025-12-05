@@ -7,6 +7,7 @@ using SourceDev.API.Extensions;
 using SourceDev.API.Models.Entities;
 using SourceDev.API.Repositories;
 using SourceDev.API.Services;
+using SourceDev.API.Services.Background;
 using System.Text;
 using FluentValidation;
 using FluentValidation.AspNetCore;
@@ -91,6 +92,10 @@ builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<IReactionService, ReactionService>();
+
+// Background Services
+builder.Services.AddSingleton<IViewCountQueue, ViewCountQueue>();
+builder.Services.AddHostedService<ViewCountWorker>();
 
 // Identity Configuration
 builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
