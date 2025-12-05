@@ -132,7 +132,8 @@ namespace SourceDev.API.Repositories
 
         public async Task<IEnumerable<PostListDto>> GetLatestDtosAsync(int page = 1, int pageSize = 20)
         {
-            return await _dbSet
+            // 1. Fetch Posts
+            var posts = await _dbSet
                 .AsNoTracking()
                 .Where(p => p.status)
                 .OrderByDescending(p => p.published_at)
@@ -153,9 +154,33 @@ namespace SourceDev.API.Repositories
                     PublishedAt = p.published_at,
                     AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
                     Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
-                    ReactionTypes = p.Reactions.GroupBy(r => r.reaction_type).ToDictionary(g => g.Key, g => g.Count())
+                    ReactionTypes = new Dictionary<string, int>() // Placeholder
                 })
                 .ToListAsync();
+
+            // 2. Fetch Reaction Counts for these posts
+            if (posts.Any())
+            {
+                var postIds = posts.Select(p => p.Id).ToList();
+                var reactions = await _context.Reactions
+                    .AsNoTracking()
+                    .Where(r => postIds.Contains(r.post_id))
+                    .GroupBy(r => new { r.post_id, r.reaction_type })
+                    .Select(g => new { PostId = g.Key.post_id, Type = g.Key.reaction_type, Count = g.Count() })
+                    .ToListAsync();
+
+                // 3. Map reactions to posts
+                foreach (var post in posts)
+                {
+                    var postReactions = reactions.Where(r => r.PostId == post.Id);
+                    foreach (var pr in postReactions)
+                    {
+                        post.ReactionTypes[pr.Type] = pr.Count;
+                    }
+                }
+            }
+
+            return posts;
         }
 
         public async Task<IEnumerable<Post>> GetTopAsync(int take = 10)
@@ -170,7 +195,8 @@ namespace SourceDev.API.Repositories
 
         public async Task<IEnumerable<PostListDto>> GetTopDtosAsync(int take = 10)
         {
-            return await _dbSet
+            // 1. Fetch Posts
+            var posts = await _dbSet
                 .AsNoTracking()
                 .Where(p => p.status)
                 .OrderByDescending(p => p.likes_count)
@@ -190,9 +216,33 @@ namespace SourceDev.API.Repositories
                     PublishedAt = p.published_at,
                     AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
                     Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
-                    ReactionTypes = p.Reactions.GroupBy(r => r.reaction_type).ToDictionary(g => g.Key, g => g.Count())
+                    ReactionTypes = new Dictionary<string, int>() // Placeholder
                 })
                 .ToListAsync();
+
+            // 2. Fetch Reaction Counts
+            if (posts.Any())
+            {
+                var postIds = posts.Select(p => p.Id).ToList();
+                var reactions = await _context.Reactions
+                    .AsNoTracking()
+                    .Where(r => postIds.Contains(r.post_id))
+                    .GroupBy(r => new { r.post_id, r.reaction_type })
+                    .Select(g => new { PostId = g.Key.post_id, Type = g.Key.reaction_type, Count = g.Count() })
+                    .ToListAsync();
+
+                // 3. Map reactions
+                foreach (var post in posts)
+                {
+                    var postReactions = reactions.Where(r => r.PostId == post.Id);
+                    foreach (var pr in postReactions)
+                    {
+                        post.ReactionTypes[pr.Type] = pr.Count;
+                    }
+                }
+            }
+
+            return posts;
         }
 
         public async Task<IEnumerable<Post>> GetByUserAsync(int userId, int page = 1, int pageSize = 20)
@@ -359,7 +409,7 @@ namespace SourceDev.API.Repositories
                     PublishedAt = p.published_at,
                     AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
                     Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
-                    ReactionTypes = p.Reactions.GroupBy(r => r.reaction_type).ToDictionary(g => g.Key, g => g.Count())
+                    ReactionTypes = new Dictionary<string, int>() // Placeholder
                 })
                 .ToListAsync();
 
@@ -387,11 +437,32 @@ namespace SourceDev.API.Repositories
                         PublishedAt = p.published_at,
                         AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
                         Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
-                        ReactionTypes = p.Reactions.GroupBy(r => r.reaction_type).ToDictionary(g => g.Key, g => g.Count())
+                        ReactionTypes = new Dictionary<string, int>() // Placeholder
                     })
                     .ToListAsync();
 
                 posts.AddRange(extraPosts);
+            }
+
+            // 4. Fetch Reaction Counts for ALL collected posts
+            if (posts.Any())
+            {
+                var postIds = posts.Select(p => p.Id).ToList();
+                var reactions = await _context.Reactions
+                    .AsNoTracking()
+                    .Where(r => postIds.Contains(r.post_id))
+                    .GroupBy(r => new { r.post_id, r.reaction_type })
+                    .Select(g => new { PostId = g.Key.post_id, Type = g.Key.reaction_type, Count = g.Count() })
+                    .ToListAsync();
+
+                foreach (var post in posts)
+                {
+                    var postReactions = reactions.Where(r => r.PostId == post.Id);
+                    foreach (var pr in postReactions)
+                    {
+                        post.ReactionTypes[pr.Type] = pr.Count;
+                    }
+                }
             }
 
             return posts;
