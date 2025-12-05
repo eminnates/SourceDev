@@ -258,7 +258,7 @@ namespace SourceDev.API.Repositories
 
         public async Task<IEnumerable<PostListDto>> GetByUserDtosAsync(int userId, int page = 1, int pageSize = 20)
         {
-            return await _dbSet
+            var posts = await _dbSet
                 .AsNoTracking()
                 .Where(p => p.user_id == userId && p.status)
                 .OrderByDescending(p => p.published_at)
@@ -279,9 +279,31 @@ namespace SourceDev.API.Repositories
                     PublishedAt = p.published_at,
                     AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
                     Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
-                    ReactionTypes = new Dictionary<string, int>() // Will be populated in service layer if needed
+                    ReactionTypes = new Dictionary<string, int>()
                 })
                 .ToListAsync();
+
+            if (posts.Any())
+            {
+                var postIds = posts.Select(p => p.Id).ToList();
+                var reactions = await _context.Reactions
+                    .AsNoTracking()
+                    .Where(r => postIds.Contains(r.post_id))
+                    .GroupBy(r => new { r.post_id, r.reaction_type })
+                    .Select(g => new { PostId = g.Key.post_id, Type = g.Key.reaction_type, Count = g.Count() })
+                    .ToListAsync();
+
+                foreach (var post in posts)
+                {
+                    var postReactions = reactions.Where(r => r.PostId == post.Id);
+                    foreach (var pr in postReactions)
+                    {
+                        post.ReactionTypes[pr.Type] = pr.Count;
+                    }
+                }
+            }
+
+            return posts;
         }
 
         public async Task<IEnumerable<Post>> GetByTagSlugAsync(string tagSlug, int page = 1, int pageSize = 20)
@@ -301,7 +323,7 @@ namespace SourceDev.API.Repositories
 
         public async Task<IEnumerable<PostListDto>> GetByTagDtosAsync(string tagSlug, int page = 1, int pageSize = 20)
         {
-            return await _context.PostTags
+            var posts = await _context.PostTags
                 .AsNoTracking()
                 .Where(pt => pt.Tag != null && pt.Post != null && pt.Tag.name == tagSlug && pt.Post.status)
                 .OrderByDescending(pt => pt.Post!.published_at)
@@ -322,9 +344,31 @@ namespace SourceDev.API.Repositories
                     PublishedAt = pt.Post.published_at,
                     AuthorDisplayName = pt.Post.User != null ? pt.Post.User.display_name : string.Empty,
                     Tags = pt.Post.PostTags.Where(pt2 => pt2.Tag != null).Select(pt2 => pt2.Tag!.name).ToList(),
-                    ReactionTypes = new Dictionary<string, int>() // Will be filled in service layer
+                    ReactionTypes = new Dictionary<string, int>()
                 })
                 .ToListAsync();
+
+            if (posts.Any())
+            {
+                var postIds = posts.Select(p => p.Id).ToList();
+                var reactions = await _context.Reactions
+                    .AsNoTracking()
+                    .Where(r => postIds.Contains(r.post_id))
+                    .GroupBy(r => new { r.post_id, r.reaction_type })
+                    .Select(g => new { PostId = g.Key.post_id, Type = g.Key.reaction_type, Count = g.Count() })
+                    .ToListAsync();
+
+                foreach (var post in posts)
+                {
+                    var postReactions = reactions.Where(r => r.PostId == post.Id);
+                    foreach (var pr in postReactions)
+                    {
+                        post.ReactionTypes[pr.Type] = pr.Count;
+                    }
+                }
+            }
+
+            return posts;
         }
 
         public async Task<IEnumerable<Post>> GetRelevantAsync(int? userId, int page = 1, int pageSize = 20)
@@ -584,7 +628,7 @@ namespace SourceDev.API.Repositories
                 postsQuery = postsQuery.AsNoTracking().OrderByDescending(p => p.published_at); // AsNoTracking EKLENDI
             }
 
-            return await postsQuery
+            var posts = await postsQuery
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .Select(p => new PostListDto
@@ -604,9 +648,31 @@ namespace SourceDev.API.Repositories
                     PublishedAt = p.published_at,
                     AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
                     Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
-                    ReactionTypes = new Dictionary<string, int>() // Will be populated in service layer if needed
+                    ReactionTypes = new Dictionary<string, int>()
                 })
                 .ToListAsync();
+
+            if (posts.Any())
+            {
+                var postIds = posts.Select(p => p.Id).ToList();
+                var reactions = await _context.Reactions
+                    .AsNoTracking()
+                    .Where(r => postIds.Contains(r.post_id))
+                    .GroupBy(r => new { r.post_id, r.reaction_type })
+                    .Select(g => new { PostId = g.Key.post_id, Type = g.Key.reaction_type, Count = g.Count() })
+                    .ToListAsync();
+
+                foreach (var post in posts)
+                {
+                    var postReactions = reactions.Where(r => r.PostId == post.Id);
+                    foreach (var pr in postReactions)
+                    {
+                        post.ReactionTypes[pr.Type] = pr.Count;
+                    }
+                }
+            }
+
+            return posts;
         }
 
         public async Task<IEnumerable<PostListDto>> GetUserDraftDtosAsync(int userId, int page = 1, int pageSize = 20)
