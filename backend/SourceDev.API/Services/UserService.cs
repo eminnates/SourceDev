@@ -55,11 +55,9 @@ namespace SourceDev.API.Services
             return await _unitOfWork.Users.GetByUsernameAsync(username);
         }
 
-        public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
+        public async Task<IEnumerable<UserDto>> GetAllUsersAsync(int page = 1, int pageSize = 20)
         {
-            var users = (await _unitOfWork.Users.GetAllAsync())
-                .Where(u => !u.on_deleted)
-                .ToList();
+            var users = (await _unitOfWork.Users.GetAllUsersPagedAsync(page, pageSize)).ToList();
 
             if (!users.Any())
                 return Enumerable.Empty<UserDto>();

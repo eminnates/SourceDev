@@ -9,7 +9,7 @@ namespace SourceDev.API.Services
         Task<UserDto?> GetUserDtoByIdAsync(int id);
         Task<User?> GetUserByEmailAsync(string email);
         Task<User?> GetUserByUsernameAsync(string username);
-        Task<IEnumerable<UserDto>> GetAllUsersAsync();
+        Task<IEnumerable<UserDto>> GetAllUsersAsync(int page = 1, int pageSize = 20);
         Task<IEnumerable<UserDto>> GetActiveUsersAsync();
         Task<IEnumerable<UserDto>> SearchUsersAsync(string searchTerm);
         Task<User> UpdateUserAsync(User user);

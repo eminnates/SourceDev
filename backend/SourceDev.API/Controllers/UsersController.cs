@@ -17,9 +17,12 @@ namespace SourceDev.API.Controllers
 
         [HttpGet]
         [AllowAnonymous]
-        public async Task<IActionResult> GetAllUsers()
+        public async Task<IActionResult> GetAllUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
-            var users = await _userService.GetAllUsersAsync();
+            if (page < 1 || pageSize < 1)
+                return BadRequest(new { message = "Invalid paging parameters." });
+
+            var users = await _userService.GetAllUsersAsync(page, pageSize);
             return Ok(users);
         }
 

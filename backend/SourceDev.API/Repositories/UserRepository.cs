@@ -32,6 +32,17 @@ namespace SourceDev.API.Repositories
             return await _dbSet.AsNoTracking().AnyAsync(u => u.UserName == username);
         }
 
+        public async Task<IEnumerable<User>> GetAllUsersPagedAsync(int page, int pageSize)
+        {
+            return await _dbSet
+                .AsNoTracking()
+                .Where(u => !u.on_deleted)
+                .OrderByDescending(u => u.created_at)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<User>> GetActiveUsersAsync()
         {
             return await _dbSet.AsNoTracking().Where(u => !u.on_deleted).ToListAsync();

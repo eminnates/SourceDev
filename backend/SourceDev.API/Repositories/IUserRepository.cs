@@ -8,6 +8,7 @@ namespace SourceDev.API.Repositories
         Task<User?> GetByUsernameAsync(string username);
         Task<bool> IsEmailExistsAsync(string email);
         Task<bool> IsUsernameExistsAsync(string username);
+        Task<IEnumerable<User>> GetAllUsersPagedAsync(int page, int pageSize);
         Task<IEnumerable<User>> GetActiveUsersAsync();
         Task<IEnumerable<User>> SearchUsersByDisplayNameAsync(string searchTerm);
         Task<int> GetFollowersCountAsync(int userId);
