@@ -8,7 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 export default function Navbar() {
     const router = useRouter();
     const pathname = usePathname();
-    const { user, isLoggedIn, logout } = useAuth();
+    const { user, isLoggedIn, logout, loading } = useAuth();
     const [searchFocused, setSearchFocused] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [showDropdown, setShowDropdown] = useState(false);
@@ -79,7 +79,9 @@ export default function Navbar() {
 
                         {/* Auth Section */}
                         <div className="flex flex-row justify-end items-center gap-2 flex-wrap ml-auto">
-                            {isLoggedIn && user ? (
+                            {loading ? (
+                                <div className="w-24 h-10 bg-gray-100 animate-pulse rounded-md"></div>
+                            ) : isLoggedIn && user ? (
                                 <>
                                     {/* Create Post Button */}
                                     <Link

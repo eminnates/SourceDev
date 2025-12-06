@@ -14,14 +14,26 @@ export default function PostCard({ post, showCover = false, onBookmarkToggle }) 
     const [commentCount, setCommentCount] = useState(0);
     const [authorProfileImage, setAuthorProfileImage] = useState(null);
     const [authorUsername, setAuthorUsername] = useState(null);
+    const [formattedDate, setFormattedDate] = useState('');
 
-    console.log('post', post);
     const author = post.authorDisplayName;
     const isBookmarked = post.bookmarkedByCurrentUser || false;
     const coverImage = post.coverImageUrl;
     const postUrl = `/post/${post.id}`; // Always use ID for unique identification
     const readTime = post.readingTimeMinutes || post.readTime || 5;
     const tags = post.tags || [];
+
+    // Format date on client side to avoid hydration mismatch
+    useEffect(() => {
+        if (post.date) {
+            setFormattedDate(post.date);
+        } else if (post.publishedAt) {
+            setFormattedDate(new Date(post.publishedAt).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric'
+            }));
+        }
+    }, [post.date, post.publishedAt]);
 
     // Fetch comment count when component mounts
     useEffect(() => {
@@ -84,13 +96,6 @@ export default function PostCard({ post, showCover = false, onBookmarkToggle }) 
         fetchUsername();
     }, [author]);
 
-    // Format date
-    const date = post.date || (post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric'
-    }) : '');
-
-
     const reactionTypes = post.reactionTypes && Object.keys(post.reactionTypes).length > 0
         ? post.reactionTypes
         : post.ReactionTypes && Object.keys(post.ReactionTypes).length > 0
@@ -140,7 +145,7 @@ export default function PostCard({ post, showCover = false, onBookmarkToggle }) 
                             >
                                 {author}
                             </Link>
-                            <p className="text-xs text-brand-muted ms-2">{date}</p>
+                            <p className="text-xs text-brand-muted ms-2">{formattedDate}</p>
                         </div>
 
                         <Link href={postUrl}>

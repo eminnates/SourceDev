@@ -1,13 +1,7 @@
-import PostFeed from '@/components/PostFeed/PostFeed';
 import LeftSidebar from '@/components/Sidebar/LeftSidebar';
 import DiscussSection from '@/components/Sidebar/DiscussSection';
 
-export const metadata = {
-  title: "Top Posts - SourceDev",
-  description: "Explore the most popular posts from the SourceDev community",
-};
-
-export default function TopPage() {
+export default function FeedLayout({ children }) {
   return (
     <div className="min-h-screen bg-brand-background flex justify-center">
       <main className="mx-4 md:mx-8 lg:mx-16 px-4 py-4 w-full">
@@ -20,11 +14,10 @@ export default function TopPage() {
 
           {/* Main Content - Post Feed */}
           <div className="flex-1 max-w-4xl">
-            <PostFeed defaultTab="top" />
+            {children}
           </div>
         </div>
       </main>
     </div>
   );
 }
-

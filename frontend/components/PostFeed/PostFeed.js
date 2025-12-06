@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import PostCard from '../Post/PostCard';
 import { getRelevantPosts, getLatestPosts, getTopPosts, toggleBookmark } from '@/utils/api/postApi';
@@ -12,15 +12,18 @@ const PAGE_SIZES = {
     top: 20
 };
 
-export default function PostFeed({ defaultTab = 'home' }) {
+export default function PostFeed({ defaultTab = 'home', initialPosts = null }) {
     const [activeTab, setActiveTab] = useState(defaultTab);
-    const [posts, setPosts] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [posts, setPosts] = useState(initialPosts || []);
+    const [loading, setLoading] = useState(!initialPosts);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [error, setError] = useState(null);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const router = useRouter();
+    
+    // Ref to skip initial fetch if initialPosts are provided
+    const shouldFetchRef = useRef(!initialPosts);
 
     useEffect(() => {
         setActiveTab(defaultTab);
@@ -121,6 +124,10 @@ export default function PostFeed({ defaultTab = 'home' }) {
     );
 
     useEffect(() => {
+        if (!shouldFetchRef.current) {
+            shouldFetchRef.current = true;
+            return;
+        }
         setPosts([]);
         setPage(1);
         setHasMore(true);
