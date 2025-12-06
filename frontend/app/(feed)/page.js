@@ -4,7 +4,7 @@ import { getRelevantPosts } from '@/utils/api/postApi';
 export default async function Home() {
   let initialPosts = null;
   try {
-    const result = await getRelevantPosts(1, 10);
+    const result = await getRelevantPosts(1, 20);
     if (result.success) {
       initialPosts = result.data;
     }

@@ -9,7 +9,7 @@ export const metadata = {
 export default async function LatestPage() {
   let initialPosts = null;
   try {
-    const result = await getLatestPosts(1, 10);
+    const result = await getLatestPosts(1, 20);
     if (result.success) {
       initialPosts = result.data;
     }

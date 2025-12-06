@@ -7,8 +7,8 @@ import { getRelevantPosts, getLatestPosts, getTopPosts, toggleBookmark } from '@
 import { isAuthenticated } from '@/utils/auth';
 
 const PAGE_SIZES = {
-    relevant: 10,
-    latest: 10,
+    relevant: 20,
+    latest: 20,
     top: 20
 };
 
@@ -19,7 +19,7 @@ export default function PostFeed({ defaultTab = 'home', initialPosts = null }) {
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [error, setError] = useState(null);
     const [page, setPage] = useState(1);
-    const [hasMore, setHasMore] = useState(true);
+    const [hasMore, setHasMore] = useState(initialPosts ? initialPosts.length >= (PAGE_SIZES[defaultTab === 'home' ? 'relevant' : defaultTab] || 20) : true);
     const router = useRouter();
     
     // Ref to skip initial fetch if initialPosts are provided
