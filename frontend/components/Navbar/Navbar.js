@@ -3,22 +3,15 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { isAuthenticated, getUser, logout } from '@/utils/auth';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Navbar() {
     const router = useRouter();
     const pathname = usePathname();
+    const { user, isLoggedIn, logout } = useAuth();
     const [searchFocused, setSearchFocused] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [user, setUser] = useState(null);
     const [showDropdown, setShowDropdown] = useState(false);
-
-    useEffect(() => {
-        // Check authentication status
-        setIsLoggedIn(isAuthenticated());
-        setUser(getUser());
-    }, []);
 
     // Clear search input when leaving search page (e.g. going back to home)
     useEffect(() => {
@@ -43,9 +36,7 @@ export default function Navbar() {
 
     const handleLogout = () => {
         logout();
-        setIsLoggedIn(false);
-        setUser(null);
-        router.push('/login');
+        setShowDropdown(false);
     };
 
     return (

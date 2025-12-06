@@ -1,5 +1,6 @@
 import "@/styles/globals.css";
 import NavbarWrapper from "@/components/Navbar/NavbarWrapper";
+import { AuthProvider } from "@/context/AuthContext";
 
 export const metadata = {
   title: "SourceDev - Developer Community",
@@ -10,8 +11,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`antialiased bg-brand-background`}>
-        <NavbarWrapper />
-        {children}
+        <AuthProvider>
+          <NavbarWrapper />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

@@ -6,12 +6,14 @@ import { FaGoogle, FaGithub } from "react-icons/fa";
 import SocialLoginButton from "./SocialLoginButton";
 import InputField from "./InputField";
 import Checkbox from "./Checkbox";
-import { login } from "@/utils/api/authApi";
+import { login as apiLogin } from "@/utils/api/authApi";
 import { isAuthenticated } from "@/utils/auth";
+import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 
 export default function LoginForm() {
   const router = useRouter();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
@@ -35,7 +37,7 @@ export default function LoginForm() {
     setIsLoading(true);
 
     try {
-      const result = await login({
+      const result = await apiLogin({
         emailOrUsername: email,
         password: password,
         rememberMe: rememberMe
@@ -44,10 +46,14 @@ export default function LoginForm() {
       if (result.success) {
         setSuccessMessage(result.message || 'Login successful!');
         
-        // Redirect to home and reload to update navbar
+        // Update auth context
+        if (result.data && result.data.token && result.data.user) {
+            login(result.data.user, result.data.token);
+        }
+
+        // Redirect to home
         setTimeout(() => {
           router.push('/');
-          window.location.reload();
         }, 300);
       } else {
         // Hata mesajını göster - eğer mesaj yoksa varsayılan mesaj kullan
