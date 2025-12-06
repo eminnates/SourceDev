@@ -82,7 +82,6 @@ export default function TagPage({ params }) {
   }, [tagname, currentPage, filter]);
 
   const handleFilterChange = (newFilter) => {
-    console.log('Filter changed:', newFilter);
     setFilter(newFilter);
     setCurrentPage(1); // Reset to first page when filter changes
   };

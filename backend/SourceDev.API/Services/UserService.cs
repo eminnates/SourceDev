@@ -21,15 +21,13 @@ namespace SourceDev.API.Services
 
         public async Task<UserDto?> GetUserDtoByIdAsync(int id)
         {
-            var userTask = _unitOfWork.Users.GetByIdAsync(id);
-            var followersCountTask = _unitOfWork.Users.GetFollowersCountAsync(id);
-            var followingCountTask = _unitOfWork.Users.GetFollowingCountAsync(id);
-
-            await Task.WhenAll(userTask, followersCountTask, followingCountTask);
-
-            var user = await userTask;
+            var user = await _unitOfWork.Users.GetByIdAsync(id);
+            
             if (user == null || user.on_deleted)
                 return null;
+
+            var followersCount = await _unitOfWork.Users.GetFollowersCountAsync(id);
+            var followingCount = await _unitOfWork.Users.GetFollowingCountAsync(id);
 
             return new UserDto
             {
@@ -40,8 +38,8 @@ namespace SourceDev.API.Services
                 Bio = user.bio,
                 ProfileImageUrl = user.profile_img_url,
                 CreatedAt = user.created_at,
-                FollowersCount = await followersCountTask,
-                FollowingCount = await followingCountTask
+                FollowersCount = followersCount,
+                FollowingCount = followingCount
             };
         }
 

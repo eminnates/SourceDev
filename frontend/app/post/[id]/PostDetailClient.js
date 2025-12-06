@@ -117,7 +117,7 @@ export default function PostDetailClient({ initialPost }) {
       {/* Right Sidebar - Author Info & More */}
       <div className="hidden lg:block w-80 shrink-0">
         <div className="sticky top-20 space-y-6">
-          <PostAuthorCard author={post.author} authorId={post.authorId} />
+          <PostAuthorCard author={post.author} authorId={post.authorId} postId={post.id} />
         </div>
       </div>
 

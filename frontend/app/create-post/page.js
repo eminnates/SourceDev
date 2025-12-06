@@ -8,7 +8,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { MdClose } from 'react-icons/md';
 import { isAuthenticated } from '@/utils/auth';
-import { createPost, updatePost, getPostById, publishPost, deletePost } from '@/utils/api/postApi';
+import { createPost, updatePost, getPostById, getPostForEdit, publishPost, deletePost } from '@/utils/api/postApi';
 import { searchTags, getPopularTags } from '@/utils/api/tagApi';
 import 'easymde/dist/easymde.min.css';
 
@@ -85,7 +85,7 @@ function CreatePostContent() {
   // Load draft data for editing
   const loadDraftData = async (postId) => {
     try {
-      const result = await getPostById(postId);
+      const result = await getPostForEdit(postId);
       if (result.success && result.data) {
         const post = result.data;
         setEditingPost(post);
@@ -94,11 +94,17 @@ function CreatePostContent() {
         setSelectedTags(post.tags || []);
         setCoverImage(post.coverImage || null);
       } else {
-        setErrors({ submit: 'Failed to load draft for editing' });
+        if (result.status === 403) {
+          setErrors({ submit: 'You are not authorized to edit this post.' });
+        } else if (result.status === 404) {
+          setErrors({ submit: 'Post not found.' });
+        } else {
+          setErrors({ submit: result.message || 'Failed to load draft for editing' });
+        }
       }
     } catch (error) {
       console.error('Error loading draft:', error);
-      setErrors({ submit: 'Failed to load draft for editing' });
+      setErrors({ submit: 'An unexpected error occurred.' });
     }
   };
 

@@ -32,7 +32,7 @@ export default function PostFeed({ defaultTab = 'home', initialPosts = null }) {
     // Handle bookmark toggle
     const handleBookmarkToggle = async (postId) => {
         if (!isAuthenticated()) {
-            window.location.href = '/login';
+            router.push('/login');
             return;
         }
 

@@ -92,18 +92,30 @@ export const deletePost = async (postId) => {
  * @private
  */
 const transformPostData = (backendPost) => {
+  if (!backendPost) return null;
+
+  let formattedDate = '';
+  try {
+    const dateStr = backendPost.publishedAt || backendPost.createdAt;
+    if (dateStr) {
+      formattedDate = new Date(dateStr).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
+      });
+    }
+  } catch (e) {
+    console.error('Date parsing error:', e);
+  }
+
   return {
     id: backendPost.id,
     title: backendPost.title,
     slug: backendPost.slug,
-    content: backendPost.contentMarkdown,
+    content: backendPost.contentMarkdown || '',
     coverImage: backendPost.coverImageUrl,
     author: backendPost.authorDisplayName,
     authorId: backendPost.authorId,
-    date: new Date(backendPost.publishedAt || backendPost.createdAt).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric'
-    }),
+    date: formattedDate,
     publishedAt: backendPost.publishedAt,
     createdAt: backendPost.createdAt,
     updatedAt: backendPost.updatedAt,
@@ -132,15 +144,51 @@ export const getPostById = async (postId) => {
   try {
     const response = await apiClient.get(`/post/${postId}`);
     
+    if (!response.data) {
+      throw new Error('No data received from server');
+    }
+
     return {
       success: true,
       data: transformPostData(response.data)
     };
   } catch (error) {
     console.error('Get post error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      response: error.response
+    });
     return {
       success: false,
       message: error.message || 'Failed to fetch post'
+    };
+  }
+};
+
+/**
+ * Get post for editing (requires auth)
+ * @param {number} postId - Post ID
+ * @returns {Promise<Object>} API response
+ */
+export const getPostForEdit = async (postId) => {
+  try {
+    const response = await apiClient.get(`/post/${postId}/edit`);
+    
+    if (!response.data) {
+      throw new Error('No data received from server');
+    }
+
+    return {
+      success: true,
+      data: transformPostData(response.data)
+    };
+  } catch (error) {
+    console.error('Get post for edit error:', error);
+    return {
+      success: false,
+      message: error.message || 'Failed to fetch post for editing',
+      status: error.response?.status
     };
   }
 };

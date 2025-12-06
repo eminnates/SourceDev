@@ -168,6 +168,20 @@ namespace SourceDev.API.Services
             return postDto;
         }
 
+        public async Task<PostDto?> GetForEditAsync(int id, int requesterId)
+        {
+            var postDto = await _unitOfWork.Posts.GetDtoByIdAsync(id);
+
+            if (postDto == null) return null;
+
+            if (postDto.AuthorId != requesterId)
+            {
+                throw new UnauthorizedAccessException("You are not the author of this post.");
+            }
+
+            return postDto;
+        }
+
 
         public async Task<PostDto?> GetBySlugAsync(string slug, int? currentUserId = null)
         {

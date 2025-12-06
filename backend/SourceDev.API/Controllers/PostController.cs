@@ -29,6 +29,26 @@ namespace SourceDev.API.Controllers
             if (post == null) return NotFound();
             return Ok(post);
         }
+
+        [HttpGet("{id:int}/edit")]
+        [Authorize]
+        public async Task<IActionResult> GetForEdit(int id)
+        {
+            var currentUserId = User.GetUserId();
+            if (!currentUserId.HasValue) return Unauthorized();
+
+            try
+            {
+                var post = await _postService.GetForEditAsync(id, currentUserId.Value);
+                if (post == null) return NotFound();
+                return Ok(post);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
         [HttpGet("slug/{slug}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetBySlug(string slug)

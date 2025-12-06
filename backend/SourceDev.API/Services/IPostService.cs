@@ -7,6 +7,7 @@ namespace SourceDev.API.Services
     public interface IPostService
     {
         Task<PostDto?> GetByIdAsync(int id,int? currentUserId = null);
+        Task<PostDto?> GetForEditAsync(int id, int requesterId);
         Task<PostDto?> GetBySlugAsync(string slug,int? currentUserId = null);
         Task<IEnumerable<PostListDto>> GetLatestAsync(int page,int pageSize);
         Task<IEnumerable<PostListDto>> GetTopAsync(int take);

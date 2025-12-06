@@ -236,7 +236,6 @@ export default function PostCard({ post, showCover = false, onBookmarkToggle }) 
                                             window.location.href = '/login';
                                             return;
                                         }
-                                        console.log('isBookmarked:', isBookmarked);
                                         if (onBookmarkToggle) {
                                             // Use parent handler for instant update
                                             onBookmarkToggle(post.id);

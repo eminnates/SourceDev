@@ -9,8 +9,6 @@ import { isAuthenticated } from '@/utils/auth';
 import { getUsernameFromDisplayName } from '@/utils/userUtils';
 
 export default function PostAuthorCard({ author, authorId, joinDate, bio, postId }) {
-  console.log('PostAuthorCard props:', { author, authorId, joinDate, bio, postId });
-
   const [currentUser, setCurrentUser] = useState(null);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -25,26 +23,19 @@ export default function PostAuthorCard({ author, authorId, joinDate, bio, postId
     if (user && authorId) {
       const isOwn = user.id === parseInt(authorId);
       setIsOwnProfile(isOwn);
-    } else {
-      console.log('Cannot check isOwnProfile - user or authorId missing');
     }
 
     // Check follow status if not own profile and user is authenticated
     const checkFollowStatus = async () => {
       if (user && authorId && isAuthenticated() && user.id !== parseInt(authorId)) {
         try {
-          console.log('Checking follow status for authorId:', authorId, 'currentUser:', user);
           const result = await checkIfFollowing(parseInt(authorId));
-          console.log('Follow status result:', result);
           if (result.success) {
-            console.log('Setting isFollowing to:', result.isFollowing);
             setIsFollowing(result.isFollowing);
           }
         } catch (error) {
           console.error('Failed to check follow status:', error);
         }
-      } else {
-        console.log('Not checking follow status:', { user: !!user, authorId, isAuthenticated: isAuthenticated(), userId: user?.id, comparison: user?.id !== parseInt(authorId) });
       }
     };
 
@@ -63,13 +54,9 @@ export default function PostAuthorCard({ author, authorId, joinDate, bio, postId
       try {
         let user = null;
 
-        console.log('Fetching author profile image for:', { authorId, author });
-
         // First try to get user by ID if we have authorId
         if (authorId) {
-          console.log('Trying to get user by ID:', authorId);
           const result = await getUserById(parseInt(authorId));
-          console.log('getUserById result:', result);
           if (result.success && result.data) {
             user = result.data;
           }
@@ -77,23 +64,17 @@ export default function PostAuthorCard({ author, authorId, joinDate, bio, postId
 
         // If we couldn't get user by ID, try search by name
         if (!user && author) {
-          console.log('Trying to search user by name:', author);
           const result = await searchUsers(author);
-          console.log('searchUsers result:', result);
           if (result.success && result.data && result.data.length > 0) {
             // Find the user with matching display name
             user = result.data.find(u => u.displayName === author);
-            console.log('Found user by name:', user);
           }
         }
 
         if (user && user.profileImageUrl) {
-          console.log('Setting author profile image:', user.profileImageUrl);
           setAuthorProfileImage(user.profileImageUrl);
           // Cache the result
           localStorage.setItem(cacheKey, user.profileImageUrl);
-        } else {
-          console.log('No profile image found for user:', user);
         }
       } catch (error) {
         console.error('Failed to fetch author profile image:', error);
@@ -104,8 +85,6 @@ export default function PostAuthorCard({ author, authorId, joinDate, bio, postId
     if (authorId || author) {
       checkFollowStatus();
       fetchAuthorProfileImage();
-    } else {
-      console.log('Both authorId and author are missing, skipping API calls');
     }
   }, [authorId, author]); // Run when authorId or author changes
 
@@ -130,7 +109,6 @@ export default function PostAuthorCard({ author, authorId, joinDate, bio, postId
 
   // Handle follow/unfollow
   const handleFollowToggle = async () => {
-    console.log('handleFollowToggle called', { authorId, isAuthenticated: isAuthenticated(), currentUser });
     if (!authorId || !isAuthenticated()) {
       // Redirect to login if not authenticated
       window.location.href = '/login';
@@ -143,14 +121,11 @@ export default function PostAuthorCard({ author, authorId, joinDate, bio, postId
     try {
       let result;
       if (isFollowing) {
-        console.log('Unfollowing user:', authorId);
         result = await unfollowUser(authorId);
       } else {
-        console.log('Following user:', authorId);
         result = await followUser(authorId);
       }
 
-      console.log('Follow/unfollow result:', result);
       if (result.success) {
         setIsFollowing(!isFollowing);
       } else {
