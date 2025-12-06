@@ -1,216 +1,69 @@
-"use client";
+import { getPostById } from '@/utils/api/postApi';
+import PostDetailClient from './PostDetailClient';
 
-import { use, useState, useEffect } from 'react';
-import PostDetailSidebar from '@/components/Post/PostDetailSidebar';
-import PostContent from '@/components/Post/PostContent';
-import PostAuthorCard from '@/components/Post/PostAuthorCard';
-import CommentsSection from '@/components/Comment/CommentsSection';
-import { getPostById, toggleLike, toggleReaction, getReactionSummary, toggleBookmark } from '@/utils/api/postApi';
-
-export default function PostDetailPage({ params }) {
-  const { id } = use(params); // This is the post ID from URL
-  const [post, setPost] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [userReactions, setUserReactions] = useState([]);
-  const [isBookmarked, setIsBookmarked] = useState(false);
-
-  useEffect(() => {
-    const fetchPost = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        // Convert id to number
-        const postId = parseInt(id, 10);
-        if (isNaN(postId)) {
-          setError('Invalid post ID');
-          setLoading(false);
-          return;
-        }
-
-        const result = await getPostById(postId);
-        if (result.success && result.data) {
-          setPost(result.data);
-          // Set user's current reactions
-          setUserReactions(result.data.userReactions || []);
-          // Set bookmark state
-          setIsBookmarked(result.data.bookmarkedByCurrentUser || false);
-        } else {
-          setError(result.message || 'Post not found');
-        }
-      } catch (err) {
-        console.error('Error fetching post:', err);
-        setError('Failed to load post');
-      } finally {
-        setLoading(false);
-      }
+// Generate metadata for SEO
+export async function generateMetadata({ params }) {
+  const { id } = await params;
+  const postId = parseInt(id, 10);
+  
+  if (isNaN(postId)) {
+    return {
+      title: 'Post Not Found',
     };
+  }
 
-    fetchPost();
-  }, [id]);
+  const result = await getPostById(postId);
+  
+  if (result.success && result.data) {
+    const post = result.data;
+    return {
+      title: `${post.title} - SourceDev`,
+      description: post.excerpt || post.content?.substring(0, 160) || 'Read this post on SourceDev',
+      openGraph: {
+        title: post.title,
+        description: post.excerpt || post.content?.substring(0, 160),
+        images: post.coverImageUrl ? [post.coverImageUrl] : [],
+        type: 'article',
+        publishedTime: post.publishedAt,
+        authors: [post.author],
+      },
+    };
+  }
 
-  const handleReaction = async (reactionType) => {
-    if (!post) return;
-
-    const hasCurrentReaction = userReactions.length > 0;
-    const currentReaction = userReactions[0];
-    const isSameReaction = currentReaction === reactionType;
-
-    let result;
-
-    if (isSameReaction) {
-      // Same reaction clicked - toggle it off
-      result = await toggleReaction(post.id, reactionType);
-    } else {
-      // Different reaction clicked - remove current and add new one
-      if (hasCurrentReaction) {
-        // First remove current reaction
-        await toggleReaction(post.id, currentReaction);
-      }
-      // Then add new reaction
-      result = await toggleReaction(post.id, reactionType);
-    }
-
-    if (result.success) {
-      // Update user's current reactions - only one reaction allowed at a time
-      setUserReactions(prev => {
-        if (isSameReaction) {
-          // Remove reaction if it's the same one
-          return [];
-        } else {
-          // Set new reaction
-          return [reactionType];
-        }
-      });
-
-      // Refresh post data to get updated reaction counts
-      const postId = parseInt(id, 10);
-      const updatedPost = await getPostById(postId);
-      if (updatedPost.success && updatedPost.data) {
-        setPost(updatedPost.data);
-      }
-    }
+  return {
+    title: 'Post Not Found',
   };
+}
 
-  const handleBookmark = async () => {
-    if (!post) return;
+export default async function PostDetailPage({ params }) {
+  const { id } = await params;
+  const postId = parseInt(id, 10);
 
-    try {
-      const result = await toggleBookmark(post.id);
-      if (result.success) {
-        // Toggle bookmark state locally
-        setIsBookmarked(prev => !prev);
-        // Update post bookmark count
-        setPost(prev => prev ? {
-          ...prev,
-          bookmarksCount: prev.bookmarksCount + (isBookmarked ? -1 : 1)
-        } : null);
-      }
-    } catch (error) {
-      console.error('Bookmark toggle failed:', error);
-    }
-  };
-
-  if (loading) {
+  if (isNaN(postId)) {
     return (
-      <div className="min-h-screen bg-brand-background flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-[50vh]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto"></div>
-          <p className="mt-4 text-brand-dark">Loading post...</p>
+          <h1 className="text-2xl font-bold text-brand-text mb-2">Invalid Post ID</h1>
+          <p className="text-brand-muted">The post ID provided is invalid.</p>
         </div>
       </div>
     );
   }
 
-  if (error || !post) {
+  // Fetch data on the server
+  const result = await getPostById(postId);
+
+  if (!result.success || !result.data) {
     return (
-      <div className="min-h-screen bg-brand-background flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-[50vh]">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-brand-dark mb-2">Post Not Found</h2>
-          <p className="text-gray-600">{error}</p>
+          <h1 className="text-2xl font-bold text-brand-text mb-2">Post Not Found</h1>
+          <p className="text-brand-muted">{result.message || "The post you're looking for doesn't exist."}</p>
         </div>
       </div>
     );
   }
 
-  const totalReactions = post.reactionTypes ? Object.values(post.reactionTypes).reduce((a, b) => a + b, 0) : 0;
-
-  const scrollToComments = () => {
-    const commentsSection = document.getElementById('comments');
-    if (commentsSection) {
-      commentsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-brand-background">
-      <main className="mx-4 md:mx-8 lg:mx-16 px-0 py-4">
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Left Sidebar - Reactions */}
-          <div className="hidden md:block">
-            <PostDetailSidebar
-              reactions={totalReactions}
-              comments={post.commentsCount || 0}
-              userReactions={userReactions}
-              onReact={handleReaction}
-              bookmarks={post.bookmarksCount || 0}
-              isBookmarked={isBookmarked}
-              onBookmark={handleBookmark}
-              onCommentClick={scrollToComments}
-            />
-          </div>
-
-          {/* Main Content */}
-          <div className="flex-1 min-w-0">
-            <PostContent post={post} />
-
-            {/* Reactions & stats sidebar for mobile - below content, above comments */}
-            <div className="mt-4 md:hidden">
-              <PostDetailSidebar
-                reactions={totalReactions}
-                comments={post.commentsCount || 0}
-                userReactions={userReactions}
-                onReact={handleReaction}
-                bookmarks={post.bookmarksCount || 0}
-                isBookmarked={isBookmarked}
-                onBookmark={handleBookmark}
-                onCommentClick={scrollToComments}
-              />
-            </div>
-
-            {/* Comments Section */}
-            <div className="pb-8">
-              <CommentsSection
-                postId={post.id}
-                commentCount={post.commentsCount || 0}
-                onCommentCountChange={(updater) => {
-                  setPost(prev => prev ? {
-                    ...prev,
-                    commentsCount: typeof updater === 'function' ? updater(prev.commentsCount || 0) : updater,
-                    comments: typeof updater === 'function' ? updater(prev.commentsCount || 0) : updater
-                  } : null);
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Right Sidebar - Author & Trending */}
-          <div className="hidden xl:block w-80 flex-shrink-0 space-y-4">
-            {post && post.author && (
-              <PostAuthorCard
-                author={post.author}
-                authorId={post.authorId}
-                joinDate={post.joinDate}
-                postId={post.id}
-              />
-            )}
-          </div>
-        </div>
-
-
-      </main>
-    </div>
-  );
+  return <PostDetailClient initialPost={result.data} />;
 }
 
