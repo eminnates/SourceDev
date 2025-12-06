@@ -48,6 +48,16 @@ if (builder.Environment.IsDevelopment())
     Console.WriteLine($"JWT Audience: {jwtAudience}");
     Console.WriteLine($"JWT Expiration: {jwtExpiration} minutes");
     Console.WriteLine($"Connection String: {connectionString?.Substring(0, Math.Min(50, connectionString.Length))}...");
+    
+    var emailHost = Environment.GetEnvironmentVariable("MAIL_HOST");
+    if (!string.IsNullOrEmpty(emailHost))
+    {
+        Console.WriteLine($"mail Host: {emailHost}");
+    }
+    else
+    {
+        Console.WriteLine("mail Host: Not configured (using mock)");
+    }
     Console.WriteLine("============================");
 }
 
@@ -92,6 +102,7 @@ builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<IReactionService, ReactionService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 // Background Services
 builder.Services.AddSingleton<IViewCountQueue, ViewCountQueue>();

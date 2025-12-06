@@ -142,11 +142,21 @@ export default function RegisterForm() {
       if (result.success) {
         setSuccessMessage(result.message);
         
-        // Redirect to home and reload to update navbar
-        setTimeout(() => {
-          router.push('/');
-          window.location.reload();
-        }, 300);
+        // Clear form
+        setFormData({
+          username: "",
+          email: "",
+          password: "",
+          confirmPassword: "",
+          displayName: "",
+          bio: ""
+        });
+        
+        // Don't redirect immediately, let user read the message
+        // setTimeout(() => {
+        //   router.push('/');
+        //   window.location.reload();
+        // }, 300);
       } else {
         // Backend'den gelen hata mesajını göster
         setServerError(result.message);

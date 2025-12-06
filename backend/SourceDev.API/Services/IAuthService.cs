@@ -9,5 +9,6 @@ namespace SourceDev.API.Services
         Task<AuthResponseDto> ChangePasswordAsync(int userId, ChangePasswordDto changePasswordDto);
         Task<AuthResponseDto> UpdateProfileAsync(int userId, UpdateProfileDto updateProfileDto);
         Task<bool> ValidateTokenAsync(string token);
+        Task<AuthResponseDto> ConfirmEmailAsync(string userId, string token);
     }
 }

@@ -90,6 +90,23 @@ namespace SourceDev.API.Controllers
         }
 
         /// <summary>
+        /// Confirm email
+        /// </summary>
+        [HttpGet("confirm-email")]
+        public async Task<ActionResult<AuthResponseDto>> ConfirmEmail([FromQuery] string userId, [FromQuery] string token)
+        {
+            if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(token))
+                return BadRequest(new { message = "Invalid parameters" });
+
+            var result = await _authService.ConfirmEmailAsync(userId, token);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        /// <summary>
         /// Logout (adds token to blacklist)
         /// </summary>
         [Authorize]

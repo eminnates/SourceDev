@@ -84,6 +84,29 @@ export const login = async (loginData) => {
 };
 
 /**
+ * Confirm email
+ * @param {string} userId - User ID
+ * @param {string} token - Confirmation token
+ * @returns {Promise<Object>} API response
+ */
+export const confirmEmail = async (userId, token) => {
+  try {
+    const response = await apiClient.get(`/auth/confirm-email?userId=${userId}&token=${encodeURIComponent(token)}`);
+    
+    return {
+      success: true,
+      data: response.data,
+      message: response.data.message || 'Email confirmed successfully!'
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message || 'Email confirmation failed'
+    };
+  }
+};
+
+/**
  * User logout
  * @returns {Promise<Object>} API response
  */
