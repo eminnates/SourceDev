@@ -13,16 +13,8 @@ namespace SourceDev.API.Models.Entities
         public int user_id { get; set; }
 
         [Required]
-        [MaxLength(100)]
-        public string slug { get; set; } = string.Empty;
-
-        [Required]
-        [MaxLength(200)] 
-        public string title { get; set; } = string.Empty;
-
-        [Required]
-        [MaxLength(30000)] // character limit expanded
-        public string content_markdown { get; set; } = string.Empty;
+        [MaxLength(5)]
+        public string default_language_code { get; set; } = "tr";
 
         public string? cover_img_url { get; set; }
 
@@ -46,6 +38,9 @@ namespace SourceDev.API.Models.Entities
         // Navigation properties
         [JsonIgnore]
         public User? User { get; set; }
+        
+        public ICollection<PostTranslation> Translations { get; set; } = new List<PostTranslation>();
+
         [JsonIgnore]
         public ICollection<Reaction> Reactions { get; set; } = new List<Reaction>();
         [JsonIgnore]

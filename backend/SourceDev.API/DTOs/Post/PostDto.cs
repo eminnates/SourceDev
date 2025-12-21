@@ -23,5 +23,6 @@ namespace SourceDev.API.DTOs.Post
         public Dictionary<string, int> ReactionTypes { get; set; } = new();
         public List<string> UserReactions { get; set; } = new();
         public List<string> Tags { get; set; } = new();
+        public List<PostTranslationDto> Translations { get; set; } = new();
     }
 }

@@ -7,14 +7,23 @@ namespace SourceDev.API.Validators.Post
     {
         public CreatePostDtoValidator()
         {
-            RuleFor(x => x.Title)
-                .NotEmpty().WithMessage("Title is required")
-                .Length(5, 200).WithMessage("Title must be between 5 and 200 characters");
+            RuleFor(x => x.Translations)
+                .NotEmpty().WithMessage("At least one translation is required");
 
-            RuleFor(x => x.Content)
-                .NotEmpty().WithMessage("Content is required")
-                .MinimumLength(50).WithMessage("Content must be at least 50 characters")
-                .MaximumLength(30000).WithMessage("Content cannot exceed 30,000 characters");
+            RuleForEach(x => x.Translations).ChildRules(translation => {
+                translation.RuleFor(x => x.Title)
+                    .NotEmpty().WithMessage("Title is required")
+                    .Length(5, 200).WithMessage("Title must be between 5 and 200 characters");
+
+                translation.RuleFor(x => x.Content)
+                    .NotEmpty().WithMessage("Content is required")
+                    .MinimumLength(50).WithMessage("Content must be at least 50 characters")
+                    .MaximumLength(30000).WithMessage("Content cannot exceed 30,000 characters");
+                
+                translation.RuleFor(x => x.LanguageCode)
+                    .NotEmpty().WithMessage("Language code is required")
+                    .Length(2, 5).WithMessage("Language code must be between 2 and 5 characters");
+            });
 
             RuleFor(x => x.CoverImageUrl)
                 .Must(BeAValidUrl).When(x => !string.IsNullOrEmpty(x.CoverImageUrl))

@@ -2,8 +2,8 @@ namespace SourceDev.API.DTOs.Post
 {
     public class CreatePostDto
     {
-        public string Title { get; set; } = string.Empty;
-        public string Content { get; set; } = string.Empty;
+        public List<PostTranslationInputDto> Translations { get; set; } = new List<PostTranslationInputDto>();
+        public string DefaultLanguageCode { get; set; } = "tr";
         public string? CoverImageUrl { get; set; }
         public bool PublishNow { get; set; } = true;
         public List<string> Tags { get; set; } = new List<string>(); // Tag isimleri

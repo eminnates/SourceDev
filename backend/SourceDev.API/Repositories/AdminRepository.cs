@@ -32,10 +32,11 @@ namespace SourceDev.API.Repositories
                 .Select(p => new AdminPostListDto
                 {
                     Id = p.post_id,
-                    Slug = p.slug,
-                    Excerpt = p.content_markdown.Length > 200
-                        ? p.content_markdown.Substring(0, 200)
-                        : p.content_markdown,
+                    Slug = p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).slug ?? p.Translations.FirstOrDefault().slug ?? "",
+                    Title = p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).title ?? p.Translations.FirstOrDefault().title ?? "",
+                    Excerpt = (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).content_markdown ?? p.Translations.FirstOrDefault().content_markdown ?? "").Length > 200
+                        ? (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).content_markdown ?? p.Translations.FirstOrDefault().content_markdown ?? "").Substring(0, 200)
+                        : (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).content_markdown ?? p.Translations.FirstOrDefault().content_markdown ?? ""),
                     AuthorId = p.user_id,
                     AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
                     Status = p.status,

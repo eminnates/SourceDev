@@ -12,6 +12,7 @@ namespace SourceDev.API.Data.Context
         }
 
         public DbSet<Post> Posts { get; set; }
+        public DbSet<PostTranslation> PostTranslations { get; set; }
         public DbSet<Comment> Comments { get; set; }
         public DbSet<Bookmark> Bookmarks { get; set; }
         public DbSet<Reaction> Reactions { get; set; }
@@ -22,6 +23,16 @@ namespace SourceDev.API.Data.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Post>().HasQueryFilter(p => p.deleted_at == null);
+            
+            // PostTranslation - Unique Constraints
+            modelBuilder.Entity<PostTranslation>()
+                .HasIndex(pt => new { pt.post_id, pt.language_code })
+                .IsUnique();
+
+            modelBuilder.Entity<PostTranslation>()
+                .HasIndex(pt => new { pt.slug, pt.language_code })
+                .IsUnique();
+
             base.OnModelCreating(modelBuilder);
 
             // Cascade Delete Ayarları
@@ -87,15 +98,8 @@ namespace SourceDev.API.Data.Context
                 .HasForeignKey(p => p.user_id)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Post - Slug index (for fast lookups)
-            modelBuilder.Entity<Post>()
-                .HasIndex(p => p.slug)
-                .HasDatabaseName("IX_Posts_slug");
-
-            // Post - Slug and Status composite index (for GetBySlugAsync query optimization)
-            modelBuilder.Entity<Post>()
-                .HasIndex(p => new { p.slug, p.status })
-                .HasDatabaseName("IX_Posts_slug_status");
+            // PostTranslation - Slug index removed (unique constraint already set above)
+            // PostTranslation - LanguageCode index removed (unique constraint already set above)
 
             // Comment - User ilişkisi
             modelBuilder.Entity<Comment>()

@@ -31,91 +31,116 @@ namespace SourceDev.API.Repositories
 
         public async Task<Post?> GetBySlugAsync(string slug)
         {
-            return await _dbSet.AsNoTracking().FirstOrDefaultAsync(p => p.slug == slug && p.status);
+            return await _dbSet.AsNoTracking()
+                .Include(p => p.Translations)
+                .FirstOrDefaultAsync(p => p.Translations.Any(t => t.slug == slug) && p.status);
         }
 
         public async Task<PostDto?> GetDtoByIdAsync(int id)
         {
-            var postDto = await _dbSet
+            var post = await _dbSet
                 .AsNoTracking()
-                .Where(p => p.post_id == id) // Status kontrolü yok - draft'ları da getir (Service'te kontrol edilecek)
-                .Select(p => new PostDto
-                {
-                    Id = p.post_id,
-                    Title = p.title ?? "",
-                    Slug = p.slug,
-                    ContentMarkdown = p.content_markdown,
-                    CoverImageUrl = p.cover_img_url,
-                    AuthorId = p.user_id,
-                    AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
-                    Status = p.status, // ← Status'u DTO'ya ekle
-                    PublishedAt = p.published_at,
-                    CreatedAt = p.created_at,
-                    UpdatedAt = p.updated_at,
-                    LikesCount = p.likes_count,
-                    CommentsCount = _context.Comments.Count(c => c.post_id == p.post_id),
-                    ViewCount = p.view_count,
-                    BookmarksCount = p.bookmarks_count,
-                    ReadingTimeMinutes = p.reading_time_minutes,
-                    Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
-                    ReactionTypes = new Dictionary<string, int>(), // Will be populated below
-                    UserReactions = new List<string>(), // Will be populated in service layer
-                    LikedByCurrentUser = false,
-                    BookmarkedByCurrentUser = false
-                })
-                .FirstOrDefaultAsync();
+                .Include(p => p.User)
+                .Include(p => p.Translations)
+                .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
+                .FirstOrDefaultAsync(p => p.post_id == id);
 
-            if (postDto != null)
+            if (post == null) return null;
+
+            var defaultTranslation = post.Translations.FirstOrDefault(t => t.language_code == post.default_language_code) 
+                                     ?? post.Translations.FirstOrDefault();
+
+            var postDto = new PostDto
             {
-                postDto.ReactionTypes = await _context.Reactions
-                    .Where(r => r.post_id == postDto.Id)
-                    .GroupBy(r => r.reaction_type)
-                    .Select(g => new { Type = g.Key, Count = g.Count() })
-                    .ToDictionaryAsync(x => x.Type, x => x.Count);
-            }
+                Id = post.post_id,
+                Title = defaultTranslation?.title ?? "",
+                Slug = defaultTranslation?.slug ?? "",
+                ContentMarkdown = defaultTranslation?.content_markdown ?? "",
+                CoverImageUrl = post.cover_img_url,
+                AuthorId = post.user_id,
+                AuthorDisplayName = post.User?.display_name ?? string.Empty,
+                Status = post.status,
+                PublishedAt = post.published_at,
+                CreatedAt = post.created_at,
+                UpdatedAt = post.updated_at,
+                LikesCount = post.likes_count,
+                CommentsCount = post.comments_count,
+                ViewCount = post.view_count,
+                BookmarksCount = post.bookmarks_count,
+                ReadingTimeMinutes = post.reading_time_minutes,
+                Tags = post.PostTags.Select(pt => pt.Tag.name).ToList(),
+                Translations = post.Translations.Select(t => new PostTranslationDto
+                {
+                    LanguageCode = t.language_code,
+                    Title = t.title,
+                    Slug = t.slug,
+                    ContentMarkdown = t.content_markdown
+                }).ToList(),
+                ReactionTypes = new Dictionary<string, int>(),
+                UserReactions = new List<string>(),
+                LikedByCurrentUser = false,
+                BookmarkedByCurrentUser = false
+            };
+
+            postDto.ReactionTypes = await _context.Reactions
+                .Where(r => r.post_id == postDto.Id)
+                .GroupBy(r => r.reaction_type)
+                .Select(g => new { Type = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.Type, x => x.Count);
 
             return postDto;
         }
 
         public async Task<PostDto?> GetDtoBySlugAsync(string slug)
         {
-            var postDto = await _dbSet
+            var post = await _dbSet
                 .AsNoTracking()
-                .Where(p => p.slug == slug && p.status)
-                .Select(p => new PostDto
-                {
-                    Id = p.post_id,
-                    Title = p.title ?? "",
-                    Slug = p.slug,
-                    ContentMarkdown = p.content_markdown,
-                    CoverImageUrl = p.cover_img_url,
-                    AuthorId = p.user_id,
-                    AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
-                    Status = p.status,
-                    PublishedAt = p.published_at,
-                    CreatedAt = p.created_at,
-                    UpdatedAt = p.updated_at,
-                    LikesCount = p.likes_count,
-                    ViewCount = p.view_count,
-                    CommentsCount = _context.Comments.Count(c => c.post_id == p.post_id),
-                    Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
-                    BookmarksCount = p.bookmarks_count,
-                    ReadingTimeMinutes = p.reading_time_minutes,
-                    ReactionTypes = new Dictionary<string, int>(), // Will be populated below
-                    UserReactions = new List<string>(), // Will be populated in service layer
-                    LikedByCurrentUser = false,
-                    BookmarkedByCurrentUser = false
-                })
-                .FirstOrDefaultAsync();
+                .Include(p => p.User)
+                .Include(p => p.Translations)
+                .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
+                .FirstOrDefaultAsync(p => p.Translations.Any(t => t.slug == slug) && p.status);
 
-            if (postDto != null)
+            if (post == null) return null;
+
+            var matchedTranslation = post.Translations.FirstOrDefault(t => t.slug == slug);
+
+            var postDto = new PostDto
             {
-                postDto.ReactionTypes = await _context.Reactions
-                    .Where(r => r.post_id == postDto.Id)
-                    .GroupBy(r => r.reaction_type)
-                    .Select(g => new { Type = g.Key, Count = g.Count() })
-                    .ToDictionaryAsync(x => x.Type, x => x.Count);
-            }
+                Id = post.post_id,
+                Title = matchedTranslation?.title ?? "",
+                Slug = matchedTranslation?.slug ?? "",
+                ContentMarkdown = matchedTranslation?.content_markdown ?? "",
+                CoverImageUrl = post.cover_img_url,
+                AuthorId = post.user_id,
+                AuthorDisplayName = post.User != null ? post.User.display_name : string.Empty,
+                Status = post.status,
+                PublishedAt = post.published_at,
+                CreatedAt = post.created_at,
+                UpdatedAt = post.updated_at,
+                LikesCount = post.likes_count,
+                ViewCount = post.view_count,
+                CommentsCount = _context.Comments.Count(c => c.post_id == post.post_id),
+                Tags = post.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
+                BookmarksCount = post.bookmarks_count,
+                ReadingTimeMinutes = post.reading_time_minutes,
+                Translations = post.Translations.Select(t => new PostTranslationDto
+                {
+                    LanguageCode = t.language_code,
+                    Title = t.title,
+                    Slug = t.slug,
+                    ContentMarkdown = t.content_markdown
+                }).ToList(),
+                ReactionTypes = new Dictionary<string, int>(),
+                UserReactions = new List<string>(),
+                LikedByCurrentUser = false,
+                BookmarkedByCurrentUser = false
+            };
+
+            postDto.ReactionTypes = await _context.Reactions
+                .Where(r => r.post_id == postDto.Id)
+                .GroupBy(r => r.reaction_type)
+                .Select(g => new { Type = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.Type, x => x.Count);
 
             return postDto;
         }
@@ -142,9 +167,11 @@ namespace SourceDev.API.Repositories
                 .Select(p => new PostListDto
                 {
                     Id = p.post_id,
-                    Title = p.title ?? "",
-                    Slug = p.slug,
-                    Excerpt = p.content_markdown.Length > 200 ? p.content_markdown.Substring(0, 200) : p.content_markdown,
+                    Title = p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).title ?? p.Translations.FirstOrDefault().title ?? "",
+                    Slug = p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).slug ?? p.Translations.FirstOrDefault().slug ?? "",
+                    Excerpt = (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).content_markdown ?? p.Translations.FirstOrDefault().content_markdown ?? "").Length > 200 
+                        ? (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).content_markdown ?? p.Translations.FirstOrDefault().content_markdown ?? "").Substring(0, 200) 
+                        : (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).content_markdown ?? p.Translations.FirstOrDefault().content_markdown ?? ""),
                     Likes = p.likes_count,
                     Views = p.view_count,
                     Bookmarks = p.bookmarks_count,
@@ -204,9 +231,11 @@ namespace SourceDev.API.Repositories
                 .Select(p => new PostListDto
                 {
                     Id = p.post_id,
-                    Title = p.title ?? "",
-                    Slug = p.slug,
-                    Excerpt = p.content_markdown.Length > 200 ? p.content_markdown.Substring(0, 200) : p.content_markdown,
+                    Title = p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).title ?? p.Translations.FirstOrDefault().title ?? "",
+                    Slug = p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).slug ?? p.Translations.FirstOrDefault().slug ?? "",
+                    Excerpt = (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).content_markdown ?? p.Translations.FirstOrDefault().content_markdown ?? "").Length > 200 
+                        ? (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).content_markdown ?? p.Translations.FirstOrDefault().content_markdown ?? "").Substring(0, 200) 
+                        : (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).content_markdown ?? p.Translations.FirstOrDefault().content_markdown ?? ""),
                     Likes = p.likes_count,
                     Views = p.view_count,
                     Bookmarks = p.bookmarks_count,
@@ -267,9 +296,11 @@ namespace SourceDev.API.Repositories
                 .Select(p => new PostListDto
                 {
                     Id = p.post_id,
-                    Title = p.title ?? "",
-                    Slug = p.slug,
-                    Excerpt = p.content_markdown.Length > 200 ? p.content_markdown.Substring(0, 200) : p.content_markdown,
+                    Title = p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).title ?? p.Translations.FirstOrDefault().title ?? "",
+                    Slug = p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).slug ?? p.Translations.FirstOrDefault().slug ?? "",
+                    Excerpt = (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).content_markdown ?? p.Translations.FirstOrDefault().content_markdown ?? "").Length > 200 
+                        ? (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).content_markdown ?? p.Translations.FirstOrDefault().content_markdown ?? "").Substring(0, 200) 
+                        : (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).content_markdown ?? p.Translations.FirstOrDefault().content_markdown ?? ""),
                     Likes = p.likes_count,
                     Views = p.view_count,
                     Bookmarks = p.bookmarks_count,
@@ -332,9 +363,11 @@ namespace SourceDev.API.Repositories
                 .Select(pt => new PostListDto
                 {
                     Id = pt.Post!.post_id,
-                    Title = pt.Post.title ?? "",
-                    Slug = pt.Post.slug,
-                    Excerpt = pt.Post.content_markdown.Length > 200 ? pt.Post.content_markdown.Substring(0, 200) : pt.Post.content_markdown,
+                    Title = pt.Post.Translations.FirstOrDefault(t => t.language_code == pt.Post.default_language_code).title ?? pt.Post.Translations.FirstOrDefault().title ?? "",
+                    Slug = pt.Post.Translations.FirstOrDefault(t => t.language_code == pt.Post.default_language_code).slug ?? pt.Post.Translations.FirstOrDefault().slug ?? "",
+                    Excerpt = (pt.Post.Translations.FirstOrDefault(t => t.language_code == pt.Post.default_language_code).content_markdown ?? pt.Post.Translations.FirstOrDefault().content_markdown ?? "").Length > 200 
+                        ? (pt.Post.Translations.FirstOrDefault(t => t.language_code == pt.Post.default_language_code).content_markdown ?? pt.Post.Translations.FirstOrDefault().content_markdown ?? "").Substring(0, 200) 
+                        : (pt.Post.Translations.FirstOrDefault(t => t.language_code == pt.Post.default_language_code).content_markdown ?? pt.Post.Translations.FirstOrDefault().content_markdown ?? ""),
                     Likes = pt.Post.likes_count,
                     Views = pt.Post.view_count,
                     Bookmarks = pt.Post.bookmarks_count,
@@ -441,9 +474,11 @@ namespace SourceDev.API.Repositories
                 .Select(p => new PostListDto
                 {
                     Id = p.post_id,
-                    Title = p.title ?? "",
-                    Slug = p.slug,
-                    Excerpt = p.content_markdown.Length > 200 ? p.content_markdown.Substring(0, 200) : p.content_markdown,
+                    Title = p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).title ?? p.Translations.FirstOrDefault().title ?? "",
+                    Slug = p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).slug ?? p.Translations.FirstOrDefault().slug ?? "",
+                    Excerpt = (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).content_markdown ?? p.Translations.FirstOrDefault().content_markdown ?? "").Length > 200 
+                        ? (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).content_markdown ?? p.Translations.FirstOrDefault().content_markdown ?? "").Substring(0, 200) 
+                        : (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).content_markdown ?? p.Translations.FirstOrDefault().content_markdown ?? ""),
                     Likes = p.likes_count,
                     Views = p.view_count,
                     Bookmarks = p.bookmarks_count,
@@ -469,9 +504,11 @@ namespace SourceDev.API.Repositories
                     .Select(p => new PostListDto
                     {
                         Id = p.post_id,
-                        Title = p.title ?? "",
-                        Slug = p.slug,
-                        Excerpt = p.content_markdown.Length > 200 ? p.content_markdown.Substring(0, 200) : p.content_markdown,
+                        Title = p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).title ?? p.Translations.FirstOrDefault().title ?? "",
+                        Slug = p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).slug ?? p.Translations.FirstOrDefault().slug ?? "",
+                        Excerpt = (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).content_markdown ?? p.Translations.FirstOrDefault().content_markdown ?? "").Length > 200 
+                            ? (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).content_markdown ?? p.Translations.FirstOrDefault().content_markdown ?? "").Substring(0, 200) 
+                            : (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).content_markdown ?? p.Translations.FirstOrDefault().content_markdown ?? ""),
                         Likes = p.likes_count,
                         Views = p.view_count,
                         Bookmarks = p.bookmarks_count,
@@ -605,8 +642,7 @@ namespace SourceDev.API.Repositories
                 .AsQueryable()
                 .Where(p => p.status)
                 // NOTE: For performance reasons, search only in slug and title for now
-                .Where(p => p.slug.ToLower().Contains(normalizedQuery)
-                            || (p.title != null && p.title.ToLower().Contains(normalizedQuery)));
+                .Where(p => p.Translations.Any(t => t.slug.ToLower().Contains(normalizedQuery) || t.title.ToLower().Contains(normalizedQuery)));
 
             // E�er kullan�c� giri� yapt�ysa, takip ettiklerini �ne ��kar
             if (userId.HasValue)
@@ -634,11 +670,11 @@ namespace SourceDev.API.Repositories
                 .Select(p => new PostListDto
                 {
                     Id = p.post_id,
-                    Title = p.title ?? "",
-                    Slug = p.slug,
-                    Excerpt = p.content_markdown.Length > 200
-                        ? p.content_markdown.Substring(0, 200)
-                        : p.content_markdown,
+                    Title = p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).title ?? p.Translations.FirstOrDefault().title ?? "",
+                    Slug = p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).slug ?? p.Translations.FirstOrDefault().slug ?? "",
+                    Excerpt = (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).content_markdown ?? p.Translations.FirstOrDefault().content_markdown ?? "").Length > 200 
+                        ? (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).content_markdown ?? p.Translations.FirstOrDefault().content_markdown ?? "").Substring(0, 200) 
+                        : (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).content_markdown ?? p.Translations.FirstOrDefault().content_markdown ?? ""),
                     Likes = p.likes_count,
                     Views = p.view_count,
                     Bookmarks = p.bookmarks_count,
@@ -686,9 +722,11 @@ namespace SourceDev.API.Repositories
                 .Select(p => new PostListDto
                 {
                     Id = p.post_id,
-                    Title = p.title ?? "",
-                    Slug = p.slug,
-                    Excerpt = p.content_markdown.Length > 200 ? p.content_markdown.Substring(0, 200) : p.content_markdown,
+                    Title = p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).title ?? p.Translations.FirstOrDefault().title ?? "",
+                    Slug = p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).slug ?? p.Translations.FirstOrDefault().slug ?? "",
+                    Excerpt = (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).content_markdown ?? p.Translations.FirstOrDefault().content_markdown ?? "").Length > 200 
+                        ? (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).content_markdown ?? p.Translations.FirstOrDefault().content_markdown ?? "").Substring(0, 200) 
+                        : (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code).content_markdown ?? p.Translations.FirstOrDefault().content_markdown ?? ""),
                     Likes = p.likes_count,
                     Views = p.view_count,
                     Bookmarks = p.bookmarks_count,

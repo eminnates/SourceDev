@@ -7,14 +7,16 @@ namespace SourceDev.API.Validators.Post
     {
         public UpdatePostDtoValidator()
         {
-            RuleFor(x => x.Title)
-                .MaximumLength(200).WithMessage("Title cannot exceed 200 characters")
-                .When(x => !string.IsNullOrEmpty(x.Title));
+            RuleForEach(x => x.Translations).ChildRules(translation => {
+                translation.RuleFor(x => x.Title)
+                    .MaximumLength(200).WithMessage("Title cannot exceed 200 characters")
+                    .When(x => !string.IsNullOrEmpty(x.Title));
 
-            RuleFor(x => x.Content)
-                .MinimumLength(50).WithMessage("Content must be at least 50 characters")
-                .MaximumLength(30000).WithMessage("Content cannot exceed 30,000 characters")
-                .When(x => !string.IsNullOrEmpty(x.Content));
+                translation.RuleFor(x => x.Content)
+                    .MinimumLength(50).WithMessage("Content must be at least 50 characters")
+                    .MaximumLength(30000).WithMessage("Content cannot exceed 30,000 characters")
+                    .When(x => !string.IsNullOrEmpty(x.Content));
+            });
 
             RuleFor(x => x.CoverImageUrl)
                 .Must(BeAValidUrl).When(x => !string.IsNullOrEmpty(x.CoverImageUrl))

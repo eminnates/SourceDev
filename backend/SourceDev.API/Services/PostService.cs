@@ -26,36 +26,20 @@ namespace SourceDev.API.Services
 
         public async Task<PostDto> CreateAsync(CreatePostDto dto, int authorId)
         {
-            if (string.IsNullOrWhiteSpace(dto.Content))
+            if (dto.Translations == null || !dto.Translations.Any())
             {
-                throw new ArgumentException("Content is required", nameof(dto.Content));
-            }
-            if (string.IsNullOrWhiteSpace(dto.Title))
-            {
-                throw new ArgumentException("Title is required", nameof(dto.Title));
+                throw new ArgumentException("At least one translation is required", nameof(dto.Translations));
             }
 
-            var slug = GenerateSlug(dto.Title);
-            var existingPost = await _unitOfWork.Posts.GetBySlugAsync(slug);
-            
-            if (existingPost != null)
+            if (!dto.Translations.Any(t => t.LanguageCode == dto.DefaultLanguageCode))
             {
-                var counter = 1;
-                var originalSlug = slug;
-                while (existingPost != null)
-                {
-                    slug = $"{originalSlug}-{counter}";
-                    existingPost = await _unitOfWork.Posts.GetBySlugAsync(slug);
-                    counter++;
-                }
+                 throw new ArgumentException("Default language translation is missing", nameof(dto.DefaultLanguageCode));
             }
 
             var post = new Post
             {
                 user_id = authorId,
-                title = dto.Title,
-                slug = slug,
-                content_markdown = dto.Content,
+                default_language_code = dto.DefaultLanguageCode,
                 cover_img_url = dto.CoverImageUrl,
                 status = dto.PublishNow,
                 published_at = dto.PublishNow ? DateTime.UtcNow : null,
@@ -64,8 +48,44 @@ namespace SourceDev.API.Services
                 likes_count = 0,
                 bookmarks_count = 0,
                 view_count = 0,
-                reading_time_minutes = CalculateReadingTimeMinutes(dto.Content)
+                reading_time_minutes = 0
             };
+
+            long maxReadingTime = 0;
+
+            foreach (var transDto in dto.Translations)
+            {
+                if (string.IsNullOrWhiteSpace(transDto.Title)) continue;
+
+                var slug = GenerateSlug(transDto.Title);
+                var existingPost = await _unitOfWork.Posts.GetBySlugAsync(slug);
+                
+                if (existingPost != null)
+                {
+                    var counter = 1;
+                    var originalSlug = slug;
+                    while (existingPost != null)
+                    {
+                        slug = $"{originalSlug}-{counter}";
+                        existingPost = await _unitOfWork.Posts.GetBySlugAsync(slug);
+                        counter++;
+                    }
+                }
+
+                var readingTime = CalculateReadingTimeMinutes(transDto.Content);
+                if (readingTime > maxReadingTime) maxReadingTime = readingTime;
+
+                post.Translations.Add(new PostTranslation
+                {
+                    language_code = transDto.LanguageCode,
+                    title = transDto.Title,
+                    content_markdown = transDto.Content,
+                    slug = slug
+                });
+            }
+            
+            post.reading_time_minutes = maxReadingTime;
+
             await _unitOfWork.Posts.AddAsync(post);
             await _unitOfWork.SaveChangesAsync();
 
@@ -89,8 +109,7 @@ namespace SourceDev.API.Services
             {
                 throw new InvalidOperationException("Failed to retrieve created post");
             }
-            _logger.LogInformation("Post created successfully. PostId: {PostId}, Slug: {Slug}",
-                    post.post_id, post.slug);
+            _logger.LogInformation("Post created successfully. PostId: {PostId}", post.post_id);
 
             return createdPostDto;
         }
@@ -432,7 +451,10 @@ namespace SourceDev.API.Services
         }
         public async Task<bool> UpdateAsync(int id, UpdatePostDto dto, int requesterId)
         {
-            var post = await _unitOfWork.Posts.GetByIdAsync(id);
+            var post = await _unitOfWork.Posts.Query()
+                .Include(p => p.Translations)
+                .FirstOrDefaultAsync(p => p.post_id == id);
+
             if (post == null)
             {
                 _logger.LogWarning("Post not found for update. PostId: {PostId}", id);
@@ -442,37 +464,83 @@ namespace SourceDev.API.Services
             if (post.user_id != requesterId)
                 throw new UnauthorizedAccessException("You can only update your own posts");
 
-            // Update Title (and slug if title changed)
-            if (!string.IsNullOrWhiteSpace(dto.Title) && dto.Title != post.title)
+            // Update Translations
+            if (dto.Translations != null)
             {
-                post.title = dto.Title;
-                // Generate new slug from title
-                post.slug = GenerateSlug(dto.Title);
-                
-                // Check if slug already exists (for published posts)
-                if (post.status)
+                foreach (var transDto in dto.Translations)
                 {
-                    var existingPost = await _unitOfWork.Posts.GetBySlugAsync(post.slug);
-                    if (existingPost != null && existingPost.post_id != id)
+                    var translation = post.Translations.FirstOrDefault(t => t.language_code == transDto.LanguageCode);
+                    if (translation != null)
                     {
-                        // Slug conflict - append number
-                        var counter = 1;
-                        var originalSlug = post.slug;
-                        while (existingPost != null && existingPost.post_id != id)
+                        // Update existing
+                        if (!string.IsNullOrWhiteSpace(transDto.Title) && transDto.Title != translation.title)
                         {
-                            post.slug = $"{originalSlug}-{counter}";
-                            existingPost = await _unitOfWork.Posts.GetBySlugAsync(post.slug);
-                            counter++;
+                            translation.title = transDto.Title;
+                            // Update slug
+                            var slug = GenerateSlug(transDto.Title);
+                            
+                            var existingPost = await _unitOfWork.Posts.GetBySlugAsync(slug);
+                            if (existingPost != null && existingPost.post_id != id)
+                            {
+                                var counter = 1;
+                                var originalSlug = slug;
+                                while (existingPost != null && existingPost.post_id != id)
+                                {
+                                    slug = $"{originalSlug}-{counter}";
+                                    existingPost = await _unitOfWork.Posts.GetBySlugAsync(slug);
+                                    counter++;
+                                }
+                            }
+                            translation.slug = slug;
+                        }
+                        
+                        if (!string.IsNullOrWhiteSpace(transDto.Content))
+                        {
+                            translation.content_markdown = transDto.Content;
                         }
                     }
+                    else
+                    {
+                        // Add new translation
+                        if (string.IsNullOrWhiteSpace(transDto.Title)) continue;
+                        
+                        var slug = GenerateSlug(transDto.Title);
+                        var existingPost = await _unitOfWork.Posts.GetBySlugAsync(slug);
+                        if (existingPost != null && existingPost.post_id != id)
+                        {
+                            var counter = 1;
+                            var originalSlug = slug;
+                            while (existingPost != null && existingPost.post_id != id)
+                            {
+                                slug = $"{originalSlug}-{counter}";
+                                existingPost = await _unitOfWork.Posts.GetBySlugAsync(slug);
+                                counter++;
+                            }
+                        }
+
+                        post.Translations.Add(new PostTranslation
+                        {
+                            language_code = transDto.LanguageCode,
+                            title = transDto.Title,
+                            content_markdown = transDto.Content,
+                            slug = slug
+                        });
+                    }
                 }
+                
+                // Recalculate reading time
+                long maxReadingTime = 0;
+                foreach(var t in post.Translations)
+                {
+                    var rt = CalculateReadingTimeMinutes(t.content_markdown);
+                    if (rt > maxReadingTime) maxReadingTime = rt;
+                }
+                post.reading_time_minutes = maxReadingTime;
             }
 
-            // Update Content
-            if (!string.IsNullOrWhiteSpace(dto.Content))
+            if (!string.IsNullOrWhiteSpace(dto.DefaultLanguageCode))
             {
-                post.content_markdown = dto.Content;
-                post.reading_time_minutes = CalculateReadingTimeMinutes(dto.Content);
+                post.default_language_code = dto.DefaultLanguageCode;
             }
 
             // Update Cover Image
@@ -521,7 +589,7 @@ namespace SourceDev.API.Services
             await _unitOfWork.SaveChangesAsync();
 
             _logger.LogInformation("Post updated. PostId: {PostId}, UserId: {UserId}, Title: {Title}, Tags: {TagCount}", 
-                id, requesterId, post.title, dto.Tags?.Count ?? 0);
+                id, requesterId, "Multi-language Post", dto.Tags?.Count ?? 0);
             return true;
         }
 
@@ -808,14 +876,18 @@ namespace SourceDev.API.Services
                 .Query()
                 .Where(p => bookmarkedPostIds.Contains(p.post_id))
                 .Include(p => p.User)
+                .Include(p => p.Translations)
                 .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
                 .ToListAsync();
 
             var postDtos = posts.Select(p => new PostListDto
             {
                 Id = p.post_id,
-                Title = p.title ?? "",
-                Slug = p.slug,
+                Title = p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code)?.title ?? p.Translations.FirstOrDefault()?.title ?? "",
+                Slug = p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code)?.slug ?? p.Translations.FirstOrDefault()?.slug ?? "",
+                Excerpt = (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code)?.content_markdown ?? p.Translations.FirstOrDefault()?.content_markdown ?? "").Length > 200 
+                        ? (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code)?.content_markdown ?? p.Translations.FirstOrDefault()?.content_markdown ?? "").Substring(0, 200) 
+                        : (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code)?.content_markdown ?? p.Translations.FirstOrDefault()?.content_markdown ?? ""),
                 CoverImageUrl = p.cover_img_url,
                 AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
                 PublishedAt = p.published_at,
