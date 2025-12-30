@@ -17,6 +17,7 @@ namespace SourceDev.API.Repositories
         {
             return await _dbSet
                 .AsNoTracking()
+                .Include(p => p.Translations)
                 .FirstOrDefaultAsync(p => p.post_id == id);
         }
 
@@ -26,6 +27,7 @@ namespace SourceDev.API.Repositories
             return await _dbSet
                 .AsNoTracking()
                 .Include(p => p.User)
+                .Include(p => p.Translations)
                 .FirstOrDefaultAsync(p => p.post_id == id && p.status);
         }
 

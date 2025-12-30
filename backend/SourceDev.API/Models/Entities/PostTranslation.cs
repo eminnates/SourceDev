@@ -6,7 +6,8 @@ namespace SourceDev.API.Models.Entities
 {
     public class PostTranslation
     {
-        [Key]
+        // ID removed from primary key - now using composite key (post_id, language_code)
+        // Keeping id property for backward compatibility during migration, but it's not the primary key
         public int id { get; set; }
 
         [ForeignKey("Post")]

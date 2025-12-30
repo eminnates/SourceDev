@@ -12,6 +12,9 @@ namespace SourceDev.API.Middlewares
 
         public async Task InvokeAsync(HttpContext context)
         {
+            // #region agent log
+            try { var logData = System.Text.Json.JsonSerializer.Serialize(new { sessionId = "debug-session", runId = "run1", hypothesisId = "B", location = "DynamicCorsMiddleware.cs:13", message = "CORS middleware entry", data = new { origin = context.Request.Headers["Origin"].ToString(), method = context.Request.Method }, timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() }); await System.IO.File.AppendAllTextAsync("/home/emin/Documents/projects/SourceDev/.cursor/debug.log", logData + "\n"); } catch { }
+            // #endregion
             // Get allowed origins from environment variable or use defaults
             var allowedOriginsEnv = Environment.GetEnvironmentVariable("ALLOWED_ORIGINS");
             var allowedOrigins = !string.IsNullOrEmpty(allowedOriginsEnv)
@@ -44,6 +47,15 @@ namespace SourceDev.API.Middlewares
                 context.Response.Headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,DELETE,OPTIONS,PATCH";
                 context.Response.Headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization";
                 context.Response.Headers["Access-Control-Allow-Credentials"] = "true";
+                // #region agent log
+                try { var logData = System.Text.Json.JsonSerializer.Serialize(new { sessionId = "debug-session", runId = "run1", hypothesisId = "B", location = "DynamicCorsMiddleware.cs:47", message = "CORS headers set", data = new { origin = origin }, timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() }); await System.IO.File.AppendAllTextAsync("/home/emin/Documents/projects/SourceDev/.cursor/debug.log", logData + "\n"); } catch { }
+                // #endregion
+            }
+            else
+            {
+                // #region agent log
+                try { var logData = System.Text.Json.JsonSerializer.Serialize(new { sessionId = "debug-session", runId = "run1", hypothesisId = "B", location = "DynamicCorsMiddleware.cs:51", message = "CORS headers NOT set", data = new { origin = origin, isAllowed = false }, timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() }); await System.IO.File.AppendAllTextAsync("/home/emin/Documents/projects/SourceDev/.cursor/debug.log", logData + "\n"); } catch { }
+                // #endregion
             }
 
             // Preflight (OPTIONS) isteği ise hemen yanıtla

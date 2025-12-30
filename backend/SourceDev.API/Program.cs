@@ -153,13 +153,29 @@ builder.Services.AddAuthentication(options =>
     {
         OnTokenValidated = async context =>
         {
+            // #region agent log
+            try { var logData = System.Text.Json.JsonSerializer.Serialize(new { sessionId = "debug-session", runId = "run1", hypothesisId = "A", location = "Program.cs:154", message = "OnTokenValidated entry", data = new { hasAuthHeader = context.Request.Headers.ContainsKey("Authorization"), authHeaderValue = context.Request.Headers["Authorization"].ToString().Substring(0, Math.Min(50, context.Request.Headers["Authorization"].ToString().Length)) }, timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() }); await System.IO.File.AppendAllTextAsync("/home/emin/Documents/projects/SourceDev/.cursor/debug.log", logData + "\n"); } catch { }
+            // #endregion
             var tokenBlacklistService = context.HttpContext.RequestServices.GetRequiredService<ITokenBlacklistService>();
-            var token = context.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+            var authHeader = context.Request.Headers["Authorization"].ToString();
+            // #region agent log
+            try { var logData = System.Text.Json.JsonSerializer.Serialize(new { sessionId = "debug-session", runId = "run1", hypothesisId = "A", location = "Program.cs:160", message = "Before token extraction", data = new { authHeaderLength = authHeader.Length, startsWithBearer = authHeader.StartsWith("Bearer "), isEmpty = string.IsNullOrEmpty(authHeader) }, timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() }); await System.IO.File.AppendAllTextAsync("/home/emin/Documents/projects/SourceDev/.cursor/debug.log", logData + "\n"); } catch { }
+            // #endregion
+            var token = authHeader.Replace("Bearer ", "");
+            // #region agent log
+            try { var logData = System.Text.Json.JsonSerializer.Serialize(new { sessionId = "debug-session", runId = "run1", hypothesisId = "A", location = "Program.cs:164", message = "After token extraction", data = new { tokenLength = token.Length, isEmpty = string.IsNullOrEmpty(token) }, timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() }); await System.IO.File.AppendAllTextAsync("/home/emin/Documents/projects/SourceDev/.cursor/debug.log", logData + "\n"); } catch { }
+            // #endregion
 
             if (await tokenBlacklistService.IsBlacklistedAsync(token))
             {
+                // #region agent log
+                try { var logData = System.Text.Json.JsonSerializer.Serialize(new { sessionId = "debug-session", runId = "run1", hypothesisId = "A", location = "Program.cs:168", message = "Token blacklisted", data = new { tokenLength = token.Length }, timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() }); await System.IO.File.AppendAllTextAsync("/home/emin/Documents/projects/SourceDev/.cursor/debug.log", logData + "\n"); } catch { }
+                // #endregion
                 context.Fail("This token has been revoked (logged out).");
             }
+            // #region agent log
+            try { var logData = System.Text.Json.JsonSerializer.Serialize(new { sessionId = "debug-session", runId = "run1", hypothesisId = "A", location = "Program.cs:173", message = "OnTokenValidated exit", data = new { tokenValidated = true }, timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() }); await System.IO.File.AppendAllTextAsync("/home/emin/Documents/projects/SourceDev/.cursor/debug.log", logData + "\n"); } catch { }
+            // #endregion
         }
     };
 });
@@ -197,13 +213,22 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     try
     {
+        // #region agent log
+        try { var logData = System.Text.Json.JsonSerializer.Serialize(new { sessionId = "debug-session", runId = "run1", hypothesisId = "E", location = "Program.cs:199", message = "Migration start", data = new { }, timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() }); System.IO.File.AppendAllText("/home/emin/Documents/projects/SourceDev/.cursor/debug.log", logData + "\n"); } catch { }
+        // #endregion
         var context = services.GetRequiredService<AppDbContext>();
         // Veritabanı yoksa oluşturur, varsa eksik migrationları uygular
         context.Database.Migrate(); 
+        // #region agent log
+        try { var logData = System.Text.Json.JsonSerializer.Serialize(new { sessionId = "debug-session", runId = "run1", hypothesisId = "E", location = "Program.cs:203", message = "Migration success", data = new { }, timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() }); System.IO.File.AppendAllText("/home/emin/Documents/projects/SourceDev/.cursor/debug.log", logData + "\n"); } catch { }
+        // #endregion
         Console.WriteLine("--> Veritabanı migrationları başarıyla uygulandı.");
     }
     catch (Exception ex)
     {
+        // #region agent log
+        try { var logData = System.Text.Json.JsonSerializer.Serialize(new { sessionId = "debug-session", runId = "run1", hypothesisId = "E", location = "Program.cs:207", message = "Migration error", data = new { errorMessage = ex.Message, errorType = ex.GetType().Name }, timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() }); System.IO.File.AppendAllText("/home/emin/Documents/projects/SourceDev/.cursor/debug.log", logData + "\n"); } catch { }
+        // #endregion
         Console.WriteLine($"--> Migration sırasında hata oluştu: {ex.Message}");
     }
 }

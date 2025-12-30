@@ -8,23 +8,27 @@ import apiClient from '../apiClient';
 /**
  * Create a new post
  * @param {Object} postData - Post data
- * @param {string} postData.title - Post title
- * @param {string} postData.content - Post content (markdown)
- * @param {string[]} postData.tags - Array of tag names
+ * @param {Array<Object>} postData.translations - Array of translation objects with languageCode, title, content
+ * @param {string} postData.defaultLanguageCode - Default language code (e.g., 'tr', 'en')
+ * @param {string[]} [postData.tags] - Array of tag names
+ * @param {number[]} [postData.tagIds] - Array of tag IDs
  * @param {string} [postData.coverImageUrl] - Cover image URL (optional)
  * @param {boolean} [postData.publishNow] - Whether to publish immediately (default: true)
  * @returns {Promise<Object>} API response
  */
 export const createPost = async (postData) => {
   try {
-    const response = await apiClient.post('/post', {
-      title: postData.title,
-      content: postData.content,
+    // Support new format with translations array
+    const requestBody = {
+      translations: postData.translations || [],
+      defaultLanguageCode: postData.defaultLanguageCode || 'tr',
       tags: postData.tags || [],
       tagIds: postData.tagIds || [],
       coverImageUrl: postData.coverImageUrl || null,
       publishNow: postData.publishNow !== undefined ? postData.publishNow : true
-    });
+    };
+    
+    const response = await apiClient.post('/post', requestBody);
     
     return {
       success: true,
@@ -45,10 +49,16 @@ export const createPost = async (postData) => {
  * Update an existing post
  * @param {number} postId - Post ID
  * @param {Object} postData - Post data to update
+ * @param {Array<Object>} [postData.translations] - Array of translation objects with languageCode, title, content
+ * @param {string} [postData.defaultLanguageCode] - Default language code (e.g., 'tr', 'en')
+ * @param {string[]} [postData.tags] - Array of tag names
+ * @param {string} [postData.coverImageUrl] - Cover image URL (optional)
+ * @param {boolean} [postData.publishNow] - Whether to publish immediately (optional)
  * @returns {Promise<Object>} API response
  */
 export const updatePost = async (postId, postData) => {
   try {
+    // Pass through the data as-is - it should already be in the correct format
     const response = await apiClient.put(`/post/${postId}`, postData);
     
     return {
@@ -107,13 +117,20 @@ const transformPostData = (backendPost) => {
     console.error('Date parsing error:', e);
   }
 
+  // Preserve translations array from backend
+  const translations = backendPost.translations || [];
+
   return {
     id: backendPost.id,
     title: backendPost.title,
     slug: backendPost.slug,
     content: backendPost.contentMarkdown || '',
+    contentMarkdown: backendPost.contentMarkdown || '',
+    translations: translations, // Preserve full translations array
     coverImage: backendPost.coverImageUrl,
+    coverImageUrl: backendPost.coverImageUrl,
     author: backendPost.authorDisplayName,
+    authorDisplayName: backendPost.authorDisplayName,
     authorId: backendPost.authorId,
     date: formattedDate,
     publishedAt: backendPost.publishedAt,

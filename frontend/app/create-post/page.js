@@ -12,7 +12,6 @@ import { createPost, updatePost, getPostById, getPostForEdit, publishPost, delet
 import { searchTags, getPopularTags } from '@/utils/api/tagApi';
 import 'easymde/dist/easymde.min.css';
 
-// Dynamic import to avoid SSR issues
 const SimpleMDE = dynamic(() => import('react-simplemde-editor'), { ssr: false });
 
 function CreatePostContent() {
@@ -20,8 +19,12 @@ function CreatePostContent() {
   const searchParams = useSearchParams();
   const editPostId = searchParams.get('edit');
 
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
+  const [translations, setTranslations] = useState({
+    tr: { title: '', content: '' },
+    en: { title: '', content: '' }
+  });
+  const [activeLang, setActiveLang] = useState('tr');
+  
   const [selectedTags, setSelectedTags] = useState([]);
   const [tagInput, setTagInput] = useState('');
   const [tagSuggestions, setTagSuggestions] = useState([]);
@@ -39,42 +42,35 @@ function CreatePostContent() {
 
   useEffect(() => {
     const initializePage = async () => {
-      // Check if user is authenticated
       if (!isAuthenticated()) {
         router.push('/login');
         return;
       }
 
-      // Load popular tags on mount
       loadPopularTags();
 
-      // If editing, load the draft data
       if (editPostId) {
         setIsEditMode(true);
         await loadDraftData(editPostId);
       }
 
-      // Change body background for this page only
       document.body.style.backgroundColor = '#f5f5f5';
     };
 
     initializePage();
 
-    // Cleanup - restore original background when leaving page
     return () => {
       document.body.style.backgroundColor = '';
     };
   }, [router, editPostId]);
 
-  // Auto-resize title textarea when title changes
   useEffect(() => {
     if (titleTextareaRef.current) {
       titleTextareaRef.current.style.height = 'auto';
       titleTextareaRef.current.style.height = titleTextareaRef.current.scrollHeight + 'px';
     }
-  }, [title]);
+  }, [translations[activeLang].title]);
 
-  // Load popular tags
   const loadPopularTags = async () => {
     const result = await getPopularTags(20);
     if (result.success && result.data) {
@@ -82,25 +78,39 @@ function CreatePostContent() {
     }
   };
 
-  // Load draft data for editing
   const loadDraftData = async (postId) => {
     try {
       const result = await getPostForEdit(postId);
       if (result.success && result.data) {
         const post = result.data;
         setEditingPost(post);
-        setTitle(post.title || '');
-        setContent(post.content || '');
+        
+        const newTranslations = {
+          tr: { title: '', content: '' },
+          en: { title: '', content: '' }
+        };
+        
+        if (post.translations && post.translations.length > 0) {
+          post.translations.forEach(t => {
+            if (newTranslations[t.languageCode]) {
+              newTranslations[t.languageCode] = {
+                title: t.title || '',
+                content: t.contentMarkdown || t.content || ''
+              };
+            }
+          });
+        } else {
+          newTranslations.tr = { 
+            title: post.title || '', 
+            content: post.contentMarkdown || post.content || '' 
+          };
+        }
+        
+        setTranslations(newTranslations);
         setSelectedTags(post.tags || []);
         setCoverImage(post.coverImage || null);
       } else {
-        if (result.status === 403) {
-          setErrors({ submit: 'You are not authorized to edit this post.' });
-        } else if (result.status === 404) {
-          setErrors({ submit: 'Post not found.' });
-        } else {
-          setErrors({ submit: result.message || 'Failed to load draft for editing' });
-        }
+        setErrors({ submit: result.message || 'Failed to load draft' });
       }
     } catch (error) {
       console.error('Error loading draft:', error);
@@ -108,7 +118,6 @@ function CreatePostContent() {
     }
   };
 
-  // Search tags as user types
   useEffect(() => {
     const searchTagsDebounced = async () => {
       if (tagInput.trim().length === 0) {
@@ -116,9 +125,7 @@ function CreatePostContent() {
         return;
       }
 
-      if (tagInput.trim().length < 2) {
-        return;
-      }
+      if (tagInput.trim().length < 2) return;
 
       const result = await searchTags(tagInput, 10);
       if (result.success && result.data) {
@@ -130,30 +137,20 @@ function CreatePostContent() {
     return () => clearTimeout(timeoutId);
   }, [tagInput]);
 
-  // Handle tag selection
   const handleAddTag = (tagName) => {
-    if (selectedTags.length >= 4) {
-      return;
-    }
-
-    if (selectedTags.includes(tagName)) {
-      return; // Silently ignore if already added
-    }
+    if (selectedTags.length >= 4 || selectedTags.includes(tagName)) return;
 
     const newTags = [...selectedTags, tagName];
     setSelectedTags(newTags);
     setTagInput('');
 
-    // Clear tags error if it exists
     if (errors.tags) {
       setErrors({ ...errors, tags: null });
     }
 
-    // If we've reached 4 tags, close suggestions
     if (newTags.length >= 4) {
       setShowSuggestions(false);
     } else {
-      // Keep suggestions open and refocus input
       setTimeout(() => {
         tagInputRef.current?.focus();
         setShowSuggestions(true);
@@ -161,49 +158,89 @@ function CreatePostContent() {
     }
   };
 
-  // Handle tag removal
   const handleRemoveTag = (tagName) => {
     setSelectedTags(selectedTags.filter(t => t !== tagName));
   };
 
-  // Handle Enter key on tag input
   const handleTagInputKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       const trimmedInput = tagInput.trim();
-
       if (trimmedInput.length > 0) {
         handleAddTag(trimmedInput);
       }
     }
   };
 
-  // Update cover image URL directly
-  const handleCoverImageUrlChange = (e) => {
-    setCoverImage(e.target.value);
+  const handleLanguageChange = (lang) => {
+    setActiveLang(lang);
   };
 
-  // Validate form
+  const handleTitleChange = (e) => {
+    const newTitle = e.target.value;
+    setTranslations(prev => ({
+      ...prev,
+      [activeLang]: { ...prev[activeLang], title: newTitle }
+    }));
+    
+    if (errors.title) {
+      setErrors({ ...errors, title: null });
+    }
+  };
+
+  const handleContentChange = (newContent) => {
+    setTranslations(prev => ({
+      ...prev,
+      [activeLang]: { ...prev[activeLang], content: newContent }
+    }));
+    
+    if (errors.content) {
+      setErrors({ ...errors, content: null });
+    }
+  };
+
   const validateForm = () => {
     const newErrors = {};
+    
+    // Validate BOTH languages
+    ['tr', 'en'].forEach(lang => {
+      const t = translations[lang];
+      
+      // TR is mandatory, EN is optional but if filled must be valid
+      if (lang === 'tr') {
+        if (!t.title.trim()) {
+          newErrors[`title_${lang}`] = `Turkish title is required`;
+        } else if (t.title.trim().length < 5) {
+          newErrors[`title_${lang}`] = `Turkish title must be at least 5 characters`;
+        } else if (t.title.trim().length > 300) {
+          newErrors[`title_${lang}`] = `Turkish title must be max 300 characters`;
+        }
 
-    // Title validation (30-300 characters)
-    if (!title.trim()) {
-      newErrors.title = 'Title is required';
-    } else if (title.trim().length < 30) {
-      newErrors.title = `Title must be at least 30 characters (currently ${title.trim().length})`;
-    } else if (title.trim().length > 300) {
-      newErrors.title = `Title must be maximum 300 characters (currently ${title.trim().length})`;
+        if (!t.content.trim()) {
+          newErrors[`content_${lang}`] = `Turkish content is required`;
+        } else if (t.content.trim().length < 10) {
+          newErrors[`content_${lang}`] = `Turkish content must be at least 10 characters`;
+        }
+      } else if (lang === 'en') {
+        // EN is optional, but if title exists, content must exist too
+        if (t.title.trim() && !t.content.trim()) {
+          newErrors[`content_${lang}`] = `English content required if title is provided`;
+        }
+        if (t.content.trim() && !t.title.trim()) {
+          newErrors[`title_${lang}`] = `English title required if content is provided`;
+        }
+      }
+    });
+
+    // Show error on current language if exists
+    if (newErrors[`title_${activeLang}`]) {
+      newErrors.title = newErrors[`title_${activeLang}`];
+    }
+    if (newErrors[`content_${activeLang}`]) {
+      newErrors.content = newErrors[`content_${activeLang}`];
     }
 
-    // Content validation (minimum 300 characters)
-    if (!content.trim()) {
-      newErrors.content = 'Content is required';
-    } else if (content.trim().length < 300) {
-      newErrors.content = `Content must be at least 300 characters (currently ${content.trim().length})`;
-    }
-
-    // Tags validation (exactly 4 tags required)
+    // Tags validation
     if (selectedTags.length === 0) {
       newErrors.tags = 'Please add at least 4 tags';
     } else if (selectedTags.length < 4) {
@@ -215,72 +252,46 @@ function CreatePostContent() {
   };
 
   const handlePublish = async () => {
-    // Validate form
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setIsLoading(true);
     try {
-      // Create post data
       const postData = {
-        title: title.trim(),
-        content: content.trim(),
-        tags: selectedTags, // Use selected tags array
+        translations: [
+          { languageCode: 'tr', ...translations.tr },
+          { languageCode: 'en', ...translations.en }
+        ].filter(t => t.title.trim() && t.content.trim()), // Only send filled translations
+        defaultLanguageCode: 'tr',
+        tags: selectedTags,
         coverImageUrl: coverImage || null,
         publishNow: true
       };
 
-      // Call API - create or update based on mode
       let result;
       if (isEditMode && editingPost) {
-        // First update the draft content, then publish it
-        await updatePost(editingPost.id, {
-          title: postData.title,
-          content: postData.content,
-          coverImageUrl: postData.coverImageUrl,
-          tags: postData.tags
-        });
-
-        // Then publish the updated draft
+        await updatePost(editingPost.id, postData);
         result = await publishPost(editingPost.id);
       } else {
         result = await createPost(postData);
       }
 
       if (result.success) {
-        // Redirect to the post using ID
         const postId = isEditMode ? editingPost.id : result.data?.id;
-        if (postId) {
-          router.push(`/post/${postId}`);
-        } else {
-          router.push('/');
-        }
+        router.push(postId ? `/post/${postId}` : '/');
       } else {
-        setErrors({ submit: result.message || `Failed to ${isEditMode ? 'update' : 'create'} post` });
+        setErrors({ submit: result.message || 'Failed to publish' });
       }
     } catch (error) {
-      console.error(`Error ${isEditMode ? 'updating' : 'creating'} post:`, error);
-      setErrors({ submit: `Failed to ${isEditMode ? 'update' : 'create'} post. Please try again.` });
+      console.error('Error publishing:', error);
+      setErrors({ submit: 'Failed to publish. Please try again.' });
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleSaveDraft = async () => {
-    // For draft, only title is required
-    if (!title.trim()) {
-      setErrors({ title: 'Title is required to save draft' });
-      return;
-    }
-
-    if (title.trim().length < 30) {
-      setErrors({ title: `Title must be at least 30 characters (currently ${title.trim().length})` });
-      return;
-    }
-
-    if (title.trim().length > 300) {
-      setErrors({ title: `Title must be maximum 300 characters (currently ${title.trim().length})` });
+    if (!translations.tr.title.trim()) {
+      setErrors({ title: 'Turkish title is required to save draft' });
       return;
     }
 
@@ -288,25 +299,20 @@ function CreatePostContent() {
     setErrors({});
 
     try {
-      // Create post data as draft
       const postData = {
-        title: title.trim(),
-        content: content.trim() || '',
-        tags: selectedTags, // Use selected tags array
+        translations: [
+          { languageCode: 'tr', ...translations.tr },
+          { languageCode: 'en', ...translations.en }
+        ].filter(t => t.title.trim() || t.content.trim()),
+        defaultLanguageCode: 'tr',
+        tags: selectedTags,
         coverImageUrl: coverImage || null,
-        publishNow: false // Save as draft
+        publishNow: false
       };
 
-      // Call API - create or update based on mode
       let result;
       if (isEditMode && editingPost) {
-        result = await updatePost(editingPost.id, {
-          title: postData.title,
-          content: postData.content,
-          coverImageUrl: postData.coverImageUrl,
-          tags: postData.tags,
-          publishNow: false
-        });
+        result = await updatePost(editingPost.id, postData);
       } else {
         result = await createPost(postData);
       }
@@ -332,11 +338,9 @@ function CreatePostContent() {
   const confirmDelete = async () => {
     setShowDeleteModal(false);
     setIsLoading(true);
-    setErrors({});
 
     try {
       const result = await deletePost(editingPost.id);
-
       if (result.success) {
         router.push('/');
       } else {
@@ -350,20 +354,14 @@ function CreatePostContent() {
     }
   };
 
-  const cancelDelete = () => {
-    setShowDeleteModal(false);
-  };
-
-  // Help content for each section
   const helpContent = {
     title: {
       title: "Writing a Great Title",
       tips: [
-        "Keep it between 30-300 characters",
+        "Keep it between 5-300 characters",
         "Make it descriptive and engaging",
-        "Use clear, concise language",
-        "Avoid clickbait or misleading titles",
-        "Include relevant keywords"
+        "Turkish title is mandatory",
+        "English translation is optional"
       ]
     },
     tags: {
@@ -371,29 +369,15 @@ function CreatePostContent() {
       tips: [
         "Add exactly 4 tags to your post",
         "Use existing tags when possible",
-        "Create new tags if needed",
-        "Tags help others find your content",
-        "Choose relevant and specific tags"
+        "Tags help others find your content"
       ]
     },
     content: {
       title: "Editor Basics",
       tips: [
-        "Use Markdown to write and format posts",
-        "Minimum 300 characters required",
-        "Embed rich content (Tweets, YouTube, etc.)",
-        "Add images with drag and drop",
-        "Use code blocks for syntax highlighting"
-      ],
-      markdown: [
-        "**bold text** - Bold",
-        "*italic text* - Italic",
-        "# Heading 1",
-        "## Heading 2",
-        "[link text](url) - Links",
-        "![alt text](image-url) - Images",
-        "`code` - Inline code",
-        "```language\\ncode block\\n``` - Code blocks"
+        "Use Markdown to format posts",
+        "Minimum 10 characters required",
+        "Turkish content is mandatory"
       ]
     },
     coverImage: {
@@ -401,43 +385,24 @@ function CreatePostContent() {
       tips: [
         "Upload an eye-catching cover image",
         "Recommended size: 1200x600px",
-        "Supports: JPG, PNG, GIF",
-        "Optional but recommended",
-        "Drag and drop to upload"
+        "Optional but recommended"
       ]
     }
   };
 
   const editorOptions = useMemo(() => ({
     spellChecker: false,
-    placeholder: 'Write your post content here...',
+    placeholder: `Write your ${activeLang === 'tr' ? 'Turkish' : 'English'} content here...`,
     status: false,
     autofocus: false,
-    autosave: {
-      enabled: false,
-    },
-    toolbar: [
-      'bold',
-      'italic',
-      'heading',
-      '|',
-      'quote',
-      'unordered-list',
-      'ordered-list',
-      '|',
-      'link',
-      'image',
-      'code',
-    ],
-  }), []);
+    toolbar: ['bold', 'italic', 'heading', '|', 'quote', 'unordered-list', 'ordered-list', '|', 'link', 'image', 'code'],
+  }), [activeLang]);
 
   return (
     <div className="min-h-screen bg-brand-background flex flex-col">
-      {/* Header - Fixed - Matching Navbar */}
       <header className="bg-white border-b border-brand-muted/30 flex-shrink-0">
         <div className="w-full px-3">
           <div className="flex items-center justify-between h-14 mx-auto sm:mx-16">
-            {/* Left: Logo + Title */}
             <div className="flex items-center gap-2">
               <Link href="/" className="text-2xl font-bold text-brand-dark hover:text-brand-primary transition-colors">
                 SourceDev
@@ -448,52 +413,39 @@ function CreatePostContent() {
               </h1>
             </div>
 
-            {/* Right: Edit/Preview + Close */}
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsPreview(false)}
-                className={`px-4 py-2 text-base font-medium rounded-md transition-colors ${!isPreview
-                    ? 'text-brand-primary bg-brand-primary/10'
-                    : 'text-brand-dark hover:bg-gray-100'
-                  }`}
+                className={`px-4 py-2 text-base font-medium rounded-md transition-colors ${!isPreview ? 'text-brand-primary bg-brand-primary/10' : 'text-brand-dark hover:bg-gray-100'}`}
               >
                 Edit
               </button>
               <button
                 onClick={() => setIsPreview(true)}
-                className={`px-4 py-2 text-base font-medium rounded-md transition-colors ${isPreview
-                    ? 'text-brand-primary bg-brand-primary/10'
-                    : 'text-brand-dark hover:bg-gray-100'
-                  }`}
+                className={`px-4 py-2 text-base font-medium rounded-md transition-colors ${isPreview ? 'text-brand-primary bg-brand-primary/10' : 'text-brand-dark hover:bg-gray-100'}`}
               >
                 Preview
               </button>
               <button
                 onClick={() => router.push('/')}
                 className="p-2 hover:bg-gray-100 rounded-md transition-colors"
-                aria-label="Close"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
-
           </div>
         </div>
       </header>
 
-      {/* Main Content - Scrollable */}
       <main className="flex-1 flex flex-col lg:flex-row relative">
-        {/* Left Content Area */}
         <div className="w-full lg:flex-[2] lg:ps-16 py-8 px-4 lg:px-0">
           <div className="max-w-[900px] bg-white rounded-lg p-6 lg:p-12 mx-auto">
             {!isPreview ? (
-              /* Edit Mode */
               <div className="space-y-6">
                 {/* Cover Image */}
                 <div className="flex flex-col gap-2">
-                  {/* URL Input */}
                   <label className="text-sm font-medium text-brand-dark">Cover Image URL</label>
                   <input
                     type="text"
@@ -510,51 +462,55 @@ function CreatePostContent() {
                     <img src={coverImage} alt="Cover" className="w-full h-64 object-cover rounded-lg" />
                     <button
                       onClick={() => setCoverImage(null)}
-                      className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors cursor-pointer"
+                      className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
                     >
                       <MdClose className="w-4 h-4" />
                     </button>
                   </div>
                 )}
 
+                {/* Language Tabs */}
+                <div className="flex gap-2 mb-4">
+                  <button
+                    onClick={() => handleLanguageChange('tr')}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                      activeLang === 'tr' ? 'bg-brand-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    🇹🇷 Turkish {translations.tr.title && '✓'}
+                  </button>
+                  <button
+                    onClick={() => handleLanguageChange('en')}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                      activeLang === 'en' ? 'bg-brand-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    🇬🇧 English {translations.en.title && '✓'}
+                  </button>
+                </div>
+
                 {/* Title */}
                 <textarea
                   ref={titleTextareaRef}
-                  value={title}
-                  onChange={(e) => {
-                    setTitle(e.target.value);
-                    if (errors.title) {
-                      setErrors({ ...errors, title: null });
-                    }
-                    // Auto-resize textarea
-                    e.target.style.height = 'auto';
-                    e.target.style.height = e.target.scrollHeight + 'px';
-                  }}
+                  value={translations[activeLang].title}
+                  onChange={handleTitleChange}
                   onFocus={() => setActiveSection('title')}
-                  placeholder="New post title here..."
+                  placeholder={`${activeLang === 'tr' ? 'Turkish' : 'English'} post title...`}
                   className={`w-full text-5xl font-bold text-brand-dark placeholder-gray-400 resize-none border-none outline-none overflow-hidden ${errors.title ? 'border-b-2 border-red-500' : ''}`}
                   rows={1}
-                  style={{ minHeight: '1.2em', maxHeight: '2.4em' }}
                 />
                 {errors.title && (
-                  <p className="text-red-600 text-sm mt-1 mb-2">{errors.title}</p>
+                  <p className="text-red-600 text-sm mt-1">{errors.title}</p>
                 )}
 
                 {/* Tags */}
                 <div className='mb-2'>
-                  {/* Selected Tags */}
                   {selectedTags.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-3">
                       {selectedTags.map((tag, index) => (
-                        <span
-                          key={index}
-                          className="inline-flex items-center gap-2 px-3 py-1.5 bg-brand-primary/10 text-brand-primary rounded-lg text-sm font-medium"
-                        >
+                        <span key={index} className="inline-flex items-center gap-2 px-3 py-1.5 bg-brand-primary/10 text-brand-primary rounded-lg text-sm font-medium">
                           #{tag}
-                          <button
-                            onClick={() => handleRemoveTag(tag)}
-                            className="hover:text-red-600 transition-colors"
-                          >
+                          <button onClick={() => handleRemoveTag(tag)} className="hover:text-red-600 transition-colors">
                             <MdClose className="w-4 h-4" />
                           </button>
                         </span>
@@ -562,7 +518,6 @@ function CreatePostContent() {
                     </div>
                   )}
 
-                  {/* Tag Input */}
                   {selectedTags.length < 4 && (
                     <input
                       ref={tagInputRef}
@@ -573,10 +528,7 @@ function CreatePostContent() {
                         setShowSuggestions(true);
                         setActiveSection('tags');
                       }}
-                      onBlur={() => {
-                        // Delay to allow click events to fire first
-                        setTimeout(() => setShowSuggestions(false), 150);
-                      }}
+                      onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
                       onKeyDown={handleTagInputKeyDown}
                       placeholder={selectedTags.length === 0 ? "Add up to 4 tags..." : "Add another tag..."}
                       className="w-full text-base text-brand-dark placeholder-gray-400 border-none outline-none mb-2"
@@ -588,23 +540,19 @@ function CreatePostContent() {
                   )}
                 </div>
 
-                {/* Tags Error */}
-                {errors.tags && (
-                  <p className="text-red-600 text-sm mb-2">{errors.tags}</p>
-                )}
+                {errors.tags && <p className="text-red-600 text-sm mb-2">{errors.tags}</p>}
 
-                {/* Tag Suggestions Dropdown - Directly below input */}
+                {/* Tag Suggestions */}
                 {showSuggestions && (tagSuggestions.length > 0 || tagInput.trim().length > 0) && (
                   <div className="bg-white border border-gray-200 rounded-lg shadow-lg overflow-y-auto mb-4" style={{ maxHeight: '180px' }}>
-                    {/* Existing tags */}
                     {tagSuggestions
-                      .filter(tag => !selectedTags.includes(tag.name || tag)) // Filter out already selected tags
+                      .filter(tag => !selectedTags.includes(tag.name || tag))
                       .slice(0, 10)
                       .map((tag, index) => (
                         <button
                           key={index}
                           onMouseDown={(e) => {
-                            e.preventDefault(); // Prevent input blur
+                            e.preventDefault();
                             handleAddTag(tag.name || tag);
                           }}
                           className="w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors"
@@ -613,58 +561,35 @@ function CreatePostContent() {
                         </button>
                       ))}
 
-                    {/* Create new tag option */}
                     {tagInput.trim().length >= 2 &&
                       !tagSuggestions.some(tag => (tag.name || tag).toLowerCase() === tagInput.trim().toLowerCase()) &&
                       !selectedTags.includes(tagInput.trim()) && (
                         <button
                           onMouseDown={(e) => {
-                            e.preventDefault(); // Prevent input blur
+                            e.preventDefault();
                             handleAddTag(tagInput.trim());
                           }}
                           className="w-full text-left px-4 py-2 hover:bg-brand-primary/10 transition-colors border-t border-gray-200"
                         >
                           <span className="text-brand-primary font-medium">
-                            Create new tag: <span className="font-bold">#{tagInput.trim()}</span>
+                            Create new: <span className="font-bold">#{tagInput.trim()}</span>
                           </span>
                         </button>
-                      )}
-
-                    {/* No results message */}
-                    {tagSuggestions.filter(tag => !selectedTags.includes(tag.name || tag)).length === 0 &&
-                      tagInput.trim().length < 2 && (
-                        <div className="px-4 py-2 text-sm text-brand-muted">
-                          Type at least 2 characters to create a new tag
-                        </div>
                       )}
                   </div>
                 )}
 
                 {/* Markdown Editor */}
-                <div
-                  className="markdown-editor"
-                  onFocus={() => setActiveSection('content')}
-                  onClick={() => setActiveSection('content')}
-                >
+                <div className="markdown-editor" onFocus={() => setActiveSection('content')}>
                   <SimpleMDE
-                    key="markdown-editor"
-                    value={content}
-                    onChange={(value) => {
-                      setContent(value);
-                      if (errors.content) {
-                        setErrors({ ...errors, content: null });
-                      }
-                    }}
+                    key={`editor-${activeLang}`}
+                    value={translations[activeLang].content}
+                    onChange={handleContentChange}
                     options={editorOptions}
                   />
                 </div>
 
-                {/* Content Error */}
-                {errors.content && (
-                  <p className="text-red-600 text-sm mt-2">{errors.content}</p>
-                )}
-
-                {/* Submit Error */}
+                {errors.content && <p className="text-red-600 text-sm mt-2">{errors.content}</p>}
                 {errors.submit && (
                   <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
                     <p className="text-red-600 text-sm">{errors.submit}</p>
@@ -672,23 +597,17 @@ function CreatePostContent() {
                 )}
               </div>
             ) : (
-              /* Preview Mode */
               <div className="space-y-6">
-                {coverImage && (
-                  <img src={coverImage} alt="Cover" className="w-full h-64 object-cover rounded-lg" />
-                )}
+                {coverImage && <img src={coverImage} alt="Cover" className="w-full h-64 object-cover rounded-lg" />}
 
                 <h1 className="text-5xl font-bold text-brand-dark break-words">
-                  {title || 'New post title here...'}
+                  {translations[activeLang].title || 'Post title...'}
                 </h1>
 
                 {selectedTags.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {selectedTags.map((tag, index) => (
-                      <span
-                        key={index}
-                        className="px-3 py-1 bg-brand-primary/10 text-brand-primary rounded-md text-sm font-medium"
-                      >
+                      <span key={index} className="px-3 py-1 bg-brand-primary/10 text-brand-primary rounded-md text-sm font-medium">
                         #{tag}
                       </span>
                     ))}
@@ -696,12 +615,12 @@ function CreatePostContent() {
                 )}
 
                 <div className="markdown-preview prose prose-lg max-w-none">
-                  {content ? (
+                  {translations[activeLang].content ? (
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {content}
+                      {translations[activeLang].content}
                     </ReactMarkdown>
                   ) : (
-                    <p className="text-gray-400">Write your post content here...</p>
+                    <p className="text-gray-400">Write your content...</p>
                   )}
                 </div>
               </div>
@@ -709,16 +628,14 @@ function CreatePostContent() {
           </div>
         </div>
 
-        {/* Right Sidebar - Help Panel (hidden on small screens) */}
         <aside className="hidden lg:flex flex-1 items-center pr-8">
           <div className="w-full max-w-sm">
             {activeSection && helpContent[activeSection] ? (
-              <div className="">
+              <div>
                 <h3 className="text-base font-bold text-brand-dark mb-3">
                   {helpContent[activeSection].title}
                 </h3>
-
-                <ul className="space-y-1.5 mb-3">
+                <ul className="space-y-1.5">
                   {helpContent[activeSection].tips.map((tip, index) => (
                     <li key={index} className="flex items-start gap-2 text-xs text-brand-muted">
                       <span className="text-brand-primary mt-0.5">•</span>
@@ -726,41 +643,21 @@ function CreatePostContent() {
                     </li>
                   ))}
                 </ul>
-
-                {/* Markdown syntax examples */}
-                {helpContent[activeSection].markdown && (
-                  <div className="mt-3 pt-3 border-t border-gray-200">
-                    <h4 className="text-xs font-semibold text-brand-dark mb-2">
-                      ▸ Commonly used syntax
-                    </h4>
-                    <div className="space-y-1">
-                      {helpContent[activeSection].markdown.map((syntax, index) => (
-                        <code key={index} className="block text-xs bg-gray-50 p-1.5 rounded text-brand-dark">
-                          {syntax}
-                        </code>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             ) : (
-              <div className="">
-                <p className="text-sm text-brand-dark text-center">
-                  Click on any field to see helpful tips
-                </p>
-              </div>
+              <p className="text-sm text-brand-dark text-center">
+                Click on any field to see helpful tips
+              </p>
             )}
           </div>
         </aside>
 
-        {/* Action Buttons - Bottom on mobile, fixed on desktop */}
         <div className="w-full lg:w-64 lg:absolute lg:right-0 lg:top-6 lg:z-10">
           <div className="p-4 lg:p-4">
             <button
               onClick={handlePublish}
               disabled={isLoading}
-              className={`w-full px-6 py-3 bg-brand-primary hover:bg-brand-primary-dark text-white font-bold rounded-lg transition-colors mb-3 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
+              className={`w-full px-6 py-3 bg-brand-primary hover:bg-brand-primary-dark text-white font-bold rounded-lg transition-colors mb-3 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {isLoading ? (isEditMode ? 'Updating...' : 'Publishing...') : (isEditMode ? 'Update & Publish' : 'Publish')}
             </button>
@@ -771,13 +668,11 @@ function CreatePostContent() {
               Save draft
             </button>
 
-            {/* Delete button - only show in edit mode */}
             {isEditMode && (
               <button
                 onClick={handleDelete}
                 disabled={isLoading}
-                className={`w-full px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-colors mt-3 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
+                className={`w-full px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-colors mt-3 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {isLoading ? 'Deleting...' : 'Delete Post'}
               </button>
@@ -786,28 +681,25 @@ function CreatePostContent() {
         </div>
       </main>
 
-      {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-bold text-brand-dark mb-4">Delete Post</h3>
             <p className="text-brand-muted mb-6">
-              Are you sure you want to delete this post? This action cannot be undone.
+              Are you sure? This action cannot be undone.
             </p>
             <div className="flex gap-3">
               <button
-                onClick={cancelDelete}
+                onClick={() => setShowDeleteModal(false)}
                 className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-brand-dark font-medium rounded-lg transition-colors"
-                disabled={isLoading}
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDelete}
                 className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-colors"
-                disabled={isLoading}
               >
-                {isLoading ? 'Deleting...' : 'Delete'}
+                Delete
               </button>
             </div>
           </div>
@@ -828,4 +720,3 @@ export default function CreatePostPage() {
     </Suspense>
   );
 }
-

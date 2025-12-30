@@ -6,7 +6,7 @@ import MarkdownContent from './MarkdownContent';
 import { searchUsers, getUserById } from '@/utils/api/userApi';
 import { getUsernameFromDisplayName } from '@/utils/userUtils';
 
-export default function PostContent({ post }) {
+export default function PostContent({ post, activeLanguage, onLanguageChange }) {
   const [authorProfileImage, setAuthorProfileImage] = useState(null);
   const [authorUsername, setAuthorUsername] = useState(null);
 
@@ -112,6 +112,25 @@ export default function PostContent({ post }) {
             <p className="text-sm text-brand-muted">Posted on {post.date}</p>
           </div>
         </div>
+
+        {/* Language Switcher */}
+        {post.translations && post.translations.length > 1 && (
+          <div className="flex gap-2 mb-4">
+            {post.translations.map((t) => (
+              <button
+                key={t.languageCode}
+                onClick={() => onLanguageChange && onLanguageChange(t.languageCode)}
+                className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
+                  activeLanguage === t.languageCode
+                    ? 'bg-brand-primary text-white shadow-md'
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                }`}
+              >
+                {t.languageCode === 'tr' ? '🇹🇷 TR' : t.languageCode === 'en' ? '🇬🇧 EN' : t.languageCode}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Title */}
         <h1 className="text-5xl font-bold text-brand-dark mb-6">

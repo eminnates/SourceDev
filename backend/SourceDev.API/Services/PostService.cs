@@ -464,9 +464,22 @@ namespace SourceDev.API.Services
             if (post.user_id != requesterId)
                 throw new UnauthorizedAccessException("You can only update your own posts");
 
+            // Ensure translations collection is initialized
+            if (post.Translations == null)
+            {
+                post.Translations = new List<PostTranslation>();
+            }
+
+            // Determine the default language code (use existing if not changing, or new if provided)
+            var defaultLanguageCode = !string.IsNullOrWhiteSpace(dto.DefaultLanguageCode) 
+                ? dto.DefaultLanguageCode 
+                : post.default_language_code;
+
             // Update Translations
             if (dto.Translations != null)
             {
+                var dtoLanguageCodes = dto.Translations.Select(t => t.LanguageCode).ToHashSet();
+                
                 foreach (var transDto in dto.Translations)
                 {
                     var translation = post.Translations.FirstOrDefault(t => t.language_code == transDto.LanguageCode);
@@ -526,6 +539,32 @@ namespace SourceDev.API.Services
                             slug = slug
                         });
                     }
+                }
+
+                // Handle translation deletion: remove translations that are not in the DTO
+                var translationsToDelete = post.Translations
+                    .Where(t => !dtoLanguageCodes.Contains(t.language_code))
+                    .ToList();
+
+                // Validation: Ensure at least one translation remains after deletion
+                if (post.Translations.Count - translationsToDelete.Count < 1)
+                {
+                    throw new InvalidOperationException("Cannot delete all translations. At least one translation must remain.");
+                }
+
+                // Validation: Prevent deletion of default language translation
+                var defaultTranslationToDelete = translationsToDelete
+                    .FirstOrDefault(t => t.language_code == defaultLanguageCode);
+                
+                if (defaultTranslationToDelete != null)
+                {
+                    throw new InvalidOperationException($"Cannot delete the default language translation ({defaultLanguageCode}). Change the default language first or ensure it remains in the translations list.");
+                }
+
+                // Delete translations that are no longer in the DTO
+                foreach (var translationToDelete in translationsToDelete)
+                {
+                    post.Translations.Remove(translationToDelete);
                 }
                 
                 // Recalculate reading time

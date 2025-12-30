@@ -11,6 +11,7 @@ export default function PostDetailClient({ initialPost }) {
   const [post, setPost] = useState(initialPost);
   const [userReactions, setUserReactions] = useState(initialPost?.userReactions || []);
   const [isBookmarked, setIsBookmarked] = useState(initialPost?.bookmarkedByCurrentUser || false);
+  const [activeLanguage, setActiveLanguage] = useState('tr');
 
   // Update local state if initialPost changes (e.g. revalidation)
   useEffect(() => {
@@ -18,8 +19,29 @@ export default function PostDetailClient({ initialPost }) {
       setPost(initialPost);
       setUserReactions(initialPost.userReactions || []);
       setIsBookmarked(initialPost.bookmarkedByCurrentUser || false);
+      
+      // Set initial language based on what's available or default
+      if (initialPost.translations && initialPost.translations.length > 0) {
+        // Try to find TR, otherwise take the first one
+        const hasTr = initialPost.translations.some(t => t.languageCode === 'tr');
+        setActiveLanguage(hasTr ? 'tr' : initialPost.translations[0].languageCode);
+      }
     }
   }, [initialPost]);
+
+  const handleLanguageChange = (lang) => {
+    setActiveLanguage(lang);
+    const translation = post.translations?.find(t => t.languageCode === lang);
+    
+    if (translation) {
+      setPost(prev => ({
+        ...prev,
+        title: translation.title,
+        content: translation.contentMarkdown || translation.content,
+        contentMarkdown: translation.contentMarkdown || translation.content
+      }));
+    }
+  };
 
   const handleReaction = async (reactionType) => {
     if (!post) return;
@@ -106,7 +128,11 @@ export default function PostDetailClient({ initialPost }) {
 
       {/* Main Content */}
       <main className="min-w-0 w-full">
-        <PostContent post={post} />
+        <PostContent 
+            post={post} 
+            activeLanguage={activeLanguage}
+            onLanguageChange={handleLanguageChange}
+        />
         
         {/* Comments Section */}
         <div id="comments-section" className="mt-12">

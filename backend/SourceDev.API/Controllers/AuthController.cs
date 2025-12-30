@@ -113,7 +113,17 @@ namespace SourceDev.API.Controllers
         [HttpPost("logout")]
         public async Task<ActionResult> Logout()
         {
-            var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+            // #region agent log
+            try { var logData = System.Text.Json.JsonSerializer.Serialize(new { sessionId = "debug-session", runId = "run1", hypothesisId = "A", location = "AuthController.cs:114", message = "Logout entry", data = new { hasAuthHeader = Request.Headers.ContainsKey("Authorization"), authHeaderValue = Request.Headers.ContainsKey("Authorization") ? Request.Headers["Authorization"].ToString().Substring(0, Math.Min(50, Request.Headers["Authorization"].ToString().Length)) : "none" }, timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() }); await System.IO.File.AppendAllTextAsync("/home/emin/Documents/projects/SourceDev/.cursor/debug.log", logData + "\n"); } catch { }
+            // #endregion
+            var authHeader = Request.Headers["Authorization"].ToString();
+            // #region agent log
+            try { var logData = System.Text.Json.JsonSerializer.Serialize(new { sessionId = "debug-session", runId = "run1", hypothesisId = "A", location = "AuthController.cs:118", message = "Before token extraction in Logout", data = new { authHeaderLength = authHeader.Length, startsWithBearer = authHeader.StartsWith("Bearer "), isEmpty = string.IsNullOrEmpty(authHeader) }, timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() }); await System.IO.File.AppendAllTextAsync("/home/emin/Documents/projects/SourceDev/.cursor/debug.log", logData + "\n"); } catch { }
+            // #endregion
+            var token = authHeader.Replace("Bearer ", "");
+            // #region agent log
+            try { var logData = System.Text.Json.JsonSerializer.Serialize(new { sessionId = "debug-session", runId = "run1", hypothesisId = "A", location = "AuthController.cs:122", message = "After token extraction in Logout", data = new { tokenLength = token.Length, isEmpty = string.IsNullOrEmpty(token) }, timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() }); await System.IO.File.AppendAllTextAsync("/home/emin/Documents/projects/SourceDev/.cursor/debug.log", logData + "\n"); } catch { }
+            // #endregion
             await _tokenBlacklistService.AddToBlacklistAsync(token);
             
             var username = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;

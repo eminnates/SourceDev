@@ -24,11 +24,11 @@ namespace SourceDev.API.Data.Context
         {
             modelBuilder.Entity<Post>().HasQueryFilter(p => p.deleted_at == null);
             
-            // PostTranslation - Unique Constraints
+            // PostTranslation - Composite Primary Key
             modelBuilder.Entity<PostTranslation>()
-                .HasIndex(pt => new { pt.post_id, pt.language_code })
-                .IsUnique();
+                .HasKey(pt => new { pt.post_id, pt.language_code });
 
+            // PostTranslation - Slug unique constraint (slug + language_code must be unique)
             modelBuilder.Entity<PostTranslation>()
                 .HasIndex(pt => new { pt.slug, pt.language_code })
                 .IsUnique();
