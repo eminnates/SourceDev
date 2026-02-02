@@ -22,7 +22,9 @@ namespace SourceDev.API.Middlewares
                 : new[] { 
                     "http://localhost:3000", 
                     "http://localhost:5173",
-                    "https://source-dev.vercel.app"
+                    "https://source-dev.vercel.app",
+                    "https://soucedev.tr",
+                    "https://www.soucedev.tr"
                 };
             
             var origin = context.Request.Headers["Origin"].ToString();
