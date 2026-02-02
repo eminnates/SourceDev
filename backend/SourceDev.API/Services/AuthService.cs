@@ -20,14 +20,13 @@ namespace SourceDev.API.Services
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ITokenBlacklistService _tokenBlacklistService;
-        private readonly IEmailService _emailService;
         private readonly ILogger<AuthService> _logger;
         private readonly string _jwtSecret;
         private readonly string _jwtIssuer;
         private readonly string _jwtAudience;
         private readonly int _jwtExpiration;
 
-        public AuthService(UserManager<User> userManager, IConfiguration configuration, SignInManager<User> signInManager, IMapper mapper, IUnitOfWork unitOfWork, ITokenBlacklistService tokenBlacklistService, IEmailService emailService, ILogger<AuthService> logger)
+        public AuthService(UserManager<User> userManager, IConfiguration configuration, SignInManager<User> signInManager, IMapper mapper, IUnitOfWork unitOfWork, ITokenBlacklistService tokenBlacklistService, ILogger<AuthService> logger)
         {
             _userManager = userManager;
             _configuration = configuration;
@@ -35,7 +34,6 @@ namespace SourceDev.API.Services
             _mapper = mapper;
             _unitOfWork = unitOfWork;
             _tokenBlacklistService = tokenBlacklistService;
-            _emailService = emailService;
             _logger = logger;
             _jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
             ?? throw new InvalidOperationException("JWT_SECRET_KEY not found!");
@@ -99,33 +97,19 @@ namespace SourceDev.API.Services
                 };
             }
 
-            // Generate email confirmation token
-            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            
-            // Encode token for URL
-            var encodedToken = System.Web.HttpUtility.UrlEncode(token);
-            
-            // Create verification link (assuming frontend is running on localhost:3000 for now)
-            // In production, this should be configurable
-            var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:3000";
-            var verificationLink = $"{frontendUrl}/verify-email?userId={user.Id}&token={encodedToken}";
-            
-            // Send email
-            await _emailService.SendEmailAsync(
-                user.Email, 
-                "Confirm your email", 
-                $"Please confirm your account by clicking this link: {verificationLink}"
-            );
+            // Generate JWT token for immediate login after registration
+            var token = GenerateJwtToken(user);
+            var expiration = DateTime.UtcNow.AddMinutes(_jwtExpiration);
 
-            _logger.LogInformation("User registered successfully. Waiting for email confirmation. UserId: {UserId}", user.Id);
+            _logger.LogInformation("User registered successfully. UserId: {UserId}", user.Id);
 
             return new AuthResponseDto
             {
                 Success = true,
-                Message = "Registration successful. Please check your email to confirm your account.",
-                // Do NOT return token here to enforce email verification
-                Token = null,
-                User = null 
+                Message = "Registration successful.",
+                Token = token,
+                TokenExpiration = expiration,
+                User = _mapper.Map<UserInfoDto>(user)
             };
         }
 
@@ -153,17 +137,6 @@ namespace SourceDev.API.Services
                 {
                     Success = false,
                     Message = "Account has been deleted"
-                };
-            }
-
-            // Check if email is confirmed
-            if (!await _userManager.IsEmailConfirmedAsync(user))
-            {
-                _logger.LogWarning("Login failed: Email not confirmed. UserId: {UserId}", user.Id);
-                return new AuthResponseDto
-                {
-                    Success = false,
-                    Message = "Please confirm your email address before logging in."
                 };
             }
 
@@ -291,35 +264,6 @@ namespace SourceDev.API.Services
             {
                 return Task.FromResult(false);
             }
-        }
-
-        public async Task<AuthResponseDto> ConfirmEmailAsync(string userId, string token)
-        {
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
-            {
-                return new AuthResponseDto
-                {
-                    Success = false,
-                    Message = "User not found"
-                };
-            }
-
-            var result = await _userManager.ConfirmEmailAsync(user, token);
-            if (!result.Succeeded)
-            {
-                return new AuthResponseDto
-                {
-                    Success = false,
-                    Message = "Email confirmation failed"
-                };
-            }
-
-            return new AuthResponseDto
-            {
-                Success = true,
-                Message = "Email confirmed successfully"
-            };
         }
 
         private string GenerateJwtToken(User user)

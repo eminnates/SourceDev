@@ -93,9 +93,6 @@ builder.Services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<IReactionService, ReactionService>();
 
-// Burada Resend Servisini tanımlıyoruz
-builder.Services.AddScoped<IEmailService, ResendEmailService>();
-
 // Background Services
 builder.Services.AddSingleton<IViewCountQueue, ViewCountQueue>();
 builder.Services.AddHostedService<ViewCountWorker>();
