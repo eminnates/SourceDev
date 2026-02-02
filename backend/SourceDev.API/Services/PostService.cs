@@ -2,6 +2,7 @@
 using SourceDev.API.Models.Entities;
 using SourceDev.API.Repositories;
 using SourceDev.API.Models;
+using SourceDev.API.Helpers;
 using Microsoft.EntityFrameworkCore;
 using SourceDev.API.Services.Background;
 
@@ -973,6 +974,175 @@ namespace SourceDev.API.Services
 
             _logger.LogInformation("Bookmarked posts fetched. UserId: {UserId}, Page: {Page}, Size: {Size}", userId, page, pageSize);
             return postDtos;
+        }
+
+        // ========== ADVANCED FEED ALGORITHMS ==========
+
+        /// <summary>
+        /// Get trending posts (last 48 hours, engagement-weighted)
+        /// Cached for 2 minutes
+        /// </summary>
+        public async Task<IEnumerable<PostListDto>> GetTrendingAsync(int page, int pageSize)
+        {
+            var posts = await _unitOfWork.Posts.GetTrendingDtosAsync(page, pageSize);
+            _logger.LogInformation("Trending posts fetched. Page: {Page}, Size: {Size}, Count: {Count}", 
+                page, pageSize, posts.Count());
+            return posts;
+        }
+
+        /// <summary>
+        /// Get hot posts (Reddit-style algorithm)
+        /// Cached for 3 minutes
+        /// </summary>
+        public async Task<IEnumerable<PostListDto>> GetHotAsync(int page, int pageSize)
+        {
+            var posts = await _unitOfWork.Posts.GetHotDtosAsync(page, pageSize);
+            _logger.LogInformation("Hot posts fetched. Page: {Page}, Size: {Size}, Count: {Count}", 
+                page, pageSize, posts.Count());
+            return posts;
+        }
+
+        /// <summary>
+        /// Get top posts with time period filter
+        /// </summary>
+        public async Task<IEnumerable<PostListDto>> GetTopByPeriodAsync(TimePeriod period, int page, int pageSize)
+        {
+            var posts = await _unitOfWork.Posts.GetTopDtosAsync(period, page, pageSize);
+            _logger.LogInformation("Top posts fetched. Period: {Period}, Page: {Page}, Size: {Size}, Count: {Count}", 
+                period, page, pageSize, posts.Count());
+            return posts;
+        }
+
+        /// <summary>
+        /// Get personalized feed for user (For You)
+        /// </summary>
+        public async Task<IEnumerable<PostListDto>> GetForYouAsync(int userId, int page, int pageSize)
+        {
+            // Get user's preferred tags from interaction history
+            var userTagInteractions = await _unitOfWork.UserTagInteractions
+                .Query()
+                .Where(uti => uti.user_id == userId)
+                .OrderByDescending(uti => uti.interaction_score)
+                .Take(20)
+                .Select(uti => uti.tag_id)
+                .ToListAsync();
+
+            // Get user's following list
+            var followingIds = await _unitOfWork.UserFollows
+                .Query()
+                .Where(uf => uf.follower_id == userId)
+                .Select(uf => uf.following_id)
+                .ToListAsync();
+
+            // If user has no interactions, fall back to trending
+            if (!userTagInteractions.Any() && !followingIds.Any())
+            {
+                _logger.LogInformation("ForYou fallback to trending for user {UserId} - no preferences", userId);
+                return await GetTrendingAsync(page, pageSize);
+            }
+
+            var posts = await _unitOfWork.Posts.GetPersonalizedDtosAsync(
+                userId, userTagInteractions, followingIds, page, pageSize);
+            
+            // Populate user-specific data
+            var postIds = posts.Select(p => p.Id).ToList();
+            
+            var userReactions = await _unitOfWork.Reactions
+                .Query()
+                .Where(r => postIds.Contains(r.post_id) && r.user_id == userId)
+                .Select(r => new { r.post_id, r.reaction_type })
+                .ToListAsync();
+
+            var userBookmarks = await _unitOfWork.Bookmarks
+                .Query()
+                .Where(b => postIds.Contains(b.post_id) && b.user_id == userId)
+                .Select(b => b.post_id)
+                .ToListAsync();
+
+            foreach (var post in posts)
+            {
+                post.UserReactions = userReactions
+                    .Where(r => r.post_id == post.Id)
+                    .Select(r => r.reaction_type)
+                    .ToList();
+                post.LikedByCurrentUser = post.UserReactions.Contains("like");
+                post.BookmarkedByCurrentUser = userBookmarks.Contains(post.Id);
+            }
+
+            _logger.LogInformation("ForYou posts fetched for user {UserId}. Page: {Page}, Size: {Size}, Count: {Count}", 
+                userId, page, pageSize, posts.Count());
+            return posts;
+        }
+
+        /// <summary>
+        /// Track user's tag interactions for personalized feed
+        /// Called when user likes, comments, or bookmarks a post
+        /// </summary>
+        public async Task UpdateUserTagInteractionsAsync(int userId, int postId, string interactionType)
+        {
+            try
+            {
+                // Get post's tags
+                var post = await _unitOfWork.Posts.GetByIdAsync(postId);
+                if (post == null) return;
+
+                var postTags = await _unitOfWork.PostTags
+                    .Query()
+                    .Where(pt => pt.post_id == postId)
+                    .Select(pt => pt.tag_id)
+                    .ToListAsync();
+
+                if (!postTags.Any()) return;
+
+                // Interaction weights
+                double weight = interactionType switch
+                {
+                    "like" => 3.0,
+                    "comment" => 2.0,
+                    "bookmark" => 2.0,
+                    "view" => 0.1,
+                    _ => 1.0
+                };
+
+                foreach (var tagId in postTags)
+                {
+                    var interaction = await _unitOfWork.UserTagInteractions
+                        .Query()
+                        .FirstOrDefaultAsync(uti => uti.user_id == userId && uti.tag_id == tagId);
+
+                    if (interaction != null)
+                    {
+                        // Update existing interaction
+                        interaction.interaction_score += weight;
+                        interaction.interaction_count++;
+                        interaction.last_interaction_at = DateTime.UtcNow;
+                        _unitOfWork.UserTagInteractions.Update(interaction);
+                    }
+                    else
+                    {
+                        // Create new interaction
+                        var newInteraction = new UserTagInteraction
+                        {
+                            user_id = userId,
+                            tag_id = tagId,
+                            interaction_score = weight,
+                            interaction_count = 1,
+                            last_interaction_at = DateTime.UtcNow,
+                            created_at = DateTime.UtcNow
+                        };
+                        await _unitOfWork.UserTagInteractions.AddAsync(newInteraction);
+                    }
+                }
+
+                await _unitOfWork.SaveChangesAsync();
+                _logger.LogDebug("Updated tag interactions for user {UserId} on post {PostId} ({Type})", 
+                    userId, postId, interactionType);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating tag interactions for user {UserId} on post {PostId}", userId, postId);
+                // Don't throw - this is a background operation
+            }
         }
 
     }

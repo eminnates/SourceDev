@@ -1,4 +1,5 @@
 ﻿using SourceDev.API.DTOs.Post;
+using SourceDev.API.Helpers;
 using SourceDev.API.Models.Entities;
 
 namespace SourceDev.API.Repositories
@@ -24,5 +25,10 @@ namespace SourceDev.API.Repositories
         Task<IEnumerable<PostListDto>> SearchInDbAsync(string query, int? userId, int page = 1, int pageSize = 20);
         Task<IEnumerable<PostListDto>> GetUserDraftDtosAsync(int userId, int page = 1, int pageSize = 20);
 
+        // Advanced feed algorithms
+        Task<IEnumerable<PostListDto>> GetTrendingDtosAsync(int page = 1, int pageSize = 20);
+        Task<IEnumerable<PostListDto>> GetHotDtosAsync(int page = 1, int pageSize = 20);
+        Task<IEnumerable<PostListDto>> GetTopDtosAsync(TimePeriod period, int page = 1, int pageSize = 20);
+        Task<IEnumerable<PostListDto>> GetPersonalizedDtosAsync(int userId, IEnumerable<int> preferredTagIds, IEnumerable<int> followingIds, int page = 1, int pageSize = 20);
     }
 }   

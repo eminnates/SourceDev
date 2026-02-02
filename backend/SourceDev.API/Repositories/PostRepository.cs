@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using SourceDev.API.Data.Context;
 using SourceDev.API.Models.Entities;
 using SourceDev.API.DTOs.Post;
+using SourceDev.API.Helpers;
 using System.Linq.Expressions;
 using SourceDev.API.Models;
 
@@ -743,6 +744,232 @@ namespace SourceDev.API.Repositories
                 .ToListAsync();
         }
 
+        // ========== ADVANCED FEED ALGORITHMS ==========
+
+        /// <summary>
+        /// Get trending posts (last 48 hours, engagement-weighted)
+        /// </summary>
+        public async Task<IEnumerable<PostListDto>> GetTrendingDtosAsync(int page = 1, int pageSize = 20)
+        {
+            var cutoffTime = DateTime.UtcNow.AddHours(-48);
+            
+            // Fetch recent posts with all needed data
+            var posts = await _dbSet
+                .AsNoTracking()
+                .Where(p => p.status && p.published_at >= cutoffTime)
+                .Include(p => p.User)
+                .Include(p => p.Translations)
+                .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
+                .ToListAsync();
+
+            // Calculate trending scores in memory
+            var scoredPosts = posts.Select(p => new
+            {
+                Post = p,
+                Score = PostScoringHelper.CalculateTrendingScore(
+                    p.view_count, p.likes_count, p.comments_count, p.bookmarks_count, p.published_at)
+            })
+            .OrderByDescending(x => x.Score)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+            var postDtos = scoredPosts.Select(x => MapToPostListDto(x.Post)).ToList();
+            await PopulateReactionTypes(postDtos);
+            
+            return postDtos;
+        }
+
+        /// <summary>
+        /// Get hot posts (Reddit-style balanced algorithm)
+        /// </summary>
+        public async Task<IEnumerable<PostListDto>> GetHotDtosAsync(int page = 1, int pageSize = 20)
+        {
+            // Fetch published posts from last 7 days for hot
+            var cutoffTime = DateTime.UtcNow.AddDays(-7);
+            
+            var posts = await _dbSet
+                .AsNoTracking()
+                .Where(p => p.status && p.published_at >= cutoffTime)
+                .Include(p => p.User)
+                .Include(p => p.Translations)
+                .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
+                .ToListAsync();
+
+            // Calculate hot scores in memory
+            var scoredPosts = posts.Select(p => new
+            {
+                Post = p,
+                Score = PostScoringHelper.CalculateHotScore(
+                    p.likes_count, p.comments_count, p.bookmarks_count, p.published_at)
+            })
+            .OrderByDescending(x => x.Score)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+            var postDtos = scoredPosts.Select(x => MapToPostListDto(x.Post)).ToList();
+            await PopulateReactionTypes(postDtos);
+            
+            return postDtos;
+        }
+
+        /// <summary>
+        /// Get top posts with time period filter (Wilson Score + time decay)
+        /// </summary>
+        public async Task<IEnumerable<PostListDto>> GetTopDtosAsync(TimePeriod period, int page = 1, int pageSize = 20)
+        {
+            var cutoffTime = period switch
+            {
+                TimePeriod.Day => DateTime.UtcNow.AddDays(-1),
+                TimePeriod.Week => DateTime.UtcNow.AddDays(-7),
+                TimePeriod.Month => DateTime.UtcNow.AddDays(-30),
+                TimePeriod.Year => DateTime.UtcNow.AddDays(-365),
+                TimePeriod.All => DateTime.MinValue,
+                _ => DateTime.UtcNow.AddDays(-30)
+            };
+
+            var query = _dbSet
+                .AsNoTracking()
+                .Where(p => p.status);
+
+            if (period != TimePeriod.All)
+            {
+                query = query.Where(p => p.published_at >= cutoffTime);
+            }
+
+            var posts = await query
+                .Include(p => p.User)
+                .Include(p => p.Translations)
+                .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
+                .ToListAsync();
+
+            // Calculate Wilson scores with time decay
+            var scoredPosts = posts.Select(p => 
+            {
+                int totalInteractions = p.likes_count + p.comments_count + p.bookmarks_count;
+                double timeDecay = PostScoringHelper.CalculateTimeDecay(p.published_at, period);
+                double score = PostScoringHelper.CalculateWilsonScore(p.likes_count, totalInteractions, timeDecay);
+                
+                return new { Post = p, Score = score };
+            })
+            .OrderByDescending(x => x.Score)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+            var postDtos = scoredPosts.Select(x => MapToPostListDto(x.Post)).ToList();
+            await PopulateReactionTypes(postDtos);
+            
+            return postDtos;
+        }
+
+        /// <summary>
+        /// Get personalized feed based on user preferences and following
+        /// </summary>
+        public async Task<IEnumerable<PostListDto>> GetPersonalizedDtosAsync(
+            int userId, 
+            IEnumerable<int> preferredTagIds, 
+            IEnumerable<int> followingIds,
+            int page = 1, 
+            int pageSize = 20)
+        {
+            var preferredTags = preferredTagIds.ToHashSet();
+            var following = followingIds.ToHashSet();
+            
+            // Get posts from last 14 days for personalization
+            var cutoffTime = DateTime.UtcNow.AddDays(-14);
+            
+            var posts = await _dbSet
+                .AsNoTracking()
+                .Where(p => p.status && p.published_at >= cutoffTime)
+                .Include(p => p.User)
+                .Include(p => p.Translations)
+                .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
+                .ToListAsync();
+
+            // Calculate personalized scores
+            var scoredPosts = posts.Select(p => 
+            {
+                // Base score (hot algorithm)
+                double baseScore = PostScoringHelper.CalculateHotScore(
+                    p.likes_count, p.comments_count, p.bookmarks_count, p.published_at);
+                
+                // Tag affinity
+                var postTagIds = p.PostTags.Select(pt => pt.tag_id);
+                double tagAffinity = PostScoringHelper.CalculateTagAffinity(preferredTags, postTagIds);
+                
+                // Author affinity (following bonus)
+                double authorAffinity = following.Contains(p.user_id) ? 1.0 : 0.0;
+                
+                // Freshness bonus
+                double freshness = PostScoringHelper.CalculateFreshnessBonus(p.published_at, 72);
+                
+                // Combined personalized score
+                double personalizedScore = PostScoringHelper.CalculatePersonalizedScore(
+                    baseScore, tagAffinity, authorAffinity, freshness);
+                
+                return new { Post = p, Score = personalizedScore };
+            })
+            .OrderByDescending(x => x.Score)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+            var postDtos = scoredPosts.Select(x => MapToPostListDto(x.Post)).ToList();
+            await PopulateReactionTypes(postDtos);
+            
+            return postDtos;
+        }
+
+        // ========== HELPER METHODS ==========
+
+        private PostListDto MapToPostListDto(Post p)
+        {
+            var defaultTranslation = p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code) 
+                                     ?? p.Translations.FirstOrDefault();
+            var content = defaultTranslation?.content_markdown ?? "";
+            
+            return new PostListDto
+            {
+                Id = p.post_id,
+                Title = defaultTranslation?.title ?? "",
+                Slug = defaultTranslation?.slug ?? "",
+                Excerpt = content.Length > 200 ? content.Substring(0, 200) : content,
+                Likes = p.likes_count,
+                Views = p.view_count,
+                Bookmarks = p.bookmarks_count,
+                CoverImageUrl = p.cover_img_url,
+                ReadingTimeMinutes = p.reading_time_minutes,
+                CommentsCount = p.comments_count,
+                PublishedAt = p.published_at,
+                AuthorDisplayName = p.User?.display_name ?? string.Empty,
+                Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
+                ReactionTypes = new Dictionary<string, int>()
+            };
+        }
+
+        private async Task PopulateReactionTypes(List<PostListDto> postDtos)
+        {
+            if (!postDtos.Any()) return;
+            
+            var postIds = postDtos.Select(p => p.Id).ToList();
+            var reactions = await _context.Reactions
+                .AsNoTracking()
+                .Where(r => postIds.Contains(r.post_id))
+                .GroupBy(r => new { r.post_id, r.reaction_type })
+                .Select(g => new { PostId = g.Key.post_id, Type = g.Key.reaction_type, Count = g.Count() })
+                .ToListAsync();
+
+            foreach (var post in postDtos)
+            {
+                var postReactions = reactions.Where(r => r.PostId == post.Id);
+                foreach (var pr in postReactions)
+                {
+                    post.ReactionTypes[pr.Type] = pr.Count;
+                }
+            }
+        }
 
     }
 }

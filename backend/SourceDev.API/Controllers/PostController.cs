@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using SourceDev.API.DTOs.Post;
 using SourceDev.API.Extensions;
+using SourceDev.API.Helpers;
 using SourceDev.API.Services;
 
 namespace SourceDev.API.Controllers
@@ -70,10 +71,69 @@ namespace SourceDev.API.Controllers
 
         [HttpGet("top")]
         [AllowAnonymous]
-        public async Task<IActionResult> GetTop([FromQuery] int take = 20)
+        public async Task<IActionResult> GetTop([FromQuery] int take = 20, [FromQuery] string period = "month")
         {
             if (take < 1) return BadRequest("Invalid take.");
-            var items = await _postService.GetTopAsync(take);
+            
+            // Parse time period
+            var timePeriod = period.ToLower() switch
+            {
+                "day" => TimePeriod.Day,
+                "week" => TimePeriod.Week,
+                "month" => TimePeriod.Month,
+                "year" => TimePeriod.Year,
+                "all" => TimePeriod.All,
+                _ => TimePeriod.Month
+            };
+            
+            var items = await _postService.GetTopByPeriodAsync(timePeriod, 1, take);
+            return Ok(items);
+        }
+
+        /// <summary>
+        /// Get trending posts (last 48 hours, fast-rising engagement)
+        /// </summary>
+        [HttpGet("trending")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetTrending([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        {
+            if (page < 1 || pageSize < 1) return BadRequest("Invalid paging.");
+            var items = await _postService.GetTrendingAsync(page, pageSize);
+            return Ok(items);
+        }
+
+        /// <summary>
+        /// Get hot posts (Reddit-style balanced algorithm)
+        /// </summary>
+        [HttpGet("hot")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetHot([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        {
+            if (page < 1 || pageSize < 1) return BadRequest("Invalid paging.");
+            var items = await _postService.GetHotAsync(page, pageSize);
+            return Ok(items);
+        }
+
+        /// <summary>
+        /// Get personalized "For You" feed based on user preferences
+        /// Falls back to trending for anonymous users
+        /// </summary>
+        [HttpGet("for-you")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetForYou([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        {
+            if (page < 1 || pageSize < 1) return BadRequest("Invalid paging.");
+            
+            var currentUserId = User.GetUserId();
+            
+            // Anonymous users get trending feed
+            if (!currentUserId.HasValue)
+            {
+                var trendingItems = await _postService.GetTrendingAsync(page, pageSize);
+                return Ok(trendingItems);
+            }
+            
+            var items = await _postService.GetForYouAsync(currentUserId.Value, page, pageSize);
             return Ok(items);
         }
 

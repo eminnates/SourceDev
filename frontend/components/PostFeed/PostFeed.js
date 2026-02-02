@@ -3,23 +3,20 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import PostCard from '../Post/PostCard';
-import { getRelevantPosts, getLatestPosts, getTopPosts, toggleBookmark } from '@/utils/api/postApi';
+import { getRelevantPosts, getLatestPosts, getHotPosts, getForYouPosts, toggleBookmark } from '@/utils/api/postApi';
 import { isAuthenticated } from '@/utils/auth';
 
-const PAGE_SIZES = {
-    relevant: 20,
-    latest: 20,
-    top: 20
-};
+const PAGE_SIZE = 20;
 
-export default function PostFeed({ defaultTab = 'home', initialPosts = null }) {
+export default function PostFeed({ defaultTab = 'home', defaultSubTab = 'feed', initialPosts = null }) {
     const [activeTab, setActiveTab] = useState(defaultTab);
+    const [homeSubTab, setHomeSubTab] = useState(defaultSubTab); // 'feed' or 'foryou'
     const [posts, setPosts] = useState(initialPosts || []);
     const [loading, setLoading] = useState(!initialPosts);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [error, setError] = useState(null);
     const [page, setPage] = useState(1);
-    const [hasMore, setHasMore] = useState(initialPosts ? initialPosts.length >= (PAGE_SIZES[defaultTab === 'home' ? 'relevant' : defaultTab] || 20) : true);
+    const [hasMore, setHasMore] = useState(initialPosts ? initialPosts.length >= PAGE_SIZE : true);
     const router = useRouter();
     
     // Ref to skip initial fetch if initialPosts are provided
@@ -27,7 +24,8 @@ export default function PostFeed({ defaultTab = 'home', initialPosts = null }) {
 
     useEffect(() => {
         setActiveTab(defaultTab);
-    }, [defaultTab]);
+        setHomeSubTab(defaultSubTab);
+    }, [defaultTab, defaultSubTab]);
 
     // Handle bookmark toggle
     const handleBookmarkToggle = async (postId) => {
@@ -69,19 +67,20 @@ export default function PostFeed({ defaultTab = 'home', initialPosts = null }) {
 
             try {
                 let result;
-                const pageSize = PAGE_SIZES[activeTab] || 10;
 
-                switch (activeTab) {
-                    case 'latest':
-                        result = await getLatestPosts(pageToLoad, pageSize);
-                        break;
-                    case 'top':
-                        result = await getTopPosts(pageSize);
-                        break;
-                    case 'home':
-                    default:
-                        result = await getRelevantPosts(pageToLoad, pageSize);
-                        break;
+                // Determine which API to call
+                if (activeTab === 'home') {
+                    if (homeSubTab === 'foryou') {
+                        result = await getForYouPosts(pageToLoad, PAGE_SIZE);
+                    } else {
+                        result = await getRelevantPosts(pageToLoad, PAGE_SIZE);
+                    }
+                } else if (activeTab === 'hot') {
+                    result = await getHotPosts(pageToLoad, PAGE_SIZE);
+                } else if (activeTab === 'latest') {
+                    result = await getLatestPosts(pageToLoad, PAGE_SIZE);
+                } else {
+                    result = await getRelevantPosts(pageToLoad, PAGE_SIZE);
                 }
 
                 if (result.success && result.data) {
@@ -94,12 +93,7 @@ export default function PostFeed({ defaultTab = 'home', initialPosts = null }) {
                     }
 
                     setPage(pageToLoad);
-                    if (activeTab === 'top') {
-                        setHasMore(false);
-                    } else {
-                    setHasMore(fetchedPosts.length === pageSize);
-                    }
- 
+                    setHasMore(fetchedPosts.length === PAGE_SIZE);
                 } else {
                     setError(result.message || 'Failed to load posts');
                     if (!append) {
@@ -120,7 +114,7 @@ export default function PostFeed({ defaultTab = 'home', initialPosts = null }) {
                 }
             }
         },
-        [activeTab]
+        [activeTab, homeSubTab]
     );
 
     useEffect(() => {
@@ -132,7 +126,7 @@ export default function PostFeed({ defaultTab = 'home', initialPosts = null }) {
         setPage(1);
         setHasMore(true);
         fetchPosts(1, false);
-    }, [activeTab, fetchPosts]);
+    }, [activeTab, homeSubTab, fetchPosts]);
 
     const handleLoadMore = () => {
         if (isLoadingMore || !hasMore) return;
@@ -142,72 +136,31 @@ export default function PostFeed({ defaultTab = 'home', initialPosts = null }) {
 
     const tabs = [
         { id: 'home', label: 'Home', path: '/' },
+        { id: 'hot', label: 'Hot', path: '/hot' },
         { id: 'latest', label: 'Latest', path: '/latest' },
-        { id: 'top', label: 'Top', path: '/top' },
     ];
 
     const handleTabClick = (tab) => {
         setActiveTab(tab.id);
+        if (tab.id === 'home') {
+            setHomeSubTab('feed');
+        }
         router.push(tab.path);
     };
 
-    if (loading) {
-        return (
-            <div className="w-full">
-                <nav className="flex gap-2 mb-2">
-                    {tabs.map((tab) => (
-                        <button
-                            key={tab.id}
-                            onClick={() => handleTabClick(tab)}
-                            className={`px-3 py-1 rounded-md text-lg transition-colors cursor-pointer hover:bg-white ${
-                                activeTab === tab.id
-                                    ? 'text-black font-bold'
-                                    : 'text-brand-muted hover:text-brand-primary'
-                            }`}
-                        >
-                            {tab.label}
-                        </button>
-                    ))}
-                </nav>
-                <div className="flex justify-center items-center py-20">
-                    <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto mb-4"></div>
-                        <p className="text-brand-muted">Loading posts...</p>
-                    </div>
-                </div>
-            </div>
-        );
-    }
+    const handleSubTabClick = (subTab) => {
+        setHomeSubTab(subTab);
+        if (subTab === 'foryou') {
+            router.push('/for-you');
+        } else {
+            router.push('/');
+        }
+    };
 
-    if (error) {
-        return (
-            <div className="w-full">
-                <nav className="flex gap-2 mb-2">
-                    {tabs.map((tab) => (
-                        <button
-                            key={tab.id}
-                            onClick={() => handleTabClick(tab)}
-                            className={`px-3 py-1 rounded-md text-lg transition-colors cursor-pointer hover:bg-white ${
-                                activeTab === tab.id
-                                    ? 'text-black font-bold'
-                                    : 'text-brand-muted hover:text-brand-primary'
-                            }`}
-                        >
-                            {tab.label}
-                        </button>
-                    ))}
-                </nav>
-                <div className="bg-white rounded-lg p-8 text-center">
-                    <p className="text-red-600 mb-2">Error loading posts</p>
-                    <p className="text-brand-muted">{error}</p>
-                </div>
-            </div>
-        );
-    }
-
-    return (
-        <div className="w-full m-0 p-0">
-            {/* Page Header */}
+    // Navigation component shared across states
+    const Navigation = () => (
+        <div className="mb-2">
+            {/* Main tabs */}
             <nav className="flex gap-2 mb-2">
                 {tabs.map((tab) => (
                     <button
@@ -223,6 +176,64 @@ export default function PostFeed({ defaultTab = 'home', initialPosts = null }) {
                     </button>
                 ))}
             </nav>
+            
+            {/* Home sub-tabs (Feed / For You) */}
+            {activeTab === 'home' && (
+                <div className="flex gap-1 ml-1">
+                    <button
+                        onClick={() => handleSubTabClick('feed')}
+                        className={`px-2 py-0.5 rounded text-sm transition-colors cursor-pointer ${
+                            homeSubTab === 'feed'
+                                ? 'bg-brand-primary text-white'
+                                : 'bg-gray-100 text-brand-muted hover:bg-gray-200'
+                        }`}
+                    >
+                        Feed
+                    </button>
+                    <button
+                        onClick={() => handleSubTabClick('foryou')}
+                        className={`px-2 py-0.5 rounded text-sm transition-colors cursor-pointer ${
+                            homeSubTab === 'foryou'
+                                ? 'bg-brand-primary text-white'
+                                : 'bg-gray-100 text-brand-muted hover:bg-gray-200'
+                        }`}
+                    >
+                        For You
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+
+    if (loading) {
+        return (
+            <div className="w-full">
+                <Navigation />
+                <div className="flex justify-center items-center py-20">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto mb-4"></div>
+                        <p className="text-brand-muted">Loading posts...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="w-full">
+                <Navigation />
+                <div className="bg-white rounded-lg p-8 text-center">
+                    <p className="text-red-600 mb-2">Error loading posts</p>
+                    <p className="text-brand-muted">{error}</p>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="w-full m-0 p-0">
+            <Navigation />
 
             {/* Posts List */}
             {posts.length === 0 ? (

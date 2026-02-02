@@ -19,6 +19,7 @@ namespace SourceDev.API.Data.Context
         public DbSet<Tag> Tags { get; set; }
         public DbSet<PostTag> PostTags { get; set; }
         public DbSet<UserFollow> UserFollows { get; set; }
+        public DbSet<UserTagInteraction> UserTagInteractions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -186,6 +187,24 @@ namespace SourceDev.API.Data.Context
                 .HasOne(r => r.Post)
                 .WithMany(p => p.Reactions)
                 .HasForeignKey(r => r.post_id)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // UserTagInteraction - Composite unique index for user-tag pair
+            modelBuilder.Entity<UserTagInteraction>()
+                .HasIndex(uti => new { uti.user_id, uti.tag_id })
+                .IsUnique()
+                .HasDatabaseName("IX_UserTagInteractions_UserId_TagId");
+
+            modelBuilder.Entity<UserTagInteraction>()
+                .HasOne(uti => uti.User)
+                .WithMany()
+                .HasForeignKey(uti => uti.user_id)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserTagInteraction>()
+                .HasOne(uti => uti.Tag)
+                .WithMany()
+                .HasForeignKey(uti => uti.tag_id)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // User.Id - user_id mapping için

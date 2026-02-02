@@ -260,12 +260,13 @@ export const getLatestPosts = async (page = 1, pageSize = 10) => {
 /**
  * Get top posts
  * @param {number} [take=20] - Number of posts to fetch
+ * @param {string} [period='month'] - Time period: day, week, month, year, all
  * @returns {Promise<Object>} API response
  */
-export const getTopPosts = async (take = 20) => {
+export const getTopPosts = async (take = 20, period = 'month') => {
   try {
     const response = await apiClient.get('/post/top', {
-      params: { take }
+      params: { take, period }
     });
     
     return {
@@ -277,6 +278,81 @@ export const getTopPosts = async (take = 20) => {
     return {
       success: false,
       message: error.message || 'Failed to fetch posts'
+    };
+  }
+};
+
+/**
+ * Get trending posts (last 48 hours, engagement-weighted)
+ * @param {number} [page=1] - Page number
+ * @param {number} [pageSize=20] - Page size
+ * @returns {Promise<Object>} API response
+ */
+export const getTrendingPosts = async (page = 1, pageSize = 20) => {
+  try {
+    const response = await apiClient.get('/post/trending', {
+      params: { page, pageSize }
+    });
+    
+    return {
+      success: true,
+      data: response.data
+    };
+  } catch (error) {
+    console.error('Get trending posts error:', error);
+    return {
+      success: false,
+      message: error.message || 'Failed to fetch trending posts'
+    };
+  }
+};
+
+/**
+ * Get hot posts (Reddit-style balanced algorithm)
+ * @param {number} [page=1] - Page number
+ * @param {number} [pageSize=20] - Page size
+ * @returns {Promise<Object>} API response
+ */
+export const getHotPosts = async (page = 1, pageSize = 20) => {
+  try {
+    const response = await apiClient.get('/post/hot', {
+      params: { page, pageSize }
+    });
+    
+    return {
+      success: true,
+      data: response.data
+    };
+  } catch (error) {
+    console.error('Get hot posts error:', error);
+    return {
+      success: false,
+      message: error.message || 'Failed to fetch hot posts'
+    };
+  }
+};
+
+/**
+ * Get personalized "For You" feed
+ * @param {number} [page=1] - Page number
+ * @param {number} [pageSize=20] - Page size
+ * @returns {Promise<Object>} API response
+ */
+export const getForYouPosts = async (page = 1, pageSize = 20) => {
+  try {
+    const response = await apiClient.get('/post/for-you', {
+      params: { page, pageSize }
+    });
+    
+    return {
+      success: true,
+      data: response.data
+    };
+  } catch (error) {
+    console.error('Get for-you posts error:', error);
+    return {
+      success: false,
+      message: error.message || 'Failed to fetch personalized posts'
     };
   }
 };

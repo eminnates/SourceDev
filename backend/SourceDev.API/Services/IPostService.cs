@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SourceDev.API.DTOs.Post;
+using SourceDev.API.Helpers;
 using SourceDev.API.Models;
 
 namespace SourceDev.API.Services
@@ -26,5 +27,14 @@ namespace SourceDev.API.Services
         Task<bool> RemoveTagFromPostAsync(int postId, int tagId, int userId);
         Task<IEnumerable<PostListDto>> SearchPostsAsync(string query, int? userId, int page = 1, int pageSize = 20);
         Task<IEnumerable<PostListDto>> GetBookmarkedPostsAsync(int userId, int page, int pageSize);
+        
+        // Advanced feed algorithms
+        Task<IEnumerable<PostListDto>> GetTrendingAsync(int page, int pageSize);
+        Task<IEnumerable<PostListDto>> GetHotAsync(int page, int pageSize);
+        Task<IEnumerable<PostListDto>> GetTopByPeriodAsync(TimePeriod period, int page, int pageSize);
+        Task<IEnumerable<PostListDto>> GetForYouAsync(int userId, int page, int pageSize);
+        
+        // User tag interaction tracking
+        Task UpdateUserTagInteractionsAsync(int userId, int postId, string interactionType);
     }
 }

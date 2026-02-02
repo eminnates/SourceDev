@@ -12,6 +12,7 @@ namespace SourceDev.API.Repositories
         ITagRepository Tags { get; }
         IRepository<PostTag> PostTags { get; }
         IRepository<UserFollow> UserFollows { get; }
+        IRepository<UserTagInteraction> UserTagInteractions { get; }
         
         // Custom Repositories
         IUserRepository Users { get; }

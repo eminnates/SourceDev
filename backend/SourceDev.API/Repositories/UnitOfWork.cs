@@ -19,6 +19,7 @@ namespace SourceDev.API.Repositories
             Tags = new TagRepository(_context);
             PostTags = new Repository<PostTag>(_context);
             UserFollows = new Repository<UserFollow>(_context);
+            UserTagInteractions = new Repository<UserTagInteraction>(_context);
             
             // Initialize custom repositories
             Users = new UserRepository(_context);
@@ -31,6 +32,7 @@ namespace SourceDev.API.Repositories
         public ITagRepository Tags { get; private set; }
         public IRepository<PostTag> PostTags { get; private set; }
         public IRepository<UserFollow> UserFollows { get; private set; }
+        public IRepository<UserTagInteraction> UserTagInteractions { get; private set; }
         
         public IUserRepository Users { get; private set; }
 
