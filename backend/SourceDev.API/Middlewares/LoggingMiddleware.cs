@@ -12,22 +12,43 @@ namespace SourceDev.API.Middlewares
             _logger = logger;
             _next = next;
         }
-        public async Task InvokeAsync(HttpContext context) 
-        {
-            _logger.LogInformation($"Request:{context.Request.Method}{context.Request.Path}");
-            var stopwatch = Stopwatch.StartNew();
-            var originalBodyStream = context.Response.Body;
-            using var responseBody = new MemoryStream();
-            context.Response.Body = responseBody;
 
-            await _next(context);
-            
-            stopwatch.Stop();
-            context.Response.Body.Seek(0, SeekOrigin.Begin);
-            var responseText = await new StreamReader(context.Response.Body).ReadToEndAsync();
-            context.Response.Body.Seek(0, SeekOrigin.Begin);
-            _logger.LogInformation($"Response: {context.Response.StatusCode} ({stopwatch.ElapsedMilliseconds} ms) Body: {responseText}");
-            await responseBody.CopyToAsync(originalBodyStream);
+        public async Task InvokeAsync(HttpContext context)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            var method = context.Request.Method;
+            var path = context.Request.Path;
+            var queryString = context.Request.QueryString;
+
+            _logger.LogInformation("Request: {Method} {Path}{Query}", method, path, queryString);
+
+            try
+            {
+                await _next(context);
+            }
+            finally
+            {
+                stopwatch.Stop();
+                var statusCode = context.Response.StatusCode;
+                var elapsed = stopwatch.ElapsedMilliseconds;
+
+                // Log at appropriate level based on status code
+                if (statusCode >= 500)
+                {
+                    _logger.LogError("Response: {StatusCode} {Method} {Path} completed in {Elapsed}ms", 
+                        statusCode, method, path, elapsed);
+                }
+                else if (statusCode >= 400)
+                {
+                    _logger.LogWarning("Response: {StatusCode} {Method} {Path} completed in {Elapsed}ms", 
+                        statusCode, method, path, elapsed);
+                }
+                else
+                {
+                    _logger.LogInformation("Response: {StatusCode} {Method} {Path} completed in {Elapsed}ms", 
+                        statusCode, method, path, elapsed);
+                }
+            }
         }
     }
 }

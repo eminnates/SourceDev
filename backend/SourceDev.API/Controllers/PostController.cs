@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using SourceDev.API.DTOs.Post;
 using SourceDev.API.Extensions;
 using SourceDev.API.Services;
@@ -116,6 +117,7 @@ namespace SourceDev.API.Controllers
         // CREATE
         [HttpPost]
         [Authorize]
+        [EnableRateLimiting("post-create")]
         public async Task<IActionResult> Create([FromBody] CreatePostDto dto)
         {
             if (!ModelState.IsValid) return ValidationProblem(ModelState);

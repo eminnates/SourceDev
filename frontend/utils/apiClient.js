@@ -53,6 +53,16 @@ apiClient.interceptors.response.use(
       }
     }
 
+    // Rate limiting (429 Too Many Requests)
+    if (error.response?.status === 429) {
+      return Promise.reject({
+        message: 'Çok fazla istek gönderdiniz. Lütfen bir dakika bekleyin.',
+        status: 429,
+        data: error.response?.data,
+        response: error.response
+      });
+    }
+
     // Hata mesajını çeşitli kaynaklardan al
     let errorMessage = 'An error occurred';
     

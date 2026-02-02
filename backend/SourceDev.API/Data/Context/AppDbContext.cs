@@ -33,6 +33,58 @@ namespace SourceDev.API.Data.Context
                 .HasIndex(pt => new { pt.slug, pt.language_code })
                 .IsUnique();
 
+            // ========== PERFORMANCE INDEXES ==========
+            
+            // Posts - Indexes for feed queries (ORDER BY created_at DESC, published_at)
+            modelBuilder.Entity<Post>()
+                .HasIndex(p => p.created_at)
+                .HasDatabaseName("IX_Posts_CreatedAt");
+            
+            modelBuilder.Entity<Post>()
+                .HasIndex(p => p.published_at)
+                .HasDatabaseName("IX_Posts_PublishedAt");
+            
+            // Posts - Index for top posts query (ORDER BY view_count DESC)
+            modelBuilder.Entity<Post>()
+                .HasIndex(p => p.view_count)
+                .HasDatabaseName("IX_Posts_ViewCount");
+            
+            // Posts - Index for user's posts query
+            modelBuilder.Entity<Post>()
+                .HasIndex(p => p.user_id)
+                .HasDatabaseName("IX_Posts_UserId");
+            
+            // Posts - Composite index for published posts feed (most common query)
+            modelBuilder.Entity<Post>()
+                .HasIndex(p => new { p.status, p.published_at })
+                .HasDatabaseName("IX_Posts_Status_PublishedAt");
+            
+            // Reactions - Composite index for toggle checks and user reactions lookup
+            modelBuilder.Entity<Reaction>()
+                .HasIndex(r => new { r.post_id, r.user_id })
+                .HasDatabaseName("IX_Reactions_PostId_UserId");
+            
+            // Comments - Index for post comments and sorting
+            modelBuilder.Entity<Comment>()
+                .HasIndex(c => c.post_id)
+                .HasDatabaseName("IX_Comments_PostId");
+            
+            modelBuilder.Entity<Comment>()
+                .HasIndex(c => c.created_at)
+                .HasDatabaseName("IX_Comments_CreatedAt");
+            
+            // Bookmarks - Index for user's bookmarks query
+            modelBuilder.Entity<Bookmark>()
+                .HasIndex(b => new { b.user_id, b.created_at })
+                .HasDatabaseName("IX_Bookmarks_UserId_CreatedAt");
+            
+            // Tags - Index for tag name lookup
+            modelBuilder.Entity<Tag>()
+                .HasIndex(t => t.name)
+                .HasDatabaseName("IX_Tags_Name");
+            
+            // ========== END PERFORMANCE INDEXES ==========
+
             base.OnModelCreating(modelBuilder);
 
             // Cascade Delete Ayarları

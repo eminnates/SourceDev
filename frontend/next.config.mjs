@@ -2,6 +2,32 @@
 const nextConfig = {
   reactCompiler: true,
   reactStrictMode: false,
+  
+  // Performance optimizations
+  compress: true,
+  poweredByHeader: false,
+  
+  // Image optimization
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 60,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
+  },
+  
+  // Bundle optimization
+  experimental: {
+    optimizePackageImports: [
+      'react-icons',
+      'framer-motion',
+      'react-markdown',
+    ],
+  },
+  
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
   },

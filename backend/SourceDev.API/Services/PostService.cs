@@ -919,44 +919,57 @@ namespace SourceDev.API.Services
                 .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
                 .ToListAsync();
 
-            var postDtos = posts.Select(p => new PostListDto
-            {
-                Id = p.post_id,
-                Title = p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code)?.title ?? p.Translations.FirstOrDefault()?.title ?? "",
-                Slug = p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code)?.slug ?? p.Translations.FirstOrDefault()?.slug ?? "",
-                Excerpt = (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code)?.content_markdown ?? p.Translations.FirstOrDefault()?.content_markdown ?? "").Length > 200 
-                        ? (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code)?.content_markdown ?? p.Translations.FirstOrDefault()?.content_markdown ?? "").Substring(0, 200) 
-                        : (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code)?.content_markdown ?? p.Translations.FirstOrDefault()?.content_markdown ?? ""),
-                CoverImageUrl = p.cover_img_url,
-                AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
-                PublishedAt = p.published_at,
-                Likes = p.likes_count,
-                CommentsCount = p.Comments != null ? p.Comments.Count : 0,
-                Views = p.view_count,
-                BookmarksCount = p.bookmarks_count,
-                ReadingTimeMinutes = p.reading_time_minutes,
-                Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
-                ReactionTypes = new Dictionary<string, int>(), // Will be populated below
-                UserReactions = new List<string>(), // Will be populated below
-                LikedByCurrentUser = false,
-                BookmarkedByCurrentUser = true
-            }).ToList();
+            // Batch fetch all reactions for these posts (fixes N+1 query problem)
+            var userReactions = await _unitOfWork.Reactions
+                .Query()
+                .Where(r => bookmarkedPostIds.Contains(r.post_id) && r.user_id == userId)
+                .Select(r => new { r.post_id, r.reaction_type })
+                .ToListAsync();
 
-            foreach (var postDto in postDtos)
+            var allReactionCounts = await _unitOfWork.Reactions
+                .Query()
+                .Where(r => bookmarkedPostIds.Contains(r.post_id))
+                .GroupBy(r => new { r.post_id, r.reaction_type })
+                .Select(g => new { g.Key.post_id, g.Key.reaction_type, Count = g.Count() })
+                .ToListAsync();
+
+            // Create lookup dictionaries for O(1) access
+            var userReactionsLookup = userReactions
+                .GroupBy(r => r.post_id)
+                .ToDictionary(g => g.Key, g => g.Select(r => r.reaction_type).ToList());
+
+            var reactionCountsLookup = allReactionCounts
+                .GroupBy(r => r.post_id)
+                .ToDictionary(g => g.Key, g => g.ToDictionary(r => r.reaction_type, r => r.Count));
+
+            var postDtos = posts.Select(p => 
             {
-                postDto.UserReactions = await _unitOfWork.Reactions
-                    .Query()
-                    .Where(r => r.post_id == postDto.Id && r.user_id == userId)
-                    .Select(r => r.reaction_type)
-                    .ToListAsync();
-                postDto.LikedByCurrentUser = postDto.UserReactions.Contains("like");
-                postDto.ReactionTypes = await _unitOfWork.Reactions
-                    .Query()
-                    .Where(r => r.post_id == postDto.Id)
-                    .GroupBy(r => r.reaction_type)
-                    .Select(g => new { Type = g.Key, Count = g.Count() })
-                    .ToDictionaryAsync(x => x.Type, x => x.Count);
-            }
+                var postUserReactions = userReactionsLookup.GetValueOrDefault(p.post_id) ?? new List<string>();
+                var postReactionTypes = reactionCountsLookup.GetValueOrDefault(p.post_id) ?? new Dictionary<string, int>();
+                
+                return new PostListDto
+                {
+                    Id = p.post_id,
+                    Title = p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code)?.title ?? p.Translations.FirstOrDefault()?.title ?? "",
+                    Slug = p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code)?.slug ?? p.Translations.FirstOrDefault()?.slug ?? "",
+                    Excerpt = (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code)?.content_markdown ?? p.Translations.FirstOrDefault()?.content_markdown ?? "").Length > 200 
+                            ? (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code)?.content_markdown ?? p.Translations.FirstOrDefault()?.content_markdown ?? "").Substring(0, 200) 
+                            : (p.Translations.FirstOrDefault(t => t.language_code == p.default_language_code)?.content_markdown ?? p.Translations.FirstOrDefault()?.content_markdown ?? ""),
+                    CoverImageUrl = p.cover_img_url,
+                    AuthorDisplayName = p.User != null ? p.User.display_name : string.Empty,
+                    PublishedAt = p.published_at,
+                    Likes = p.likes_count,
+                    CommentsCount = p.Comments != null ? p.Comments.Count : 0,
+                    Views = p.view_count,
+                    BookmarksCount = p.bookmarks_count,
+                    ReadingTimeMinutes = p.reading_time_minutes,
+                    Tags = p.PostTags.Where(pt => pt.Tag != null).Select(pt => pt.Tag!.name).ToList(),
+                    ReactionTypes = postReactionTypes,
+                    UserReactions = postUserReactions,
+                    LikedByCurrentUser = postUserReactions.Contains("like"),
+                    BookmarkedByCurrentUser = true
+                };
+            }).ToList();
 
             _logger.LogInformation("Bookmarked posts fetched. UserId: {UserId}, Page: {Page}, Size: {Size}", userId, page, pageSize);
             return postDtos;
