@@ -31,6 +31,11 @@ namespace SourceDev.API.Services
             {
                 // Remove existing reaction (toggle off)
                 _unitOfWork.Reactions.Delete(existing);
+                
+                // Update likes_count (total reactions count)
+                post.likes_count = Math.Max(0, post.likes_count - 1);
+                _unitOfWork.Posts.Update(post);
+                
                 await _unitOfWork.SaveChangesAsync();
                 _logger.LogInformation("Reaction removed. PostId: {PostId}, UserId: {UserId}, Type: {Type}", postId, userId, reactionType);
                 return true;
@@ -44,6 +49,11 @@ namespace SourceDev.API.Services
                 created_at = DateTime.UtcNow
             };
             await _unitOfWork.Reactions.AddAsync(entity);
+            
+            // Update likes_count (total reactions count)
+            post.likes_count++;
+            _unitOfWork.Posts.Update(post);
+            
             await _unitOfWork.SaveChangesAsync();
             _logger.LogInformation("Reaction added. PostId: {PostId}, UserId: {UserId}, Type: {Type}", postId, userId, reactionType);
             return true;
@@ -55,7 +65,17 @@ namespace SourceDev.API.Services
             var existing = await _unitOfWork.Reactions
                 .FirstOrDefaultAsync(r => r.post_id == postId && r.user_id == userId && r.reaction_type == reactionType);
             if (existing == null) return false;
+            
             _unitOfWork.Reactions.Delete(existing);
+            
+            // Update likes_count (total reactions count)
+            var post = await _unitOfWork.Posts.GetByIdAsync(postId);
+            if (post != null)
+            {
+                post.likes_count = Math.Max(0, post.likes_count - 1);
+                _unitOfWork.Posts.Update(post);
+            }
+            
             await _unitOfWork.SaveChangesAsync();
             _logger.LogInformation("Reaction explicitly removed. PostId: {PostId}, UserId: {UserId}, Type: {Type}", postId, userId, reactionType);
             return true;
