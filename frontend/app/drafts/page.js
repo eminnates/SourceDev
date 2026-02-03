@@ -75,7 +75,7 @@ export default function DraftsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-brand-background flex justify-center">
-        <main className="mx-16 px-4 py-4 w-full">
+        <main className="mx-2 sm:mx-4 md:mx-8 lg:mx-16 px-4 py-4 w-full">
           <div className="flex gap-4">
             {/* Left Sidebar */}
             <div className="hidden lg:block w-80 flex-shrink-0 space-y-4">
@@ -101,7 +101,7 @@ export default function DraftsPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-brand-background flex justify-center">
-        <main className="mx-16 px-4 py-4 w-full">
+        <main className="mx-2 sm:mx-4 md:mx-8 lg:mx-16 px-4 py-4 w-full">
           <div className="flex gap-4">
             {/* Left Sidebar */}
             <div className="hidden lg:block w-80 flex-shrink-0 space-y-4">

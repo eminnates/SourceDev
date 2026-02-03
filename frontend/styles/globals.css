@@ -49,6 +49,16 @@ body {
   scrollbar-color: #2D3748 #f5f5f5;
 }
 
+/* Hide scrollbar utility */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Custom Font Classes */
 .font-sans-article {
   font-family: var(--font-sans-article-body);

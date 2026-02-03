@@ -98,7 +98,7 @@ export default function TagPageClient({ tagname, initialTag }) {
   if (loading && posts.length === 0) {
     return (
       <div className="min-h-screen bg-brand-background">
-        <main className="mx-16 px-3 py-4">
+        <main className="mx-2 sm:mx-4 md:mx-8 lg:mx-16 px-3 py-4">
           <div className="max-w-[1280px] mx-auto">
             <div className="flex items-center justify-center py-20">
               <div className="text-center">
@@ -115,7 +115,7 @@ export default function TagPageClient({ tagname, initialTag }) {
   if (error && posts.length === 0) {
     return (
       <div className="min-h-screen bg-brand-background">
-        <main className="mx-16 px-3 py-4">
+        <main className="mx-2 sm:mx-4 md:mx-8 lg:mx-16 px-3 py-4">
           <div className="max-w-[1280px] mx-auto">
             <div className="flex items-center justify-center py-20">
               <div className="text-center">

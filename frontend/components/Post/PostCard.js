@@ -121,7 +121,7 @@ export default function PostCard({ post, showCover = false, onBookmarkToggle }) 
                 </Link>
             )}
 
-            <div className="p-5">
+            <div className="p-3 sm:p-4 md:p-5">
                 <div className="flex gap-2">
                         <Link href={authorUsername ? `/user/${authorUsername}` : '#'}>
                             {authorProfileImage ? (
@@ -149,7 +149,7 @@ export default function PostCard({ post, showCover = false, onBookmarkToggle }) 
                         </div>
 
                         <Link href={postUrl}>
-                            <h2 className="text-xl sm:text-2xl font-bold text-black mb-2 hover:text-brand-primary cursor-pointer transition-colors">
+                            <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-black mb-2 hover:text-brand-primary cursor-pointer transition-colors">
                                 {post.title}
                             </h2>
                         </Link>

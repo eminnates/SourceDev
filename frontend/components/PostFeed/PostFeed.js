@@ -159,14 +159,14 @@ export default function PostFeed({ defaultTab = 'home', defaultSubTab = 'feed', 
 
     // Navigation component shared across states
     const Navigation = () => (
-        <div className="mb-2">
+        <div className="mb-3">
             {/* Main tabs */}
-            <nav className="flex gap-2 mb-2">
+            <nav className="flex gap-1 sm:gap-2 mb-2 overflow-x-auto scrollbar-hide">
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => handleTabClick(tab)}
-                        className={`px-3 py-1 rounded-md text-lg transition-colors cursor-pointer hover:bg-white ${
+                        className={`px-2 sm:px-3 py-1 rounded-md text-sm sm:text-base md:text-lg whitespace-nowrap transition-colors cursor-pointer hover:bg-white ${
                             activeTab === tab.id
                                 ? 'text-black font-bold'
                                 : 'text-brand-muted hover:text-brand-primary'
@@ -182,7 +182,7 @@ export default function PostFeed({ defaultTab = 'home', defaultSubTab = 'feed', 
                 <div className="flex gap-1 ml-1">
                     <button
                         onClick={() => handleSubTabClick('feed')}
-                        className={`px-2 py-0.5 rounded text-sm transition-colors cursor-pointer ${
+                        className={`px-2 py-0.5 rounded text-xs sm:text-sm transition-colors cursor-pointer ${
                             homeSubTab === 'feed'
                                 ? 'bg-brand-primary text-white'
                                 : 'bg-gray-100 text-brand-muted hover:bg-gray-200'
@@ -192,7 +192,7 @@ export default function PostFeed({ defaultTab = 'home', defaultSubTab = 'feed', 
                     </button>
                     <button
                         onClick={() => handleSubTabClick('foryou')}
-                        className={`px-2 py-0.5 rounded text-sm transition-colors cursor-pointer ${
+                        className={`px-2 py-0.5 rounded text-xs sm:text-sm transition-colors cursor-pointer ${
                             homeSubTab === 'foryou'
                                 ? 'bg-brand-primary text-white'
                                 : 'bg-gray-100 text-brand-muted hover:bg-gray-200'
