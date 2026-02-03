@@ -1,6 +1,13 @@
 export const metadata = {
-  title: "About - SourceDev",
-  description: "Learn more about SourceDev and our team",
+  title: "Hakkımızda - SourceDev",
+  description: "SourceDev hakkında daha fazla bilgi edinin. Yazılımcılar için oluşturulmuş bilgi paylaşım platformu.",
+  openGraph: {
+    title: "Hakkımızda - SourceDev",
+    description: "SourceDev hakkında daha fazla bilgi edinin. Yazılımcılar için oluşturulmuş bilgi paylaşım platformu.",
+  },
+  alternates: {
+    canonical: 'https://sourcedev.tr/about',
+  },
 };
 
 const teamMembers = [

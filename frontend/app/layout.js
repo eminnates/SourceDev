@@ -70,9 +70,39 @@ export const viewport = {
   initialScale: 1,
 };
 
+// JSON-LD Structured Data for SEO
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'SourceDev',
+  alternateName: 'SourceDev - Yazılımcı Topluluğu',
+  url: SITE_URL,
+  description: 'Yazılımcılar için bilgi paylaşım ve networking platformu. Makaleler yaz, projelerini paylaş, topluluğa katıl.',
+  inLanguage: 'tr-TR',
+  publisher: {
+    '@type': 'Organization',
+    name: 'SourceDev',
+    url: SITE_URL,
+  },
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: {
+      '@type': 'EntryPoint',
+      urlTemplate: `${SITE_URL}/search?q={search_term_string}`,
+    },
+    'query-input': 'required name=search_term_string',
+  },
+};
+
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="tr">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className={`antialiased bg-brand-background`}>
         <AuthProvider>
           <NavbarWrapper />

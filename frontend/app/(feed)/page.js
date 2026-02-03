@@ -12,6 +12,9 @@ export const metadata = {
     title: 'SourceDev - Yazılımcı Topluluğu',
     description: 'En güncel yazılım makaleleri, projeler ve tartışmalar.',
   },
+  alternates: {
+    canonical: 'https://sourcedev.tr',
+  },
 };
 
 export default async function Home() {
