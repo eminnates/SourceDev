@@ -1,5 +1,12 @@
 const SITE_URL = 'https://sourcedev.tr';
 
+// Safe date parser - returns current date if invalid
+function safeDate(dateString) {
+  if (!dateString) return new Date();
+  const date = new Date(dateString);
+  return isNaN(date.getTime()) ? new Date() : date;
+}
+
 export default async function sitemap() {
   // Static pages
   const staticPages = [
@@ -64,7 +71,7 @@ export default async function sitemap() {
       const posts = await postsRes.json();
       postPages = (posts || []).map((post) => ({
         url: `${SITE_URL}/post/${post.id}`,
-        lastModified: post.updatedAt ? new Date(post.updatedAt) : new Date(post.createdAt),
+        lastModified: safeDate(post.updatedAt || post.createdAt),
         changeFrequency: 'weekly',
         priority: 0.8,
       }));
@@ -78,7 +85,7 @@ export default async function sitemap() {
     if (tagsRes.ok) {
       const tags = await tagsRes.json();
       tagPages = (tags || []).map((tag) => ({
-        url: `${SITE_URL}/tag/${tag.name}`,
+        url: `${SITE_URL}/tag/${encodeURIComponent(tag.name)}`,
         lastModified: new Date(),
         changeFrequency: 'daily',
         priority: 0.7,
@@ -93,8 +100,8 @@ export default async function sitemap() {
     if (usersRes.ok) {
       const users = await usersRes.json();
       userPages = (users || []).map((user) => ({
-        url: `${SITE_URL}/user/${user.username}`,
-        lastModified: user.updatedAt ? new Date(user.updatedAt) : new Date(),
+        url: `${SITE_URL}/user/${encodeURIComponent(user.username)}`,
+        lastModified: safeDate(user.updatedAt),
         changeFrequency: 'weekly',
         priority: 0.6,
       }));
