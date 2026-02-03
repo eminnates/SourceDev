@@ -1,6 +1,10 @@
 import PostFeed from '@/components/PostFeed/PostFeed';
 import { getForYouPosts } from '@/utils/api/postApi';
 
+// Disable caching - always fetch fresh data
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export const metadata = {
   title: 'For You | SourceDev',
   description: 'Personalized posts based on your interests',

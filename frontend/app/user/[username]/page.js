@@ -1,222 +1,116 @@
-"use client";
+import UserProfileClient from './UserProfileClient';
 
-import { use, useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import ProfileHeader from '@/components/Profile/ProfileHeader';
-import ProfileSidebar from '@/components/Profile/ProfileSidebar';
-import PostCard from '@/components/Post/PostCard';
-import { searchUsers, getUserById, getUserPosts, getAllUsers } from '@/utils/api/userApi';
-import { isAuthenticated, getUser as getCurrentUser } from '@/utils/auth';
-import { toggleBookmark } from '@/utils/api/postApi';
-import { getFollowersCount, getFollowingCount } from '@/utils/api/followApi';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://sourcedev-production.up.railway.app/api';
+const SITE_URL = 'https://sourcedev.tr';
 
-export default function UserProfilePage({ params }) {
-  const { username } = use(params);
-  const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [followersCount, setFollowersCount] = useState(0);
-  const [followingCount, setFollowingCount] = useState(0);
+async function getUser(username) {
+  try {
+    // Search for user
+    const res = await fetch(`${API_URL}/users/search?query=${encodeURIComponent(username)}`, {
+      next: { revalidate: 60 },
+    });
+    
+    if (res.ok) {
+      const users = await res.json();
+      const user = users?.find(u => u.username?.toLowerCase() === username.toLowerCase());
+      if (user) return user;
+    }
 
-  const normalizedUsername = (username || '').toLowerCase();
+    // Fallback to all users
+    const allRes = await fetch(`${API_URL}/users`, {
+      next: { revalidate: 60 },
+    });
+    
+    if (allRes.ok) {
+      const allUsers = await allRes.json();
+      return allUsers?.find(u => u.username?.toLowerCase() === username.toLowerCase()) || null;
+    }
+  } catch (error) {
+    console.error('Error fetching user for metadata:', error);
+  }
+  return null;
+}
 
-  useEffect(() => {
-    // Fetch user data
-    const fetchUserData = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        // Check if viewing own profile
-        const currentUser = getCurrentUser();
-        if (currentUser && currentUser.username?.toLowerCase() === normalizedUsername) {
-          // Use current user data
-          setUser(currentUser);
-          
-          // Fetch user posts
-          const postsResult = await getUserPosts(currentUser.id);
-          if (postsResult.success) {
-            setPosts(postsResult.data || []);
-          }
-
-          // Fetch follower/following counts
-          const [followersResult, followingResult] = await Promise.all([
-            getFollowersCount(currentUser.id),
-            getFollowingCount(currentUser.id)
-          ]);
-
-          if (followersResult.success) setFollowersCount(followersResult.count);
-          if (followingResult.success) setFollowingCount(followingResult.count);
-        } else {
-          // Search for user by username
-          const findUserByUsername = (data) => data?.find((u) => u.username?.toLowerCase() === normalizedUsername);
-
-          const searchResult = await searchUsers(username);
-          let foundUser = searchResult.success ? findUserByUsername(searchResult.data) : null;
-
-          if (!foundUser) {
-            const allUsersResult = await getAllUsers();
-            if (allUsersResult.success) {
-              foundUser = findUserByUsername(allUsersResult.data);
-            }
-          }
-
-            if (foundUser) {
-            if (foundUser.username && foundUser.username !== username) {
-              router.replace(`/user/${foundUser.username}`);
-            }
-
-              setUser(foundUser);
-              
-              // Fetch user posts
-              const postsResult = await getUserPosts(foundUser.id);
-              if (postsResult.success) {
-                setPosts(postsResult.data || []);
-              }
-
-              // Fetch follower/following counts
-              const [followersResult, followingResult] = await Promise.all([
-                getFollowersCount(foundUser.id),
-                getFollowingCount(foundUser.id)
-              ]);
-
-              if (followersResult.success) setFollowersCount(followersResult.count);
-              if (followingResult.success) setFollowingCount(followingResult.count);
-          } else {
-            setError('User not found');
-          }
-        }
-      } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error('Error fetching user data:', err);
-        setError('Failed to load profile');
-      } finally {
-        setLoading(false);
-      }
+export async function generateMetadata({ params }) {
+  const { username } = await params;
+  const user = await getUser(username);
+  
+  if (!user) {
+    return {
+      title: 'Kullanıcı Bulunamadı',
+      description: 'Aradığınız kullanıcı bulunamadı.',
     };
-
-    fetchUserData();
-  }, [normalizedUsername, router]);
-
-  // Loading state
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-brand-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary"></div>
-          <p className="mt-4 text-brand-muted">Loading profile...</p>
-        </div>
-      </div>
-    );
   }
 
-  // Error state
-  if (error || !user) {
-    return (
-      <div className="min-h-screen bg-brand-background flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-brand-dark mb-2">Profile not found</h2>
-          <p className="text-brand-muted mb-4">{error || 'User does not exist'}</p>
-          <button
-            onClick={() => router.push('/')}
-            className="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary-dark transition-colors"
-          >
-            Go to Home
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const displayName = user.displayName || user.username;
+  const bio = user.bio || `${displayName} - SourceDev üyesi`;
 
-  // Calculate stats from user data
-  const stats = {
-    posts: posts.length || 0,
-    comments: user.commentsCount || 0,
-    tags: user.tagsCount || 0
+  return {
+    title: `${displayName} (@${user.username})`,
+    description: bio,
+    openGraph: {
+      title: `${displayName} (@${user.username}) | SourceDev`,
+      description: bio,
+      url: `${SITE_URL}/user/${user.username}`,
+      type: 'profile',
+      images: user.profilePictureUrl ? [user.profilePictureUrl] : [],
+      profile: {
+        username: user.username,
+      },
+    },
+    twitter: {
+      card: 'summary',
+      title: `${displayName} (@${user.username})`,
+      description: bio,
+      images: user.profilePictureUrl ? [user.profilePictureUrl] : [],
+    },
+    alternates: {
+      canonical: `${SITE_URL}/user/${user.username}`,
+    },
   };
+}
 
-  const badges = [
-    { emoji: "🥚", name: "New User" },
-    { emoji: "📝", name: "Writer" }
-  ];
-
-  const skills = user.skills || "";
-  const learning = user.learning || "";
-  const availableFor = user.availableFor || "";
-
-  const handleBookmarkToggle = async (postId) => {
-    if (!isAuthenticated()) {
-      router.push('/login');
-      return;
-    }
-
-    try {
-      const result = await toggleBookmark(postId);
-      if (result.success) {
-        // Update local posts state
-        setPosts(prevPosts =>
-          prevPosts.map(post =>
-            post.id === postId
-              ? {
-                  ...post,
-                  bookmarkedByCurrentUser: !post.bookmarkedByCurrentUser,
-                  bookmarksCount: post.bookmarksCount + (post.bookmarkedByCurrentUser ? -1 : 1)
-                }
-              : post
-          )
-        );
-      }
-    } catch (error) {
-      console.error('Bookmark toggle failed:', error);
-    }
+// JSON-LD Structured Data for Person
+function generatePersonJsonLd(user) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name: user.displayName || user.username,
+    alternateName: user.username,
+    description: user.bio || undefined,
+    image: user.profilePictureUrl || undefined,
+    url: `${SITE_URL}/user/${user.username}`,
+    sameAs: [
+      user.githubUrl,
+      user.twitterUrl,
+      user.linkedinUrl,
+      user.websiteUrl,
+    ].filter(Boolean),
+    jobTitle: user.work || undefined,
+    worksFor: user.company ? {
+      '@type': 'Organization',
+      name: user.company,
+    } : undefined,
+    knowsAbout: user.skills?.split(',').map(s => s.trim()).filter(Boolean) || undefined,
   };
+}
+
+export default async function UserProfilePage({ params }) {
+  const { username } = await params;
+  const initialUser = await getUser(username);
+
+  const jsonLd = initialUser ? generatePersonJsonLd(initialUser) : null;
 
   return (
-    <div className="min-h-screen bg-brand-background">
-      <main className="mx-4 md:mx-8 lg:mx-16 px-3 py-4">
-        <div className="max-w-[1280px] mx-auto">
-          {/* Profile Header - Full Width within container */}
-            <ProfileHeader
-              user={user}
-              onFollowChange={(isNowFollowing) => {
-                // Update follower count when follow status changes
-                setFollowersCount(prev => isNowFollowing ? prev + 1 : Math.max(0, prev - 1));
-              }}
-            />
-          
-          {/* Content Grid - Sidebar + Posts */}
-          <div className="flex gap-6 mt-6">
-            {/* Left Sidebar */}
-            <div className="hidden lg:block w-80 flex-shrink-0">
-              <ProfileSidebar
-                stats={stats}
-                badges={badges}
-                skills={skills}
-                learning={learning}
-                availableFor={availableFor}
-                followersCount={followersCount}
-                followingCount={followingCount}
-              />
-            </div>
-
-            {/* Posts Section */}
-            <div className="flex-1 min-w-0 space-y-2">
-              {posts.map((post) => (
-                <PostCard
-                  key={post.id}
-                  post={post}
-                  showCover={false}
-                  onBookmarkToggle={handleBookmarkToggle}
-                  userReactions={post.userReactions || []}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      </main>
-    </div>
+    <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+      <UserProfileClient username={username} initialUser={initialUser} />
+    </>
   );
 }
 

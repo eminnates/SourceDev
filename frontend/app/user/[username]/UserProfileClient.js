@@ -1,0 +1,238 @@
+"use client";
+
+import { use, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import ProfileHeader from '@/components/Profile/ProfileHeader';
+import ProfileSidebar from '@/components/Profile/ProfileSidebar';
+import PostCard from '@/components/Post/PostCard';
+import { searchUsers, getUserPosts, getAllUsers } from '@/utils/api/userApi';
+import { isAuthenticated, getUser as getCurrentUser } from '@/utils/auth';
+import { toggleBookmark } from '@/utils/api/postApi';
+import { getFollowersCount, getFollowingCount } from '@/utils/api/followApi';
+
+export default function UserProfileClient({ username: initialUsername, initialUser }) {
+  const router = useRouter();
+  const [user, setUser] = useState(initialUser);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(!initialUser);
+  const [error, setError] = useState(null);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+
+  const normalizedUsername = (initialUsername || '').toLowerCase();
+
+  useEffect(() => {
+    // Fetch user data
+    const fetchUserData = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        // Check if viewing own profile
+        const currentUser = getCurrentUser();
+        if (currentUser && currentUser.username?.toLowerCase() === normalizedUsername) {
+          // Use current user data
+          setUser(currentUser);
+          
+          // Fetch user posts
+          const postsResult = await getUserPosts(currentUser.id);
+          if (postsResult.success) {
+            setPosts(postsResult.data || []);
+          }
+
+          // Fetch follower/following counts
+          const [followersResult, followingResult] = await Promise.all([
+            getFollowersCount(currentUser.id),
+            getFollowingCount(currentUser.id)
+          ]);
+
+          if (followersResult.success) setFollowersCount(followersResult.count);
+          if (followingResult.success) setFollowingCount(followingResult.count);
+        } else if (initialUser) {
+          // Use initial user from server
+          setUser(initialUser);
+          
+          // Fetch user posts
+          const postsResult = await getUserPosts(initialUser.id);
+          if (postsResult.success) {
+            setPosts(postsResult.data || []);
+          }
+
+          // Fetch follower/following counts
+          const [followersResult, followingResult] = await Promise.all([
+            getFollowersCount(initialUser.id),
+            getFollowingCount(initialUser.id)
+          ]);
+
+          if (followersResult.success) setFollowersCount(followersResult.count);
+          if (followingResult.success) setFollowingCount(followingResult.count);
+        } else {
+          // Search for user by username
+          const findUserByUsername = (data) => data?.find((u) => u.username?.toLowerCase() === normalizedUsername);
+
+          const searchResult = await searchUsers(initialUsername);
+          let foundUser = searchResult.success ? findUserByUsername(searchResult.data) : null;
+
+          if (!foundUser) {
+            const allUsersResult = await getAllUsers();
+            if (allUsersResult.success) {
+              foundUser = findUserByUsername(allUsersResult.data);
+            }
+          }
+
+          if (foundUser) {
+            if (foundUser.username && foundUser.username !== initialUsername) {
+              router.replace(`/user/${foundUser.username}`);
+            }
+
+            setUser(foundUser);
+            
+            // Fetch user posts
+            const postsResult = await getUserPosts(foundUser.id);
+            if (postsResult.success) {
+              setPosts(postsResult.data || []);
+            }
+
+            // Fetch follower/following counts
+            const [followersResult, followingResult] = await Promise.all([
+              getFollowersCount(foundUser.id),
+              getFollowingCount(foundUser.id)
+            ]);
+
+            if (followersResult.success) setFollowersCount(followersResult.count);
+            if (followingResult.success) setFollowingCount(followingResult.count);
+          } else {
+            setError('User not found');
+          }
+        }
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('Error fetching user data:', err);
+        setError('Failed to load profile');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [normalizedUsername, router, initialUser, initialUsername]);
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-brand-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary"></div>
+          <p className="mt-4 text-brand-muted">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !user) {
+    return (
+      <div className="min-h-screen bg-brand-background flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-brand-dark mb-2">Profile not found</h2>
+          <p className="text-brand-muted mb-4">{error || 'User does not exist'}</p>
+          <button
+            onClick={() => router.push('/')}
+            className="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary-dark transition-colors"
+          >
+            Go to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate stats from user data
+  const stats = {
+    posts: posts.length || 0,
+    comments: user.commentsCount || 0,
+    tags: user.tagsCount || 0
+  };
+
+  const badges = [
+    { emoji: "🥚", name: "New User" },
+    { emoji: "📝", name: "Writer" }
+  ];
+
+  const skills = user.skills || "";
+  const learning = user.learning || "";
+  const availableFor = user.availableFor || "";
+
+  const handleBookmarkToggle = async (postId) => {
+    if (!isAuthenticated()) {
+      router.push('/login');
+      return;
+    }
+
+    try {
+      const result = await toggleBookmark(postId);
+      if (result.success) {
+        // Update local posts state
+        setPosts(prevPosts =>
+          prevPosts.map(post =>
+            post.id === postId
+              ? {
+                  ...post,
+                  bookmarkedByCurrentUser: !post.bookmarkedByCurrentUser,
+                  bookmarksCount: post.bookmarksCount + (post.bookmarkedByCurrentUser ? -1 : 1)
+                }
+              : post
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Bookmark toggle failed:', error);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-brand-background">
+      <main className="mx-4 md:mx-8 lg:mx-16 px-3 py-4">
+        <div className="max-w-[1280px] mx-auto">
+          {/* Profile Header - Full Width within container */}
+          <ProfileHeader
+            user={user}
+            onFollowChange={(isNowFollowing) => {
+              // Update follower count when follow status changes
+              setFollowersCount(prev => isNowFollowing ? prev + 1 : Math.max(0, prev - 1));
+            }}
+          />
+          
+          {/* Content Grid - Sidebar + Posts */}
+          <div className="flex gap-6 mt-6">
+            {/* Left Sidebar */}
+            <div className="hidden lg:block w-80 flex-shrink-0">
+              <ProfileSidebar
+                stats={stats}
+                badges={badges}
+                skills={skills}
+                learning={learning}
+                availableFor={availableFor}
+                followersCount={followersCount}
+                followingCount={followingCount}
+              />
+            </div>
+
+            {/* Posts Section */}
+            <div className="flex-1 min-w-0 space-y-2">
+              {posts.map((post) => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  showCover={false}
+                  onBookmarkToggle={handleBookmarkToggle}
+                  userReactions={post.userReactions || []}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}

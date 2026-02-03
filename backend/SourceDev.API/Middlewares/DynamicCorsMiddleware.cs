@@ -23,8 +23,6 @@ namespace SourceDev.API.Middlewares
                     "http://localhost:3000", 
                     "http://localhost:5173",
                     "https://source-dev.vercel.app",
-                    "https://soucedev.tr",
-                    "https://www.soucedev.tr",
                     "https://sourcedev.tr",
                     "https://www.sourcedev.tr"
                 };
