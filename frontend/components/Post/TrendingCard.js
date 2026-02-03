@@ -36,7 +36,7 @@ export default function TrendingCard() {
       <div className="space-y-4 mt-4">
         {trendingPosts.map((post) => (
           <div key={post.id} className="group">
-            <Link href={`/post/${post.id}`} className="flex gap-3">
+            <Link href={`/post/${post.slug || post.id}`} className="flex gap-3">
               <div className="w-8 h-8 bg-gradient-to-br from-brand-primary to-brand-primary-dark rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                 {post.avatar}
               </div>

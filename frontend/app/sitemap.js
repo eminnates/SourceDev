@@ -69,12 +69,14 @@ export default async function sitemap() {
     
     if (postsRes.ok) {
       const posts = await postsRes.json();
-      postPages = (posts || []).map((post) => ({
-        url: `${SITE_URL}/post/${post.id}`,
-        lastModified: safeDate(post.updatedAt || post.createdAt),
-        changeFrequency: 'weekly',
-        priority: 0.8,
-      }));
+      postPages = (posts || [])
+        .filter((post) => post.slug) // Only include posts with slugs
+        .map((post) => ({
+          url: `${SITE_URL}/post/${post.slug}`,
+          lastModified: safeDate(post.updatedAt || post.createdAt),
+          changeFrequency: 'weekly',
+          priority: 0.8,
+        }));
     }
 
     // Fetch tags for sitemap

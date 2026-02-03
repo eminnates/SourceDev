@@ -3,8 +3,8 @@
 import Link from 'next/link';
 
 export default function DiscussionItem({ id, slug, title, tag, tagColor, description, badge, badgeColor, comments }) {
-  // Always use ID for discussion posts
-  const postUrl = `/post/${id}`;
+  // Prefer slug for SEO, fallback to ID
+  const postUrl = `/post/${slug || id}`;
 
   return (
     <div className="group py-4 first:pt-0 last:pb-0">

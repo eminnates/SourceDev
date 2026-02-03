@@ -28,7 +28,7 @@ export default function ProfilePosts({ posts }) {
           </div>
 
           {/* Title */}
-          <Link href={`/post/${post.id}`}>
+          <Link href={`/post/${post.slug || post.id}`}>
             <h2 className="text-2xl font-bold text-brand-dark hover:text-brand-primary transition-colors mb-3 cursor-pointer">
               {post.title}
             </h2>

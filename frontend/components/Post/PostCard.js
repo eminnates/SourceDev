@@ -19,7 +19,7 @@ export default function PostCard({ post, showCover = false, onBookmarkToggle }) 
     const author = post.authorDisplayName;
     const isBookmarked = post.bookmarkedByCurrentUser || false;
     const coverImage = post.coverImageUrl;
-    const postUrl = `/post/${post.id}`; // Always use ID for unique identification
+    const postUrl = `/post/${post.slug || post.id}`; // Prefer slug for SEO, fallback to ID
     const readTime = post.readingTimeMinutes || post.readTime || 5;
     const tags = post.tags || [];
 
