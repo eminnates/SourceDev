@@ -58,6 +58,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString, sqlOptions =>
     {
         sqlOptions.CommandTimeout(60);
+        sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
     });
     options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
     

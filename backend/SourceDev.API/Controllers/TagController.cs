@@ -65,7 +65,22 @@ namespace SourceDev.API.Controllers
             return Ok(tag);
         }
 
-        // GET: api/tag/name/{name}
+        // GET: api/tag/{name} (string route - catches non-integer paths like /api/tag/ros2)
+        [HttpGet("{name}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetTagBySlug(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                return BadRequest(new { message = "Tag name cannot be empty" });
+
+            var tag = await _tagService.GetTagByNameAsync(name);
+            if (tag == null)
+                return NotFound(new { message = "Tag not found" });
+
+            return Ok(tag);
+        }
+
+        // GET: api/tag/name/{name} (kept for backward compatibility)
         [HttpGet("name/{name}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetTagByName(string name)

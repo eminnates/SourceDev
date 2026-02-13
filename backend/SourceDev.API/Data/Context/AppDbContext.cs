@@ -24,6 +24,11 @@ namespace SourceDev.API.Data.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Post>().HasQueryFilter(p => p.deleted_at == null);
+            modelBuilder.Entity<Bookmark>().HasQueryFilter(b => b.Post!.deleted_at == null);
+            modelBuilder.Entity<Comment>().HasQueryFilter(c => c.Post!.deleted_at == null);
+            modelBuilder.Entity<PostTag>().HasQueryFilter(pt => pt.Post!.deleted_at == null);
+            modelBuilder.Entity<PostTranslation>().HasQueryFilter(pt => pt.Post.deleted_at == null);
+            modelBuilder.Entity<Reaction>().HasQueryFilter(r => r.Post!.deleted_at == null);
             
             // PostTranslation - Composite Primary Key
             modelBuilder.Entity<PostTranslation>()
