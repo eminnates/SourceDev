@@ -51,6 +51,9 @@ export const metadata = {
   },
   alternates: {
     canonical: SITE_URL,
+    types: {
+      'application/rss+xml': '/feed.xml',
+    },
   },
   icons: {
     icon: '/favicon.ico',
@@ -98,6 +101,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="tr">
       <head>
+        <link rel="alternate" type="application/rss+xml" title="SourceDev RSS Feed" href="/feed.xml" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
