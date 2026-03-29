@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import MarkdownContent from './MarkdownContent';
 import { searchUsers, getUserById } from '@/utils/api/userApi';
 import { getUsernameFromDisplayName } from '@/utils/userUtils';
@@ -10,6 +11,7 @@ import { getUsernameFromDisplayName } from '@/utils/userUtils';
 export default function PostContent({ post, activeLanguage, onLanguageChange }) {
   const [authorProfileImage, setAuthorProfileImage] = useState(null);
   const [authorUsername, setAuthorUsername] = useState(null);
+  const pathname = usePathname();
 
   // Get author initials safely
   const getAuthorInitials = (authorName) => {
@@ -128,20 +130,23 @@ export default function PostContent({ post, activeLanguage, onLanguageChange }) 
               <span className="text-sm font-semibold text-brand-dark">Available in:</span>
             </div>
             <div className="flex gap-3 flex-wrap">
-              {post.translations.map((t) => (
-                <button
-                  key={t.languageCode}
-                  onClick={() => onLanguageChange && onLanguageChange(t.languageCode)}
-                  className={`px-5 py-2.5 rounded-lg text-sm font-semibold uppercase tracking-wider transition-all transform ${
-                    activeLanguage === t.languageCode
-                      ? 'bg-brand-primary text-white border-2 border-brand-primary shadow-lg scale-100'
-                      : 'bg-white text-brand-primary border-2 border-brand-primary shadow-sm hover:bg-brand-primary/20 hover:scale-105'
-                  }`}
-                  title={t.languageCode === 'tr' ? 'Türkçe' : t.languageCode === 'en' ? 'English' : t.languageCode}
-                >
-                  {t.languageCode === 'tr' ? '🇹🇷 TR' : t.languageCode === 'en' ? '🇬🇧 EN' : t.languageCode}
-                </button>
-              ))}
+              {post.translations.map((t) => {
+                const href = t.languageCode === 'tr' ? pathname : `${pathname}?lang=${t.languageCode}`;
+                return (
+                  <Link
+                    key={t.languageCode}
+                    href={href}
+                    className={`px-5 py-2.5 rounded-lg text-sm font-semibold uppercase tracking-wider transition-all transform ${
+                      activeLanguage === t.languageCode
+                        ? 'bg-brand-primary text-white border-2 border-brand-primary shadow-lg scale-100'
+                        : 'bg-white text-brand-primary border-2 border-brand-primary shadow-sm hover:bg-brand-primary/20 hover:scale-105'
+                    }`}
+                    title={t.languageCode === 'tr' ? 'Türkçe' : t.languageCode === 'en' ? 'English' : t.languageCode}
+                  >
+                    {t.languageCode === 'tr' ? '🇹🇷 TR' : t.languageCode === 'en' ? '🇬🇧 EN' : t.languageCode}
+                  </Link>
+                );
+              })}
             </div>
           </div>
         )}

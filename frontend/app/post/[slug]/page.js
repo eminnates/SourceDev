@@ -22,29 +22,56 @@ export async function generateStaticParams() {
 }
 
 // Generate metadata for SEO
-export async function generateMetadata({ params }) {
+export async function generateMetadata({ params, searchParams }) {
   const { slug } = await params;
-  
-  if (!slug) {
-    return {
-      title: 'Post Not Found',
-    };
-  }
+  const { lang } = await searchParams || {};
+  const activeLang = lang || 'tr';
+
+  if (!slug) return { title: 'Post Not Found' };
 
   const result = await getPostBySlug(slug);
-  
+
   if (result.success && result.data) {
     const post = result.data;
-    const description = post.excerpt || post.content?.replace(/<[^>]*>/g, '').substring(0, 160) || 'SourceDev makalesini oku';
-    
+
+    // Pick the active translation's content for metadata
+    let title = post.title;
+    let description = post.excerpt || post.content?.replace(/<[^>]*>/g, '').substring(0, 160) || 'SourceDev makalesini oku';
+
+    if (activeLang !== 'tr' && post.translations) {
+      const translation = post.translations.find(t => t.languageCode === activeLang);
+      if (translation) {
+        title = translation.title || post.title;
+        const raw = (translation.contentMarkdown || translation.content || '').replace(/<[^>]*>/g, '').replace(/[#*`_~]/g, '');
+        description = raw.substring(0, 160) || description;
+      }
+    }
+
+    // hreflang alternates — one entry per available translation
+    const languages = {};
+    if (post.translations?.length > 0) {
+      post.translations.forEach(t => {
+        languages[t.languageCode] = t.languageCode === 'tr'
+          ? `${SITE_URL}/post/${slug}`
+          : `${SITE_URL}/post/${slug}?lang=${t.languageCode}`;
+      });
+    }
+
+    const canonicalUrl = activeLang === 'tr'
+      ? `${SITE_URL}/post/${slug}`
+      : `${SITE_URL}/post/${slug}?lang=${activeLang}`;
+
+    const ogLocale = activeLang === 'en' ? 'en_US' : 'tr_TR';
+
     return {
-      title: post.title,
-      description: description,
+      title,
+      description,
       openGraph: {
-        title: post.title,
-        description: description,
-        url: `${SITE_URL}/post/${slug}`,
-        images: post.coverImageUrl ? [{ url: post.coverImageUrl, width: 1200, height: 630, alt: post.title }] : [],
+        title,
+        description,
+        url: canonicalUrl,
+        locale: ogLocale,
+        images: post.coverImageUrl ? [{ url: post.coverImageUrl, width: 1200, height: 630, alt: title }] : [],
         type: 'article',
         publishedTime: post.publishedAt,
         modifiedTime: post.updatedAt,
@@ -53,19 +80,18 @@ export async function generateMetadata({ params }) {
       },
       twitter: {
         card: 'summary_large_image',
-        title: post.title,
-        description: description,
+        title,
+        description,
         images: post.coverImageUrl ? [post.coverImageUrl] : [],
       },
       alternates: {
-        canonical: `${SITE_URL}/post/${slug}`,
+        canonical: canonicalUrl,
+        ...(Object.keys(languages).length > 0 && { languages }),
       },
     };
   }
 
-  return {
-    title: 'Post Not Found',
-  };
+  return { title: 'Post Not Found' };
 }
 
 // JSON-LD Structured Data for Article
@@ -120,8 +146,10 @@ function generateBreadcrumbJsonLd(post) {
   };
 }
 
-export default async function PostDetailPage({ params }) {
+export default async function PostDetailPage({ params, searchParams }) {
   const { slug } = await params;
+  const { lang } = await searchParams || {};
+  const activeLang = lang || 'tr';
 
   if (!slug) {
     return (
@@ -158,8 +186,23 @@ export default async function PostDetailPage({ params }) {
   }
 
   const post = result.data;
-  const jsonLd = generateArticleJsonLd(post);
-  const breadcrumbJsonLd = generateBreadcrumbJsonLd(post);
+
+  // Apply translation server-side so Google sees the correct language content
+  let renderedPost = post;
+  if (activeLang !== 'tr' && post.translations) {
+    const translation = post.translations.find(t => t.languageCode === activeLang);
+    if (translation) {
+      renderedPost = {
+        ...post,
+        title: translation.title || post.title,
+        content: translation.contentMarkdown || translation.content || post.content,
+        contentMarkdown: translation.contentMarkdown || translation.content || post.contentMarkdown,
+      };
+    }
+  }
+
+  const jsonLd = generateArticleJsonLd(renderedPost);
+  const breadcrumbJsonLd = generateBreadcrumbJsonLd(renderedPost);
 
   return (
     <>
@@ -171,7 +214,7 @@ export default async function PostDetailPage({ params }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
-      <PostDetailClient initialPost={post} />
+      <PostDetailClient initialPost={renderedPost} initialLanguage={activeLang} />
     </>
   );
 }

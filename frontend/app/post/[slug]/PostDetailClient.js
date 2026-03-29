@@ -7,27 +7,21 @@ import PostAuthorCard from '@/components/Post/PostAuthorCard';
 import CommentsSection from '@/components/Comment/CommentsSection';
 import { getPostById, toggleReaction, toggleBookmark } from '@/utils/api/postApi';
 
-export default function PostDetailClient({ initialPost }) {
+export default function PostDetailClient({ initialPost, initialLanguage = 'tr' }) {
   const [post, setPost] = useState(initialPost);
   const [userReactions, setUserReactions] = useState(initialPost?.userReactions || []);
   const [isBookmarked, setIsBookmarked] = useState(initialPost?.bookmarkedByCurrentUser || false);
-  const [activeLanguage, setActiveLanguage] = useState('tr');
+  const [activeLanguage, setActiveLanguage] = useState(initialLanguage);
 
-  // Update local state if initialPost changes (e.g. revalidation)
+  // Update local state if initialPost changes (e.g. revalidation or language navigation)
   useEffect(() => {
     if (initialPost) {
       setPost(initialPost);
       setUserReactions(initialPost.userReactions || []);
       setIsBookmarked(initialPost.bookmarkedByCurrentUser || false);
-      
-      // Set initial language based on what's available or default
-      if (initialPost.translations && initialPost.translations.length > 0) {
-        // Try to find TR, otherwise take the first one
-        const hasTr = initialPost.translations.some(t => t.languageCode === 'tr');
-        setActiveLanguage(hasTr ? 'tr' : initialPost.translations[0].languageCode);
-      }
+      setActiveLanguage(initialLanguage);
     }
-  }, [initialPost]);
+  }, [initialPost, initialLanguage]);
 
   const handleLanguageChange = (lang) => {
     setActiveLanguage(lang);
