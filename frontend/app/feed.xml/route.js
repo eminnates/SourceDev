@@ -127,8 +127,8 @@ ${author}
   <channel>
     <title>SourceDev</title>
     <link>${SITE_URL}</link>
-    <description>Yazılımcılar için bilgi paylaşım ve networking platformu. Makaleler yaz, projelerini paylaş, topluluğa katıl.</description>
-    <language>tr</language>
+    <description>Knowledge sharing and networking platform for developers. Write articles, share projects, join the community.</description>
+    <language>en</language>
     <lastBuildDate>${lastBuildDate}</lastBuildDate>
     <atom:link href="${SITE_URL}/feed.xml" rel="self" type="application/rss+xml"/>
 ${itemsXml}
