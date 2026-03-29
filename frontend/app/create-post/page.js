@@ -8,7 +8,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { MdClose } from 'react-icons/md';
 import { isAuthenticated } from '@/utils/auth';
-import { createPost, updatePost, getPostById, getPostForEdit, publishPost, deletePost } from '@/utils/api/postApi';
+import { createPost, updatePost, getPostForEdit, publishPost, deletePost } from '@/utils/api/postApi';
 import { searchTags, getPopularTags } from '@/utils/api/tagApi';
 import 'easymde/dist/easymde.min.css';
 
@@ -202,32 +202,31 @@ function CreatePostContent() {
   const validateForm = () => {
     const newErrors = {};
     
-    // Validate BOTH languages
-    ['tr', 'en'].forEach(lang => {
+    // EN is mandatory, TR is optional but if partially filled must be complete
+    ['en', 'tr'].forEach(lang => {
       const t = translations[lang];
-      
-      // TR is mandatory, EN is optional but if filled must be valid
-      if (lang === 'tr') {
+
+      if (lang === 'en') {
         if (!t.title.trim()) {
-          newErrors[`title_${lang}`] = `Turkish title is required`;
+          newErrors[`title_${lang}`] = `English title is required`;
         } else if (t.title.trim().length < 5) {
-          newErrors[`title_${lang}`] = `Turkish title must be at least 5 characters`;
+          newErrors[`title_${lang}`] = `English title must be at least 5 characters`;
         } else if (t.title.trim().length > 300) {
-          newErrors[`title_${lang}`] = `Turkish title must be max 300 characters`;
+          newErrors[`title_${lang}`] = `English title must be max 300 characters`;
         }
 
         if (!t.content.trim()) {
-          newErrors[`content_${lang}`] = `Turkish content is required`;
+          newErrors[`content_${lang}`] = `English content is required`;
         } else if (t.content.trim().length < 10) {
-          newErrors[`content_${lang}`] = `Turkish content must be at least 10 characters`;
+          newErrors[`content_${lang}`] = `English content must be at least 10 characters`;
         }
-      } else if (lang === 'en') {
-        // EN is optional, but if title exists, content must exist too
+      } else if (lang === 'tr') {
+        // TR is optional, but if one field is filled the other must be too
         if (t.title.trim() && !t.content.trim()) {
-          newErrors[`content_${lang}`] = `English content required if title is provided`;
+          newErrors[`content_${lang}`] = `Turkish content required if title is provided`;
         }
         if (t.content.trim() && !t.title.trim()) {
-          newErrors[`title_${lang}`] = `English title required if content is provided`;
+          newErrors[`title_${lang}`] = `Turkish title required if content is provided`;
         }
       }
     });
@@ -261,7 +260,7 @@ function CreatePostContent() {
           { languageCode: 'tr', ...translations.tr },
           { languageCode: 'en', ...translations.en }
         ].filter(t => t.title.trim() && t.content.trim()), // Only send filled translations
-        defaultLanguageCode: 'tr',
+        defaultLanguageCode: 'en',
         tags: selectedTags,
         coverImageUrl: coverImage || null,
         publishNow: true
@@ -290,8 +289,8 @@ function CreatePostContent() {
   };
 
   const handleSaveDraft = async () => {
-    if (!translations.tr.title.trim()) {
-      setErrors({ title: 'Turkish title is required to save draft' });
+    if (!translations.en.title.trim()) {
+      setErrors({ title: 'English title is required to save draft' });
       return;
     }
 
@@ -304,7 +303,7 @@ function CreatePostContent() {
           { languageCode: 'tr', ...translations.tr },
           { languageCode: 'en', ...translations.en }
         ].filter(t => t.title.trim() || t.content.trim()),
-        defaultLanguageCode: 'tr',
+        defaultLanguageCode: 'en',
         tags: selectedTags,
         coverImageUrl: coverImage || null,
         publishNow: false
@@ -360,8 +359,8 @@ function CreatePostContent() {
       tips: [
         "Keep it between 5-300 characters",
         "Make it descriptive and engaging",
-        "Turkish title is mandatory",
-        "English translation is optional"
+        "English title is required",
+        "Turkish translation is optional"
       ]
     },
     tags: {
@@ -377,7 +376,7 @@ function CreatePostContent() {
       tips: [
         "Use Markdown to format posts",
         "Minimum 10 characters required",
-        "Turkish content is mandatory"
+        "English content is required"
       ]
     },
     coverImage: {
@@ -392,7 +391,7 @@ function CreatePostContent() {
 
   const editorOptions = useMemo(() => ({
     spellChecker: false,
-    placeholder: `Write your ${activeLang === 'tr' ? 'Turkish' : 'English'} content here...`,
+    placeholder: `Write your ${activeLang === 'en' ? 'English' : 'Turkish'} content here...`,
     status: false,
     autofocus: false,
     toolbar: ['bold', 'italic', 'heading', '|', 'quote', 'unordered-list', 'ordered-list', '|', 'link', 'image', 'code'],
@@ -470,22 +469,30 @@ function CreatePostContent() {
                 )}
 
                 {/* Language Tabs */}
-                <div className="flex gap-2 mb-4">
-                  <button
-                    onClick={() => handleLanguageChange('tr')}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                      activeLang === 'tr' ? 'bg-brand-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    🇹🇷 Turkish {translations.tr.title && '✓'}
-                  </button>
+                <div className="flex items-center gap-2 mb-4">
                   <button
                     onClick={() => handleLanguageChange('en')}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                       activeLang === 'en' ? 'bg-brand-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >
-                    🇬🇧 English {translations.en.title && '✓'}
+                    🇬🇧 English
+                    <span className={`text-xs px-1.5 py-0.5 rounded font-semibold ${activeLang === 'en' ? 'bg-white/20 text-white' : 'bg-brand-primary/10 text-brand-primary'}`}>
+                      required
+                    </span>
+                    {translations.en.title && <span className="text-green-400">✓</span>}
+                  </button>
+                  <button
+                    onClick={() => handleLanguageChange('tr')}
+                    className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                      activeLang === 'tr' ? 'bg-brand-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    🇹🇷 Turkish
+                    <span className={`text-xs px-1.5 py-0.5 rounded font-semibold ${activeLang === 'tr' ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                      optional
+                    </span>
+                    {translations.tr.title && <span className="text-green-400">✓</span>}
                   </button>
                 </div>
 
@@ -495,7 +502,7 @@ function CreatePostContent() {
                   value={translations[activeLang].title}
                   onChange={handleTitleChange}
                   onFocus={() => setActiveSection('title')}
-                  placeholder={`${activeLang === 'tr' ? 'Turkish' : 'English'} post title...`}
+                  placeholder={`${activeLang === 'en' ? 'English' : 'Turkish'} post title...`}
                   className={`w-full text-5xl font-bold text-brand-dark placeholder-gray-400 resize-none border-none outline-none overflow-hidden ${errors.title ? 'border-b-2 border-red-500' : ''}`}
                   rows={1}
                 />

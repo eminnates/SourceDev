@@ -95,61 +95,58 @@ export default function PostContent({ post, activeLanguage, onLanguageChange }) 
 
       {/* Content */}
       <div className="p-4 md:p-12">
-        {/* Author and Date */}
-        <div className="flex items-center gap-3 mb-6">
-          <Link href={authorUsername ? `/user/${authorUsername}` : '#'}>
-            {authorProfileImage ? (
-              <Image
-                src={authorProfileImage}
-                alt={post.author}
-                width={40}
-                height={40}
-                className="w-10 h-10 rounded-full object-cover hover:opacity-80 transition-opacity cursor-pointer"
-              />
-            ) : (
-              <div className="w-10 h-10 bg-gradient-to-br from-brand-primary to-brand-primary-dark rounded-full flex items-center justify-center text-white text-sm font-bold hover:opacity-80 transition-opacity cursor-pointer">
-                {getAuthorInitials(post.author)}
-              </div>
-            )}
-          </Link>
-          <div>
-            <Link 
-              href={authorUsername ? `/user/${authorUsername}` : '#'} 
-              className="font-bold text-brand-dark hover:text-brand-primary transition-colors"
-            >
-              {post.author}
+        {/* Author, Date and Language Switcher */}
+        <div className="flex items-center justify-between gap-3 mb-6">
+          <div className="flex items-center gap-3">
+            <Link href={authorUsername ? `/user/${authorUsername}` : '#'}>
+              {authorProfileImage ? (
+                <Image
+                  src={authorProfileImage}
+                  alt={post.author}
+                  width={40}
+                  height={40}
+                  className="w-10 h-10 rounded-full object-cover hover:opacity-80 transition-opacity cursor-pointer"
+                />
+              ) : (
+                <div className="w-10 h-10 bg-gradient-to-br from-brand-primary to-brand-primary-dark rounded-full flex items-center justify-center text-white text-sm font-bold hover:opacity-80 transition-opacity cursor-pointer">
+                  {getAuthorInitials(post.author)}
+                </div>
+              )}
             </Link>
-            <p className="text-sm text-brand-muted">Posted on {post.date}</p>
-          </div>
-        </div>
-
-        {/* Language Switcher */}
-        {post.translations && post.translations.length > 1 && (
-          <div className="bg-brand-primary/5 rounded-lg p-3 mb-6 border border-brand-primary/20">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-sm font-semibold text-brand-dark">Available in:</span>
+            <div>
+              <Link
+                href={authorUsername ? `/user/${authorUsername}` : '#'}
+                className="font-bold text-brand-dark hover:text-brand-primary transition-colors"
+              >
+                {post.author}
+              </Link>
+              <p className="text-sm text-brand-muted">Posted on {post.date}</p>
             </div>
-            <div className="flex gap-3 flex-wrap">
+          </div>
+
+          {/* Language pills — compact, right-aligned */}
+          {post.translations && post.translations.length > 1 && (
+            <div className="flex items-center gap-1 shrink-0">
               {post.translations.map((t) => {
-                const href = t.languageCode === 'tr' ? pathname : `${pathname}?lang=${t.languageCode}`;
+                const href = t.languageCode === 'en' ? pathname : `${pathname}?lang=${t.languageCode}`;
+                const label = t.languageCode === 'tr' ? '🇹🇷 TR' : t.languageCode === 'en' ? '🇬🇧 EN' : t.languageCode.toUpperCase();
                 return (
                   <Link
                     key={t.languageCode}
                     href={href}
-                    className={`px-5 py-2.5 rounded-lg text-sm font-semibold uppercase tracking-wider transition-all transform ${
+                    className={`px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
                       activeLanguage === t.languageCode
-                        ? 'bg-brand-primary text-white border-2 border-brand-primary shadow-lg scale-100'
-                        : 'bg-white text-brand-primary border-2 border-brand-primary shadow-sm hover:bg-brand-primary/20 hover:scale-105'
+                        ? 'bg-brand-primary text-white border-brand-primary'
+                        : 'text-brand-muted border-brand-muted/40 hover:border-brand-primary hover:text-brand-primary bg-white'
                     }`}
-                    title={t.languageCode === 'tr' ? 'Türkçe' : t.languageCode === 'en' ? 'English' : t.languageCode}
                   >
-                    {t.languageCode === 'tr' ? '🇹🇷 TR' : t.languageCode === 'en' ? '🇬🇧 EN' : t.languageCode}
+                    {label}
                   </Link>
                 );
               })}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Title */}
         <h1 className="text-5xl font-bold text-brand-dark mb-6">

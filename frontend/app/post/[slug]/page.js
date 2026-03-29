@@ -25,7 +25,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params, searchParams }) {
   const { slug } = await params;
   const { lang } = await searchParams || {};
-  const activeLang = lang || 'tr';
+  const activeLang = lang || 'en';
 
   if (!slug) return { title: 'Post Not Found' };
 
@@ -36,9 +36,9 @@ export async function generateMetadata({ params, searchParams }) {
 
     // Pick the active translation's content for metadata
     let title = post.title;
-    let description = post.excerpt || post.content?.replace(/<[^>]*>/g, '').substring(0, 160) || 'SourceDev makalesini oku';
+    let description = post.excerpt || post.content?.replace(/<[^>]*>/g, '').substring(0, 160) || 'Read this post on SourceDev';
 
-    if (activeLang !== 'tr' && post.translations) {
+    if (post.translations) {
       const translation = post.translations.find(t => t.languageCode === activeLang);
       if (translation) {
         title = translation.title || post.title;
@@ -47,17 +47,17 @@ export async function generateMetadata({ params, searchParams }) {
       }
     }
 
-    // hreflang alternates — one entry per available translation
+    // hreflang alternates — EN has no param, others get ?lang=XX
     const languages = {};
     if (post.translations?.length > 0) {
       post.translations.forEach(t => {
-        languages[t.languageCode] = t.languageCode === 'tr'
+        languages[t.languageCode] = t.languageCode === 'en'
           ? `${SITE_URL}/post/${slug}`
           : `${SITE_URL}/post/${slug}?lang=${t.languageCode}`;
       });
     }
 
-    const canonicalUrl = activeLang === 'tr'
+    const canonicalUrl = activeLang === 'en'
       ? `${SITE_URL}/post/${slug}`
       : `${SITE_URL}/post/${slug}?lang=${activeLang}`;
 
@@ -137,10 +137,10 @@ function generateBreadcrumbJsonLd(post) {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: SITE_URL },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
       firstTag
         ? { '@type': 'ListItem', position: 2, name: `#${firstTag.name}`, item: `${SITE_URL}/tag/${firstTag.name}` }
-        : { '@type': 'ListItem', position: 2, name: 'Yazılar', item: `${SITE_URL}/latest` },
+        : { '@type': 'ListItem', position: 2, name: 'Posts', item: `${SITE_URL}/latest` },
       { '@type': 'ListItem', position: 3, name: post.title, item: `${SITE_URL}/post/${post.slug}` },
     ],
   };
@@ -149,7 +149,7 @@ function generateBreadcrumbJsonLd(post) {
 export default async function PostDetailPage({ params, searchParams }) {
   const { slug } = await params;
   const { lang } = await searchParams || {};
-  const activeLang = lang || 'tr';
+  const activeLang = lang || 'en';
 
   if (!slug) {
     return (
@@ -189,7 +189,7 @@ export default async function PostDetailPage({ params, searchParams }) {
 
   // Apply translation server-side so Google sees the correct language content
   let renderedPost = post;
-  if (activeLang !== 'tr' && post.translations) {
+  if (post.translations) {
     const translation = post.translations.find(t => t.languageCode === activeLang);
     if (translation) {
       renderedPost = {

@@ -660,6 +660,14 @@ namespace SourceDev.API.Services
         {
             var slug = title.ToLowerInvariant();
 
+            // Transliterate common characters to ASCII equivalents before stripping
+            slug = slug
+                .Replace("ü", "u").Replace("ö", "o").Replace("ş", "s")
+                .Replace("ı", "i").Replace("ğ", "g").Replace("ç", "c")
+                .Replace("â", "a").Replace("î", "i").Replace("û", "u")
+                .Replace("é", "e").Replace("è", "e").Replace("ê", "e")
+                .Replace("ä", "a").Replace("ß", "ss");
+
             slug = System.Text.RegularExpressions.Regex.Replace(slug, @"[^a-z0-9\s-]", "");
 
             slug = System.Text.RegularExpressions.Regex.Replace(slug, @"\s+", "-");

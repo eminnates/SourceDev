@@ -7,7 +7,7 @@ import PostAuthorCard from '@/components/Post/PostAuthorCard';
 import CommentsSection from '@/components/Comment/CommentsSection';
 import { getPostById, toggleReaction, toggleBookmark } from '@/utils/api/postApi';
 
-export default function PostDetailClient({ initialPost, initialLanguage = 'tr' }) {
+export default function PostDetailClient({ initialPost, initialLanguage = 'en' }) {
   const [post, setPost] = useState(initialPost);
   const [userReactions, setUserReactions] = useState(initialPost?.userReactions || []);
   const [isBookmarked, setIsBookmarked] = useState(initialPost?.bookmarkedByCurrentUser || false);
