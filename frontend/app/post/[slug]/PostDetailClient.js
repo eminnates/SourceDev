@@ -61,12 +61,10 @@ export default function PostDetailClient({ initialPost, initialLanguage = 'tr' }
 
     if (result.success) {
       // Update user's current reactions - only one reaction allowed at a time
-      setUserReactions(prev => {
+      setUserReactions(() => {
         if (isSameReaction) {
-          // Remove reaction if it's the same one
           return [];
         } else {
-          // Set new reaction
           return [reactionType];
         }
       });
@@ -142,7 +140,7 @@ export default function PostDetailClient({ initialPost, initialLanguage = 'tr' }
       </div>
 
       {/* Mobile Bottom Bar */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-brand-card border-t border-brand-border p-4 z-50">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-brand-card border-t border-brand-border px-4 pt-3 pb-6 z-50">
         <PostDetailSidebar 
           reactions={Object.values(post.reactionTypes || {}).reduce((a, b) => a + b, 0)}
           comments={post.commentsCount}

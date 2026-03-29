@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
@@ -96,13 +97,12 @@ export default function Navbar() {
                                             onClick={() => setShowDropdown(!showDropdown)}
                                             className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200 hover:border-brand-primary transition-colors"
                                         >
-                                            <img
+                                            <Image
                                                 src={user.profileImageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.username)}&background=1ABC9C&color=fff&bold=true`}
                                                 alt={user.displayName || user.username}
+                                                width={40}
+                                                height={40}
                                                 className="w-full h-full object-cover"
-                                                onError={(e) => {
-                                                    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.username)}&background=1ABC9C&color=fff&bold=true`;
-                                                }}
                                             />
                                         </button>
 
@@ -167,7 +167,7 @@ export default function Navbar() {
                             ) : (
                                 <>
                                     {/* Not Logged In - Show Login/Register */}
-                                    <Link href="/login" className="hidden sm:block px-3 py-1.5 text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary rounded-md transition-colors mr-1">
+                                    <Link href="/login" className="px-3 py-1.5 text-sm sm:text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary rounded-md transition-colors mr-1">
                                         Log in
                                     </Link>
                                     <Link href="/register" className="flex-1 sm:flex-none text-center px-3 py-1.5 text-sm sm:text-base font-medium text-brand-primary border border-brand-primary hover:bg-brand-primary hover:text-white rounded-md transition-colors whitespace-nowrap">

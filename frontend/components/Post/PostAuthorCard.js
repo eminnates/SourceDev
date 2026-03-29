@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getUser } from '@/utils/auth';
 import { checkIfFollowing, followUser, unfollowUser } from '@/utils/api/followApi';
 import { searchUsers, getUserById } from '@/utils/api/userApi';
@@ -142,9 +143,11 @@ export default function PostAuthorCard({ author, authorId, joinDate, bio, postId
     <div className="bg-white rounded-lg border border-brand-muted/20 p-5">
       <Link href={authorUsername ? `/user/${authorUsername}` : '#'} className="flex items-center gap-3 mb-4">
         {authorProfileImage ? (
-          <img
+          <Image
             src={authorProfileImage}
-            alt={author}
+            alt={author || 'Author'}
+            width={48}
+            height={48}
             className="w-12 h-12 rounded-full object-cover hover:opacity-80 transition-opacity"
           />
         ) : (

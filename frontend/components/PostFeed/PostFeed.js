@@ -1,8 +1,28 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import PostCard from '../Post/PostCard';
+
+function PostCardSkeleton() {
+    return (
+        <div className="bg-white rounded-lg border border-brand-muted/20 p-4 animate-pulse">
+            <div className="flex gap-3">
+                <div className="w-8 h-8 rounded-full bg-gray-200 shrink-0" />
+                <div className="flex-1 space-y-3">
+                    <div className="h-3 bg-gray-200 rounded w-1/4" />
+                    <div className="h-5 bg-gray-200 rounded w-3/4" />
+                    <div className="h-4 bg-gray-200 rounded w-1/2" />
+                    <div className="flex gap-2">
+                        <div className="h-6 w-16 bg-gray-200 rounded" />
+                        <div className="h-6 w-20 bg-gray-200 rounded" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
 import { getRelevantPosts, getLatestPosts, getHotPosts, getForYouPosts, toggleBookmark } from '@/utils/api/postApi';
 import { isAuthenticated } from '@/utils/auth';
 
@@ -166,10 +186,10 @@ export default function PostFeed({ defaultTab = 'home', defaultSubTab = 'feed', 
                     <button
                         key={tab.id}
                         onClick={() => handleTabClick(tab)}
-                        className={`px-2 sm:px-3 py-1 rounded-md text-sm sm:text-base md:text-lg whitespace-nowrap transition-colors cursor-pointer hover:bg-white ${
+                        className={`px-2 sm:px-3 py-1.5 text-sm sm:text-base md:text-lg whitespace-nowrap transition-colors cursor-pointer ${
                             activeTab === tab.id
-                                ? 'text-black font-bold'
-                                : 'text-brand-muted hover:text-brand-primary'
+                                ? 'text-brand-dark font-bold border-b-2 border-brand-primary'
+                                : 'text-brand-muted hover:text-brand-primary rounded-md hover:bg-white'
                         }`}
                     >
                         {tab.label}
@@ -209,11 +229,8 @@ export default function PostFeed({ defaultTab = 'home', defaultSubTab = 'feed', 
         return (
             <div className="w-full">
                 <Navigation />
-                <div className="flex justify-center items-center py-20">
-                    <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto mb-4"></div>
-                        <p className="text-brand-muted">Loading posts...</p>
-                    </div>
+                <div className="space-y-3">
+                    {[...Array(5)].map((_, i) => <PostCardSkeleton key={i} />)}
                 </div>
             </div>
         );
@@ -224,8 +241,14 @@ export default function PostFeed({ defaultTab = 'home', defaultSubTab = 'feed', 
             <div className="w-full">
                 <Navigation />
                 <div className="bg-white rounded-lg p-8 text-center">
-                    <p className="text-red-600 mb-2">Error loading posts</p>
-                    <p className="text-brand-muted">{error}</p>
+                    <p className="text-red-500 font-medium mb-1">Gönderiler yüklenemedi</p>
+                    <p className="text-brand-muted text-sm mb-4">{error}</p>
+                    <button
+                        onClick={() => fetchPosts(1, false)}
+                        className="px-4 py-2 text-sm text-brand-primary border border-brand-primary rounded-md hover:bg-brand-primary hover:text-white transition-colors"
+                    >
+                        Tekrar dene
+                    </button>
                 </div>
             </div>
         );
@@ -238,12 +261,18 @@ export default function PostFeed({ defaultTab = 'home', defaultSubTab = 'feed', 
             {/* Posts List */}
             {posts.length === 0 ? (
                 <div className="bg-white rounded-lg p-8 text-center">
-                    <p className="text-brand-muted text-lg">No posts found</p>
-                    <p className="text-sm text-brand-muted mt-2">Be the first to create a post!</p>
+                    <p className="text-brand-muted text-lg">Henüz gönderi yok</p>
+                    <p className="text-sm text-brand-muted mt-1 mb-4">İlk gönderiyi sen oluştur!</p>
+                    <Link
+                        href="/create-post"
+                        className="inline-block px-4 py-2 text-sm font-medium text-white bg-brand-primary hover:bg-brand-primary-dark rounded-md transition-colors"
+                    >
+                        Gönderi oluştur
+                    </Link>
                 </div>
             ) : (
                 <>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                         {posts.map((post, index) => (
                             <PostCard
                                 key={`${post.id}-${index}`}
@@ -260,12 +289,17 @@ export default function PostFeed({ defaultTab = 'home', defaultSubTab = 'feed', 
                                 <button
                                     onClick={handleLoadMore}
                                     disabled={isLoadingMore}
-                                    className="px-6 py-2 rounded-md border border-brand-primary text-brand-primary hover:bg-brand-primary hover:text-white transition disabled:opacity-50"
+                                    className="flex items-center gap-2 px-6 py-2 rounded-md border border-brand-primary text-brand-primary hover:bg-brand-primary hover:text-white transition disabled:opacity-50"
                                 >
-                                    {isLoadingMore ? 'Loading...' : 'Load more'}
+                                    {isLoadingMore ? (
+                                        <>
+                                            <span className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                                            Yükleniyor...
+                                        </>
+                                    ) : 'Daha fazla'}
                                 </button>
                             ) : (
-                                <p className="text-sm text-brand-muted">No more posts</p>
+                                <p className="text-sm text-brand-muted">Tüm gönderiler yüklendi</p>
                             )}
                         </div>
                     )}

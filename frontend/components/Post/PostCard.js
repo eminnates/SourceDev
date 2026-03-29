@@ -177,7 +177,7 @@ export default function PostCard({ post, showCover = false, priority = false, on
                                     <Link
                                         key={idx}
                                         href={`/tag/${tag}`}
-                                        className={`px-2 py-1 border border-transparent bg-transparent hover:${colors.bg} ${colors.text} ${colors.hover} ${colors.border} text-xs rounded cursor-pointer transition-all`}
+                                        className={`px-2 py-1 border border-transparent bg-transparent ${colors.text} ${colors.hover} ${colors.border} text-xs rounded cursor-pointer transition-all`}
                                     >
                                         #<span className='text-black'>{tag}</span>
                                     </Link>
@@ -224,7 +224,7 @@ export default function PostCard({ post, showCover = false, priority = false, on
                                 <Link href={`${postUrl}#comments`} className="flex items-center gap-2 hover:bg-gray-100 px-2 py-1 rounded transition-colors">
                                     <RiChat1Line className="w-5 h-5 text-brand-muted" />
                                     <span className="text-sm text-center gap-2 text-brand-dark">
-                                       {commentCount > 0 ? `${commentCount} comments` : ' Add comment'}
+                                        {commentCount} comment{commentCount !== 1 ? 's' : ''}
                                     </span>
                                 </Link>
                             </div>

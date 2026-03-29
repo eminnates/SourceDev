@@ -12,6 +12,8 @@
   --color-brand-dark: #2D3748;         /* Koyu gri - Text, headings */
   --color-brand-muted: #9CA3AF;        /* Açık gri - Secondary text, borders */
   --color-brand-background: #f5f5f5;   /* Çok açık gri - Backgrounds */
+  --color-brand-card: #ffffff;          /* Kart arka planı - Beyaz */
+  --color-brand-border: #e5e7eb;        /* Kenarlık rengi - Açık gri */
 }
 
 html {
