@@ -2,4 +2,4 @@ frontend/package-lock.json
 .cursor/debug.log
 obj/
 bin/
-
+node_modules/

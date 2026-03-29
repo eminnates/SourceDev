@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { BsBookmark, BsBookmarkFill } from 'react-icons/bs';
 import { RiChat1Line } from "react-icons/ri";
 import { toggleBookmark } from '@/utils/api/postApi';
@@ -10,7 +11,7 @@ import { searchUsers } from '@/utils/api/userApi';
 import { isAuthenticated } from '@/utils/auth';
 import { getUsernameFromDisplayName } from '@/utils/userUtils';
 
-export default function PostCard({ post, showCover = false, onBookmarkToggle }) {
+export default function PostCard({ post, showCover = false, priority = false, onBookmarkToggle }) {
     const [commentCount, setCommentCount] = useState(0);
     const [authorProfileImage, setAuthorProfileImage] = useState(null);
     const [authorUsername, setAuthorUsername] = useState(null);
@@ -112,11 +113,14 @@ export default function PostCard({ post, showCover = false, onBookmarkToggle }) 
     return (
         <article className="bg-white rounded-lg border border-brand-muted/20 overflow-hidden">
             {showCover && coverImage && (
-                <Link href={postUrl}>
-                    <img 
-                        src={coverImage} 
+                <Link href={postUrl} className="block relative h-48">
+                    <Image
+                        src={coverImage}
                         alt={post.title}
-                        className="w-full h-48 object-cover cursor-pointer hover:opacity-95 transition-opacity"
+                        fill
+                        priority={priority}
+                        className="object-cover hover:opacity-95 transition-opacity"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
                     />
                 </Link>
             )}
@@ -125,9 +129,11 @@ export default function PostCard({ post, showCover = false, onBookmarkToggle }) 
                 <div className="flex gap-2">
                         <Link href={authorUsername ? `/user/${authorUsername}` : '#'}>
                             {authorProfileImage ? (
-                                <img
+                                <Image
                                     src={authorProfileImage}
                                     alt={author}
+                                    width={32}
+                                    height={32}
                                     className="w-8 h-8 rounded-full object-cover hover:opacity-80 transition-opacity cursor-pointer"
                                 />
                             ) : (

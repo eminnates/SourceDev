@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import MarkdownContent from './MarkdownContent';
 import { searchUsers, getUserById } from '@/utils/api/userApi';
 import { getUsernameFromDisplayName } from '@/utils/userUtils';
@@ -78,11 +79,16 @@ export default function PostContent({ post, activeLanguage, onLanguageChange }) 
     <article className="bg-white rounded-lg border border-brand-muted/20 overflow-hidden">
       {/* Cover Image */}
       {post.coverImage && (
-        <img 
-          src={post.coverImage} 
-          alt={post.title}
-          className="w-full h-96 object-cover"
-        />
+        <div className="relative w-full h-96">
+          <Image
+            src={post.coverImage}
+            alt={post.title}
+            fill
+            priority
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 800px"
+          />
+        </div>
       )}
 
       {/* Content */}
@@ -91,9 +97,11 @@ export default function PostContent({ post, activeLanguage, onLanguageChange }) 
         <div className="flex items-center gap-3 mb-6">
           <Link href={authorUsername ? `/user/${authorUsername}` : '#'}>
             {authorProfileImage ? (
-              <img
+              <Image
                 src={authorProfileImage}
                 alt={post.author}
+                width={40}
+                height={40}
                 className="w-10 h-10 rounded-full object-cover hover:opacity-80 transition-opacity cursor-pointer"
               />
             ) : (

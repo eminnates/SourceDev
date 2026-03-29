@@ -47,7 +47,7 @@ export const metadata = {
     title: 'SourceDev - Yazılımcı Topluluğu',
     description: 'Yazılımcılar için bilgi paylaşım ve networking platformu.',
     images: ['/og-image.png'],
-    creator: '@soucedev',
+    creator: '@sourcedev',
   },
   alternates: {
     canonical: SITE_URL,
@@ -62,8 +62,8 @@ export const metadata = {
   },
   manifest: '/manifest.json',
   verification: {
-    // Google Search Console verification (kullanıcı ekleyecek)
-    // google: 'verification-code',
+
+    google: 'verification-code',
   },
 };
 
@@ -74,7 +74,7 @@ export const viewport = {
 };
 
 // JSON-LD Structured Data for SEO
-const jsonLd = {
+const websiteJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
   name: 'SourceDev',
@@ -97,14 +97,31 @@ const jsonLd = {
   },
 };
 
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'SourceDev',
+  url: SITE_URL,
+  logo: {
+    '@type': 'ImageObject',
+    url: `${SITE_URL}/icon-512x512.png`,
+  },
+};
+
 export default function RootLayout({ children }) {
   return (
     <html lang="tr">
       <head>
+        <link rel="preconnect" href="https://sourcedev-production.up.railway.app" />
+        <link rel="dns-prefetch" href="https://sourcedev-production.up.railway.app" />
         <link rel="alternate" type="application/rss+xml" title="SourceDev RSS Feed" href="/feed.xml" />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
       </head>
       <body className={`antialiased bg-brand-background`}>

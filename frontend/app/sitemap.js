@@ -29,18 +29,6 @@ export default async function sitemap() {
       priority: 0.5,
     },
     {
-      url: `${SITE_URL}/login`,
-      lastModified: new Date(),
-      changeFrequency: 'yearly',
-      priority: 0.3,
-    },
-    {
-      url: `${SITE_URL}/register`,
-      lastModified: new Date(),
-      changeFrequency: 'yearly',
-      priority: 0.3,
-    },
-    {
       url: `${SITE_URL}/latest`,
       lastModified: new Date(),
       changeFrequency: 'hourly',
@@ -87,7 +75,7 @@ export default async function sitemap() {
     if (tagsRes.ok) {
       const tags = await tagsRes.json();
       tagPages = (tags || []).map((tag) => ({
-        url: `${SITE_URL}/tag/${encodeURIComponent(tag.name)}`,
+        url: `${SITE_URL}/tag/${tag.slug || encodeURIComponent(tag.name)}`,
         lastModified: new Date(),
         changeFrequency: 'daily',
         priority: 0.7,

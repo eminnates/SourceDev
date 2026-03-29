@@ -249,6 +249,7 @@ export default function PostFeed({ defaultTab = 'home', defaultSubTab = 'feed', 
                                 key={`${post.id}-${index}`}
                                 post={post}
                                 showCover={index === 0}
+                                priority={index === 0}
                                 onBookmarkToggle={handleBookmarkToggle}
                             />
                         ))}

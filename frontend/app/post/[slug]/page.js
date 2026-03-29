@@ -1,4 +1,5 @@
-import { getPostBySlug, getLatestPosts } from '@/utils/api/postApi';
+import { redirect } from 'next/navigation';
+import { getPostBySlug, getPostById, getLatestPosts } from '@/utils/api/postApi';
 import PostDetailClient from './PostDetailClient';
 
 const SITE_URL = 'https://sourcedev.tr';
@@ -99,6 +100,23 @@ function generateArticleJsonLd(post) {
       '@id': `${SITE_URL}/post/${post.slug}`,
     },
     keywords: post.tags?.map(t => t.name).join(', '),
+    wordCount: post.content ? post.content.replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length : undefined,
+    articleSection: post.tags?.[0]?.name || undefined,
+  };
+}
+
+function generateBreadcrumbJsonLd(post) {
+  const firstTag = post.tags?.[0];
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: SITE_URL },
+      firstTag
+        ? { '@type': 'ListItem', position: 2, name: `#${firstTag.name}`, item: `${SITE_URL}/tag/${firstTag.name}` }
+        : { '@type': 'ListItem', position: 2, name: 'Yazılar', item: `${SITE_URL}/latest` },
+      { '@type': 'ListItem', position: 3, name: post.title, item: `${SITE_URL}/post/${post.slug}` },
+    ],
   };
 }
 
@@ -114,6 +132,15 @@ export default async function PostDetailPage({ params }) {
         </div>
       </div>
     );
+  }
+
+  // Numeric ID → redirect to slug-based URL (backward compatibility)
+  const numericId = parseInt(slug, 10);
+  if (!isNaN(numericId) && String(numericId) === slug) {
+    const idResult = await getPostById(numericId);
+    if (idResult.success && idResult.data?.slug) {
+      redirect(`/post/${idResult.data.slug}`);
+    }
   }
 
   // Fetch data on the server
@@ -132,12 +159,17 @@ export default async function PostDetailPage({ params }) {
 
   const post = result.data;
   const jsonLd = generateArticleJsonLd(post);
+  const breadcrumbJsonLd = generateBreadcrumbJsonLd(post);
 
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
       <PostDetailClient initialPost={post} />
     </>
