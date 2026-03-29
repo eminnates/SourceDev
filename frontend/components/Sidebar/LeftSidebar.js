@@ -7,12 +7,14 @@ import { BsInfoCircle, BsEnvelope, BsCode } from 'react-icons/bs';
 import MenuLink from './MenuLink';
 import SocialLinks from './SocialLinks';
 import PopularTags from './PopularTags';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function LeftSidebar() {
+    const { t } = useLanguage();
     const menuItems = [
-        { icon: <AiOutlineHome className="w-5 h-5" />, label: 'Home', href: '/' },
-        { icon: <BsInfoCircle className="w-5 h-5" />, label: 'About', href: '/about', emoji: '😎' },
-        { icon: <BsEnvelope className="w-5 h-5" />, label: 'Contact', href: '/contact', emoji: '📬' },
+        { icon: <AiOutlineHome className="w-5 h-5" />, label: t('menu.home'), href: '/' },
+        { icon: <BsInfoCircle className="w-5 h-5" />, label: t('menu.about'), href: '/about', emoji: '😎' },
+        { icon: <BsEnvelope className="w-5 h-5" />, label: t('menu.contact'), href: '/contact', emoji: '📬' },
     ];
 
 

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import PostCard from '../Post/PostCard';
+import { useLanguage } from '@/context/LanguageContext';
 
 function PostCardSkeleton() {
     return (
@@ -29,6 +30,7 @@ import { isAuthenticated } from '@/utils/auth';
 const PAGE_SIZE = 20;
 
 export default function PostFeed({ defaultTab = 'home', defaultSubTab = 'feed', initialPosts = null }) {
+    const { t } = useLanguage();
     const [activeTab, setActiveTab] = useState(defaultTab);
     const [homeSubTab, setHomeSubTab] = useState(defaultSubTab); // 'feed' or 'foryou'
     const [posts, setPosts] = useState(initialPosts || []);
@@ -155,9 +157,9 @@ export default function PostFeed({ defaultTab = 'home', defaultSubTab = 'feed', 
     };
 
     const tabs = [
-        { id: 'home', label: 'Home', path: '/' },
-        { id: 'hot', label: 'Hot', path: '/hot' },
-        { id: 'latest', label: 'Latest', path: '/latest' },
+        { id: 'home', label: t('feed.home'), path: '/' },
+        { id: 'hot', label: t('feed.hot'), path: '/hot' },
+        { id: 'latest', label: t('feed.latest'), path: '/latest' },
     ];
 
     const handleTabClick = (tab) => {
@@ -208,7 +210,7 @@ export default function PostFeed({ defaultTab = 'home', defaultSubTab = 'feed', 
                                 : 'bg-gray-100 text-brand-muted hover:bg-gray-200'
                         }`}
                     >
-                        Feed
+                        {t('feed.feed')}
                     </button>
                     <button
                         onClick={() => handleSubTabClick('foryou')}
@@ -218,7 +220,7 @@ export default function PostFeed({ defaultTab = 'home', defaultSubTab = 'feed', 
                                 : 'bg-gray-100 text-brand-muted hover:bg-gray-200'
                         }`}
                     >
-                        For You
+                        {t('feed.forYou')}
                     </button>
                 </div>
             )}
@@ -241,13 +243,13 @@ export default function PostFeed({ defaultTab = 'home', defaultSubTab = 'feed', 
             <div className="w-full">
                 <Navigation />
                 <div className="bg-white rounded-lg p-8 text-center">
-                    <p className="text-red-500 font-medium mb-1">Gönderiler yüklenemedi</p>
+                    <p className="text-red-500 font-medium mb-1">{t('feed.error')}</p>
                     <p className="text-brand-muted text-sm mb-4">{error}</p>
                     <button
                         onClick={() => fetchPosts(1, false)}
                         className="px-4 py-2 text-sm text-brand-primary border border-brand-primary rounded-md hover:bg-brand-primary hover:text-white transition-colors"
                     >
-                        Tekrar dene
+                        {t('feed.retry')}
                     </button>
                 </div>
             </div>
@@ -261,13 +263,13 @@ export default function PostFeed({ defaultTab = 'home', defaultSubTab = 'feed', 
             {/* Posts List */}
             {posts.length === 0 ? (
                 <div className="bg-white rounded-lg p-8 text-center">
-                    <p className="text-brand-muted text-lg">Henüz gönderi yok</p>
-                    <p className="text-sm text-brand-muted mt-1 mb-4">İlk gönderiyi sen oluştur!</p>
+                    <p className="text-brand-muted text-lg">{t('feed.empty')}</p>
+                    <p className="text-sm text-brand-muted mt-1 mb-4">{t('feed.emptySubtext')}</p>
                     <Link
                         href="/create-post"
                         className="inline-block px-4 py-2 text-sm font-medium text-white bg-brand-primary hover:bg-brand-primary-dark rounded-md transition-colors"
                     >
-                        Gönderi oluştur
+                        {t('feed.createPost')}
                     </Link>
                 </div>
             ) : (
@@ -294,12 +296,12 @@ export default function PostFeed({ defaultTab = 'home', defaultSubTab = 'feed', 
                                     {isLoadingMore ? (
                                         <>
                                             <span className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
-                                            Yükleniyor...
+                                            {t('feed.loadingMore')}
                                         </>
-                                    ) : 'Daha fazla'}
+                                    ) : t('feed.loadMore')}
                                 </button>
                             ) : (
-                                <p className="text-sm text-brand-muted">Tüm gönderiler yüklendi</p>
+                                <p className="text-sm text-brand-muted">{t('feed.noMore')}</p>
                             )}
                         </div>
                     )}

@@ -10,6 +10,7 @@ import { getCommentCount } from '@/utils/api/commentApi';
 import { searchUsers } from '@/utils/api/userApi';
 import { isAuthenticated } from '@/utils/auth';
 import { getUsernameFromDisplayName } from '@/utils/userUtils';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function PostCard({ post, showCover = false, priority = false, onBookmarkToggle }) {
     const [commentCount, setCommentCount] = useState(0);
@@ -17,6 +18,7 @@ export default function PostCard({ post, showCover = false, priority = false, on
     const [authorUsername, setAuthorUsername] = useState(null);
     const [formattedDate, setFormattedDate] = useState('');
 
+    const { t } = useLanguage();
     const author = post.authorDisplayName;
     const isBookmarked = post.bookmarkedByCurrentUser || false;
     const coverImage = post.coverImageUrl;
@@ -224,13 +226,13 @@ export default function PostCard({ post, showCover = false, priority = false, on
                                 <Link href={`${postUrl}#comments`} className="flex items-center gap-2 hover:bg-gray-100 px-2 py-1 rounded transition-colors">
                                     <RiChat1Line className="w-5 h-5 text-brand-muted" />
                                     <span className="text-sm text-center gap-2 text-brand-dark">
-                                        {commentCount} comment{commentCount !== 1 ? 's' : ''}
+                                        {commentCount} {commentCount !== 1 ? t('post.comments') : t('post.comment')}
                                     </span>
                                 </Link>
                             </div>
 
                             <div className="flex items-center gap-3 self-end text-right sm:justify-end sm:text-left">
-                                <span className="text-xs">{readTime} min read</span>
+                                <span className="text-xs">{readTime} {t('post.minRead')}</span>
 
                                 <button
                                     onClick={(e) => {

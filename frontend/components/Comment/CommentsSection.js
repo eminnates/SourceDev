@@ -5,8 +5,10 @@ import { getComments, addComment, deleteComment } from '@/utils/api/postApi';
 import { isAuthenticated, getUser } from '@/utils/auth';
 import CommentItem from './CommentItem';
 import CommentForm from './CommentForm';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function CommentsSection({ postId, commentCount, onCommentCountChange }) {
+  const { t } = useLanguage();
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -83,13 +85,13 @@ export default function CommentsSection({ postId, commentCount, onCommentCountCh
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="text-2xl font-bold text-brand-dark">Comments</h3>
+            <h3 className="text-2xl font-bold text-brand-dark">{t('comments.title')}</h3>
             <span className="text-brand-muted text-lg">({commentCount || 0})</span>
           </div>
           <div className="text-sm text-brand-muted flex items-center gap-2">
-            <span className="font-medium">Top comments</span>
+            <span className="font-medium">{t('comments.topComments')}</span>
             <span className="text-xs">•</span>
-            <span>Newest first</span>
+            <span>{t('comments.newestFirst')}</span>
           </div>
         </div>
       </div>
@@ -99,7 +101,7 @@ export default function CommentsSection({ postId, commentCount, onCommentCountCh
         <CommentForm
           postId={postId}
           onSubmit={handleAddComment}
-          placeholder="Add to the discussion"
+          placeholder={t('comments.addPlaceholder')}
           showAvatar={true}
         />
       </div>
@@ -108,7 +110,7 @@ export default function CommentsSection({ postId, commentCount, onCommentCountCh
         {loading && (
           <div className="text-center py-6">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary mx-auto"></div>
-            <p className="text-sm text-brand-muted mt-2">Loading comments...</p>
+            <p className="text-sm text-brand-muted mt-2">{t('comments.loading')}</p>
           </div>
         )}
 
@@ -119,7 +121,7 @@ export default function CommentsSection({ postId, commentCount, onCommentCountCh
         )}
 
         {!loading && !error && comments.length === 0 && (
-          <p className="text-brand-muted text-center py-4">No comments yet. Start the conversation!</p>
+          <p className="text-brand-muted text-center py-4">{t('comments.empty')}</p>
         )}
 
         {!loading && !error && (() => {

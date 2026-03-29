@@ -23,7 +23,7 @@ function CreatePostContent() {
     tr: { title: '', content: '' },
     en: { title: '', content: '' }
   });
-  const [activeLang, setActiveLang] = useState('tr');
+  const [activeLang, setActiveLang] = useState('en');
   
   const [selectedTags, setSelectedTags] = useState([]);
   const [tagInput, setTagInput] = useState('');

@@ -6,8 +6,10 @@ import { isAuthenticated, getUser } from '@/utils/auth';
 import CommentForm from './CommentForm';
 import { searchUsers, getUserById } from '@/utils/api/userApi';
 import { getUsernameFromDisplayName } from '@/utils/userUtils';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function CommentItem({ comment, onReply, onDelete, isReply = false }) {
+  const { t } = useLanguage();
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [authorProfileImage, setAuthorProfileImage] = useState(null);
@@ -115,7 +117,7 @@ export default function CommentItem({ comment, onReply, onDelete, isReply = fals
   };
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this comment?')) return;
+    if (!confirm(t('comments.deleteConfirm'))) return;
 
     setIsDeleting(true);
     try {
@@ -163,7 +165,7 @@ export default function CommentItem({ comment, onReply, onDelete, isReply = fals
             </span>
             {!isReply && comment.repliesCount > 0 && (
               <span className="text-xs text-brand-muted">
-                • {comment.repliesCount} {comment.repliesCount === 1 ? 'reply' : 'replies'}
+                • {comment.repliesCount} {comment.repliesCount === 1 ? t('comments.replyLabel') : t('comments.repliesLabel')}
               </span>
             )}
           </div>
@@ -180,7 +182,7 @@ export default function CommentItem({ comment, onReply, onDelete, isReply = fals
                   onClick={() => setShowReplyForm(!showReplyForm)}
                   className="hover:text-brand-primary font-medium transition-colors"
                 >
-                  Reply
+                  {t('comments.reply')}
                 </button>
 
                 {canDelete && (
@@ -189,7 +191,7 @@ export default function CommentItem({ comment, onReply, onDelete, isReply = fals
                     disabled={isDeleting}
                     className="text-red-500 hover:text-red-600 transition-colors disabled:opacity-50 font-medium"
                   >
-                    {isDeleting ? 'Deleting...' : 'Delete'}
+                    {isDeleting ? t('comments.deleting') : t('comments.delete')}
                   </button>
                 )}
               </>

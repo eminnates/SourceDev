@@ -1,6 +1,7 @@
 import "@/styles/globals.css";
 import NavbarWrapper from "@/components/Navbar/NavbarWrapper";
 import { AuthProvider } from "@/context/AuthContext";
+import { LanguageProvider } from "@/context/LanguageContext";
 
 const SITE_URL = 'https://sourcedev.tr';
 
@@ -125,10 +126,12 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className={`antialiased bg-brand-background`}>
-        <AuthProvider>
-          <NavbarWrapper />
-          {children}
-        </AuthProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <NavbarWrapper />
+            {children}
+          </AuthProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useLanguage } from '@/context/LanguageContext';
 import { getUser } from '@/utils/auth';
 import { checkIfFollowing, followUser, unfollowUser } from '@/utils/api/followApi';
 import { searchUsers, getUserById } from '@/utils/api/userApi';
@@ -10,6 +11,7 @@ import { isAuthenticated } from '@/utils/auth';
 import { getUsernameFromDisplayName } from '@/utils/userUtils';
 
 export default function PostAuthorCard({ author, authorId, joinDate, bio, postId }) {
+  const { t } = useLanguage();
   const [currentUser, setCurrentUser] = useState(null);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -166,7 +168,7 @@ export default function PostAuthorCard({ author, authorId, joinDate, bio, postId
       {isOwnProfile ? (
         <Link href={`/create-post?edit=${postId}`}>
           <button className="w-full bg-brand-primary hover:bg-brand-primary-dark text-white font-bold py-2 px-4 rounded-lg transition-colors mb-4 cursor-pointer">
-            Edit Post
+            {t('author.editPost')}
           </button>
         </Link>
       ) : (
@@ -181,7 +183,7 @@ export default function PostAuthorCard({ author, authorId, joinDate, bio, postId
               : 'bg-brand-primary hover:bg-brand-primary-dark text-white'
           }`}
         >
-          {loading ? 'Loading...' : (isFollowing ? 'Following' : 'Follow')}
+          {loading ? t('author.loading') : (isFollowing ? t('author.following') : t('author.follow'))}
         </button>
       )}
 

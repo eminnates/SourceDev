@@ -3,8 +3,10 @@
 import { useState, useRef, useEffect } from 'react';
 import TagLink from './TagLink';
 import { getAllTags } from '@/utils/api/tagApi';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function PopularTags() {
+  const { t } = useLanguage();
   const [isScrolling, setIsScrolling] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const [tags, setTags] = useState([]);
@@ -53,9 +55,9 @@ export default function PopularTags() {
   if (loading) {
     return (
       <div className="mt-6">
-        <h3 className="px-3 text-base font-bold text-brand-dark mb-2">Popular Tags</h3>
+        <h3 className="px-3 text-base font-bold text-brand-dark mb-2">{t('tags.popular')}</h3>
         <div className="px-3 py-4 text-center text-brand-muted">
-          Loading tags...
+          {t('tags.loading')}
         </div>
       </div>
     );
@@ -63,7 +65,7 @@ export default function PopularTags() {
 
   return (
     <div className="mt-6">
-      <h3 className="px-3 text-base font-bold text-brand-dark mb-2">Popular Tags</h3>
+      <h3 className="px-3 text-base font-bold text-brand-dark mb-2">{t('tags.popular')}</h3>
       <div
         className={`max-h-80 overflow-y-auto transition-all ${isScrolling ? 'scrollbar-default' : 'scrollbar-hide'
           }`}
@@ -86,7 +88,7 @@ export default function PopularTags() {
           onClick={() => setShowAll(!showAll)}
           className="w-full px-3 py-2 mt-2 text-sm font-medium text-brand-primary hover:text-brand-primary-dark hover:bg-brand-primary/10 rounded-md transition-colors"
         >
-          {showAll ? 'Show Less' : `All Tags (${tags.length})`}
+          {showAll ? t('tags.showLess') : t('tags.showAll', { count: tags.length })}
         </button>
       )}
     </div>

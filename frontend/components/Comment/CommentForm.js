@@ -5,8 +5,10 @@ import Link from 'next/link';
 import { isAuthenticated, getUser } from '@/utils/auth';
 import { useRouter } from 'next/navigation';
 import { searchUsers, getUserById } from '@/utils/api/userApi';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function CommentForm({ postId, onSubmit, placeholder = "Write a comment...", parentCommentId = null, showAvatar = true }) {
+  const { t } = useLanguage();
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentUserProfileImage, setCurrentUserProfileImage] = useState(null);
@@ -106,7 +108,7 @@ export default function CommentForm({ postId, onSubmit, placeholder = "Write a c
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={isAuthenticated() ? placeholder : "Login to comment..."}
+            placeholder={isAuthenticated() ? placeholder : t('comments.loginPlaceholder')}
             disabled={!isAuthenticated() || isSubmitting}
             className="w-full text-brand-dark placeholder:text-brand-muted bg-transparent border-none resize-none focus:outline-none"
             maxLength={3000}
@@ -116,7 +118,7 @@ export default function CommentForm({ postId, onSubmit, placeholder = "Write a c
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-brand-muted">
-            {content.length}/3000 • Press Ctrl + Enter to submit
+            {content.length}/3000 • {t('comments.hint')}
           </p>
 
           <div className="flex items-center gap-3 self-end sm:self-auto">
@@ -126,7 +128,7 @@ export default function CommentForm({ postId, onSubmit, placeholder = "Write a c
               disabled={!content.length || isSubmitting}
               className="px-4 py-2 border border-brand-muted/60 rounded-lg text-sm font-medium text-brand-dark hover:border-brand-primary hover:text-brand-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Clear
+              {t('comments.clear')}
             </button>
 
             <button
@@ -134,7 +136,7 @@ export default function CommentForm({ postId, onSubmit, placeholder = "Write a c
               disabled={!content.trim() || !isAuthenticated() || isSubmitting}
               className="px-5 py-2 bg-brand-primary hover:bg-brand-primary-dark text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'Posting...' : (parentCommentId ? 'Reply' : 'Comment')}
+              {isSubmitting ? t('comments.posting') : (parentCommentId ? t('comments.reply') : t('comments.comment'))}
             </button>
           </div>
         </div>

@@ -5,11 +5,13 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function Navbar() {
     const router = useRouter();
     const pathname = usePathname();
     const { user, isLoggedIn, logout, loading } = useAuth();
+    const { lang, setLanguage, t } = useLanguage();
     const [searchFocused, setSearchFocused] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [showDropdown, setShowDropdown] = useState(false);
@@ -61,7 +63,7 @@ export default function Navbar() {
                                 </svg>
                                 <input
                                     type="text"
-                                    placeholder="Search..."
+                                    placeholder={t('nav.search')}
                                     className="flex-1 bg-transparent outline-none text-sm sm:text-base text-brand-dark placeholder-brand-dark ml-2"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -89,7 +91,7 @@ export default function Navbar() {
                                         href="/create-post"
                                         className="hidden sm:block px-4 py-2 text-base font-medium text-brand-primary border-2 border-brand-primary hover:bg-brand-primary hover:text-white rounded-md transition-colors whitespace-nowrap"
                                     >
-                                        Create Post
+                                        {t('nav.createPost')}
                                     </Link>
                                     {/* Profile Picture & Dropdown */}
                                     <div className="relative profile-dropdown">
@@ -117,47 +119,63 @@ export default function Navbar() {
                                                 </div>
                                                 <hr className="border-gray-200 mb-2" />
                                                 <div className="py-1">
-                                                    <Link href="/create-post" 
+                                                    <Link href="/create-post"
                                                     className="flex items-center px-4 py-2 text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary transition-colors rounded-md sm:hidden"
                                                     onClick={() => setShowDropdown(false)}
                                                     >
-                                                        Create Post
+                                                        {t('nav.createPost')}
                                                     </Link>
                                                     <Link
                                                         href="/dashboard"
                                                         className="flex items-center px-4 py-2 text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary transition-colors rounded-md"
                                                         onClick={() => setShowDropdown(false)}
                                                     >
-                                                        Dashboard
+                                                        {t('nav.dashboard')}
                                                     </Link>
                                                     <Link
                                                         href="/drafts"
                                                         className="flex items-center px-4 py-2 text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary transition-colors rounded-md"
                                                         onClick={() => setShowDropdown(false)}
                                                     >
-                                                        My Drafts
+                                                        {t('nav.drafts')}
                                                     </Link>
                                                     <Link
                                                         href="/reading-list"
                                                         className="flex items-center px-4 py-2 text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary transition-colors rounded-md"
                                                         onClick={() => setShowDropdown(false)}
                                                     >
-                                                        Reading list
+                                                        {t('nav.readingList')}
                                                     </Link>
                                                     <Link
                                                         href="/settings"
                                                         className="flex items-center px-4 py-2 text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary transition-colors rounded-md"
                                                         onClick={() => setShowDropdown(false)}
                                                     >
-                                                        Settings
+                                                        {t('nav.settings')}
                                                     </Link>
                                                 </div>
                                                 <div className="border-t border-gray-200 py-1">
+                                                    {/* Language Toggle */}
+                                                    <div className="flex items-center gap-1 px-4 py-2">
+                                                        <button
+                                                            onClick={() => setLanguage('en')}
+                                                            className={`px-2 py-0.5 rounded text-sm font-medium transition-colors ${lang === 'en' ? 'bg-brand-primary text-white' : 'text-brand-muted hover:text-brand-dark'}`}
+                                                        >
+                                                            EN
+                                                        </button>
+                                                        <span className="text-brand-muted text-xs">|</span>
+                                                        <button
+                                                            onClick={() => setLanguage('tr')}
+                                                            className={`px-2 py-0.5 rounded text-sm font-medium transition-colors ${lang === 'tr' ? 'bg-brand-primary text-white' : 'text-brand-muted hover:text-brand-dark'}`}
+                                                        >
+                                                            TR
+                                                        </button>
+                                                    </div>
                                                     <button
                                                         onClick={handleLogout}
                                                         className="w-full flex items-center text-left px-4 py-2 text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary transition-colors rounded-md"
                                                     >
-                                                        Sign Out
+                                                        {t('nav.signOut')}
                                                     </button>
                                                 </div>
                                             </div>
@@ -167,11 +185,27 @@ export default function Navbar() {
                             ) : (
                                 <>
                                     {/* Not Logged In - Show Login/Register */}
+                                    {/* Language toggle (logged out) */}
+                                    <div className="hidden sm:flex items-center gap-1 mr-2">
+                                        <button
+                                            onClick={() => setLanguage('en')}
+                                            className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${lang === 'en' ? 'bg-brand-primary text-white' : 'text-brand-muted hover:text-brand-dark'}`}
+                                        >
+                                            EN
+                                        </button>
+                                        <span className="text-brand-muted text-xs">|</span>
+                                        <button
+                                            onClick={() => setLanguage('tr')}
+                                            className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${lang === 'tr' ? 'bg-brand-primary text-white' : 'text-brand-muted hover:text-brand-dark'}`}
+                                        >
+                                            TR
+                                        </button>
+                                    </div>
                                     <Link href="/login" className="px-3 py-1.5 text-sm sm:text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary rounded-md transition-colors mr-1">
-                                        Log in
+                                        {t('nav.login')}
                                     </Link>
                                     <Link href="/register" className="flex-1 sm:flex-none text-center px-3 py-1.5 text-sm sm:text-base font-medium text-brand-primary border border-brand-primary hover:bg-brand-primary hover:text-white rounded-md transition-colors whitespace-nowrap">
-                                        Create account
+                                        {t('nav.createAccount')}
                                     </Link>
                                 </>
                             )}
