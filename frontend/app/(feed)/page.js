@@ -1,5 +1,6 @@
 import PostFeed from '@/components/PostFeed/PostFeed';
 import { getRelevantPosts } from '@/utils/api/postApi';
+import InternalPostLinks from '@/components/SEO/InternalPostLinks';
 
 // Disable caching for feed pages - always fetch fresh data
 export const dynamic = 'force-dynamic';
@@ -28,5 +29,14 @@ export default async function Home() {
     console.error('Failed to fetch initial posts:', error);
   }
 
-  return <PostFeed initialPosts={initialPosts} defaultTab="home" />;
+  return (
+    <>
+      <PostFeed initialPosts={initialPosts} defaultTab="home" />
+      <InternalPostLinks
+        title="Ana sayfadan öne çıkan yazılar"
+        posts={initialPosts}
+        maxLinks={12}
+      />
+    </>
+  );
 }
