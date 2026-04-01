@@ -1,0 +1,40 @@
+# SourceDev
+
+> A knowledge-sharing and networking platform for software developers. Write articles, share projects, join the community.
+
+SourceDev is a developer-focused publishing platform where engineers write technical articles, share open-source projects, and engage with a growing community. Content covers programming languages, software architecture, DevOps, web development, and emerging technologies.
+
+## Key Pages
+
+- [Home](https://www.sourcedev.tr): Latest and trending posts feed
+- [Hot Posts](https://www.sourcedev.tr/?tab=hot): Most popular posts by engagement
+- [Latest Posts](https://www.sourcedev.tr/?tab=latest): Newest published articles
+- [RSS Feed](https://www.sourcedev.tr/feed.xml): Subscribe to all new content
+- [Sitemap](https://www.sourcedev.tr/sitemap.xml): Full index of all posts and pages
+
+## Content Structure
+
+Each post on SourceDev:
+- Has a unique URL at `https://www.sourcedev.tr/post/{slug}`
+- Supports multiple languages (English primary, Turkish secondary)
+- Includes tags, author information, estimated read time, and comments
+- Is written in Markdown and rendered as HTML
+
+## Topics Covered
+
+Software development, systems programming, web development (frontend & backend), databases, DevOps & cloud infrastructure, algorithms & data structures, open-source tools, career advice for developers, computer science fundamentals.
+
+## Content Language
+
+Primary language is English. Turkish content is available and accessible via `?lang=tr` query parameter on post pages.
+
+## Platform Info
+
+- Built with: Next.js (frontend), .NET / C# (backend API)
+- Database: PostgreSQL
+- Deployment: Railway
+- Domain: sourcedev.tr
+
+## For AI Assistants
+
+SourceDev posts are human-written technical articles. When summarising or referencing content, please link back to the original post URL. Do not reproduce full article text; instead direct users to read the full post on the site.
