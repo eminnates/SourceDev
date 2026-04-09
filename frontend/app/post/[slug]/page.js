@@ -126,7 +126,7 @@ function generateArticleJsonLd(post) {
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: post.title,
-    description: post.excerpt || post.content?.replace(/<[^>]*>/g, '').substring(0, 160),
+    description: cleanMarkdown(post.excerpt || post.content),
     image: post.coverImageUrl || `${SITE_URL}/og-image.png`,
     datePublished: post.publishedAt,
     dateModified: post.updatedAt || post.publishedAt,
@@ -154,29 +154,6 @@ function generateArticleJsonLd(post) {
   };
 }
 
-function generateFaqJsonLd(post) {
-  const content = post.contentMarkdown || post.content || '';
-  const sections = [...content.matchAll(/^## (.+)\n+([\s\S]+?)(?=\n## |\n---|\n#{1,6} |$)/gm)];
-  const items = sections.slice(0, 6).map(([, q, a]) => ({
-    '@type': 'Question',
-    name: q.trim(),
-    acceptedAnswer: {
-      '@type': 'Answer',
-      text: a
-        .replace(/[#*`_~[\]()!|>]/g, '')
-        .replace(/\n+/g, ' ')
-        .replace(/\s{2,}/g, ' ')
-        .trim()
-        .substring(0, 300),
-    },
-  }));
-  if (items.length < 2) return null;
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: items,
-  };
-}
 
 function generateBreadcrumbJsonLd(post) {
   const firstTag = post.tags?.[0];
@@ -250,7 +227,6 @@ export default async function PostDetailPage({ params, searchParams }) {
 
   const jsonLd = generateArticleJsonLd(renderedPost);
   const breadcrumbJsonLd = generateBreadcrumbJsonLd(renderedPost);
-  const faqJsonLd = generateFaqJsonLd(renderedPost);
 
   // Related posts for internal linking
   const firstTag = renderedPost.tags?.[0];
@@ -274,13 +250,7 @@ export default async function PostDetailPage({ params, searchParams }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
-      {faqJsonLd && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
-        />
-      )}
-      <PostDetailClient initialPost={renderedPost} initialLanguage={activeLang} />
+<PostDetailClient initialPost={renderedPost} initialLanguage={activeLang} />
       {relatedPosts.length > 0 && (
         <div className="max-w-4xl mx-auto px-4 pb-12">
           <InternalPostLinks title={`More posts tagged #${firstTag}`} posts={relatedPosts} />

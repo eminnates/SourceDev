@@ -58,21 +58,25 @@ export default function MarkdownContent({ content }) {
           <li className="text-lg text-brand-dark" {...props} />
         ),
         
-        // Code blocks — react-markdown v8: no `inline` prop; detect by className (fenced blocks get language-* class)
+        // Code blocks — react-markdown v8: no `inline` prop.
+        // Fenced blocks: parent is <pre>, className has language-*
+        // Inline backticks: parent is <p>/<li>/etc, no className
         code: ({ node, className, children, ...props }) => {
-          const isBlock = Boolean(className);
-          if (!isBlock) {
+          // Fenced code blocks always get a language-* className; inline backticks never do
+          if (className) {
+            // Block code inside <pre> — no extra styling, pre handles the background
             return (
-              <code
-                className="bg-gray-100 text-red-600 px-1.5 py-0.5 rounded text-sm font-mono"
-                {...props}
-              >
+              <code className={className} {...props}>
                 {children}
               </code>
             );
           }
+          // Inline code — styled as badge
           return (
-            <code className={className} {...props}>
+            <code
+              className="bg-gray-100 text-red-600 px-1.5 py-0.5 rounded text-sm font-mono"
+              {...props}
+            >
               {children}
             </code>
           );

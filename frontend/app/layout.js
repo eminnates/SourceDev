@@ -12,8 +12,7 @@ export const metadata = {
     template: '%s | SourceDev',
   },
   description: 'Yazılımcılar için bilgi paylaşım ve networking platformu. Makaleler yaz, projelerini paylaş, topluluğa katıl.',
-  keywords: ['yazılım', 'programlama', 'developer', 'geliştirici', 'blog', 'teknoloji', 'kodlama', 'web development'],
-  authors: [{ name: 'SourceDev Team' }],
+authors: [{ name: 'SourceDev Team' }],
   creator: 'SourceDev',
   publisher: 'SourceDev',
   robots: {
