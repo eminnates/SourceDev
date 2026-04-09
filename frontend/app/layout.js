@@ -111,7 +111,7 @@ const organizationJsonLd = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="tr">
+    <html lang="en">
       <head>
         <link rel="preconnect" href="https://sourcedev-production.up.railway.app" />
         <link rel="dns-prefetch" href="https://sourcedev-production.up.railway.app" />

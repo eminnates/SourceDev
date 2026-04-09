@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
-import { getPostBySlug, getPostById, getLatestPosts } from '@/utils/api/postApi';
+import { getPostBySlug, getPostById, getLatestPosts, getPostsByTag } from '@/utils/api/postApi';
 import PostDetailClient from './PostDetailClient';
+import InternalPostLinks from '@/components/SEO/InternalPostLinks';
 
 const SITE_URL = 'https://sourcedev.tr';
 
@@ -36,14 +37,36 @@ export async function generateMetadata({ params, searchParams }) {
 
     // Pick the active translation's content for metadata
     let title = post.title;
-    let description = post.excerpt || post.content?.replace(/<[^>]*>/g, '').substring(0, 160) || 'Read this post on SourceDev';
+
+    function cleanMarkdown(text) {
+      const raw = (text || '')
+        .replace(/<[^>]*>/g, '')
+        .replace(/#{1,6}\s+/g, '')
+        .replace(/\*{1,3}([^*\n]+)\*{1,3}/g, '$1')
+        .replace(/`[^`\n]+`/g, '')
+        .replace(/!\[.*?\]\(.*?\)/g, '')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/[_~|>]/g, '')
+        .replace(/\n+/g, ' ')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+      return raw.length > 157 ? raw.substring(0, 157) + '…' : raw;
+    }
+
+    let description = post.excerpt
+      ? cleanMarkdown(post.excerpt)
+      : cleanMarkdown(post.content) || 'Read this post on SourceDev';
 
     if (post.translations) {
       const translation = post.translations.find(t => t.languageCode === activeLang);
       if (translation) {
         title = translation.title || post.title;
-        const raw = (translation.contentMarkdown || translation.content || '').replace(/<[^>]*>/g, '').replace(/[#*`_~]/g, '');
-        description = raw.substring(0, 160) || description;
+        if (translation.excerpt) {
+          description = cleanMarkdown(translation.excerpt);
+        } else {
+          const cleaned = cleanMarkdown(translation.contentMarkdown || translation.content);
+          if (cleaned) description = cleaned;
+        }
       }
     }
 
@@ -76,7 +99,7 @@ export async function generateMetadata({ params, searchParams }) {
         publishedTime: post.publishedAt,
         modifiedTime: post.updatedAt,
         authors: post.author?.username ? [`${SITE_URL}/user/${post.author.username}`] : [],
-        tags: post.tags?.map(t => t.name) || [],
+        tags: post.tags || [],
       },
       twitter: {
         card: 'summary_large_image',
@@ -125,9 +148,33 @@ function generateArticleJsonLd(post) {
       '@type': 'WebPage',
       '@id': `${SITE_URL}/post/${post.slug}`,
     },
-    keywords: post.tags?.map(t => t.name).join(', '),
+    keywords: post.tags?.join(', '),
     wordCount: post.content ? post.content.replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length : undefined,
-    articleSection: post.tags?.[0]?.name || undefined,
+    articleSection: post.tags?.[0] || undefined,
+  };
+}
+
+function generateFaqJsonLd(post) {
+  const content = post.contentMarkdown || post.content || '';
+  const sections = [...content.matchAll(/^## (.+)\n+([\s\S]+?)(?=\n## |\n---|\n#{1,6} |$)/gm)];
+  const items = sections.slice(0, 6).map(([, q, a]) => ({
+    '@type': 'Question',
+    name: q.trim(),
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: a
+        .replace(/[#*`_~[\]()!|>]/g, '')
+        .replace(/\n+/g, ' ')
+        .replace(/\s{2,}/g, ' ')
+        .trim()
+        .substring(0, 300),
+    },
+  }));
+  if (items.length < 2) return null;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: items,
   };
 }
 
@@ -139,7 +186,7 @@ function generateBreadcrumbJsonLd(post) {
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
       firstTag
-        ? { '@type': 'ListItem', position: 2, name: `#${firstTag.name}`, item: `${SITE_URL}/tag/${firstTag.name}` }
+        ? { '@type': 'ListItem', position: 2, name: `#${firstTag}`, item: `${SITE_URL}/tag/${firstTag}` }
         : { '@type': 'ListItem', position: 2, name: 'Posts', item: `${SITE_URL}/latest` },
       { '@type': 'ListItem', position: 3, name: post.title, item: `${SITE_URL}/post/${post.slug}` },
     ],
@@ -203,6 +250,19 @@ export default async function PostDetailPage({ params, searchParams }) {
 
   const jsonLd = generateArticleJsonLd(renderedPost);
   const breadcrumbJsonLd = generateBreadcrumbJsonLd(renderedPost);
+  const faqJsonLd = generateFaqJsonLd(renderedPost);
+
+  // Related posts for internal linking
+  const firstTag = renderedPost.tags?.[0];
+  let relatedPosts = [];
+  if (firstTag) {
+    try {
+      const tagResult = await getPostsByTag(firstTag, 1, 6);
+      if (tagResult.success && tagResult.data) {
+        relatedPosts = tagResult.data.filter(p => p.slug !== slug).slice(0, 5);
+      }
+    } catch {}
+  }
 
   return (
     <>
@@ -214,7 +274,18 @@ export default async function PostDetailPage({ params, searchParams }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
+      {faqJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        />
+      )}
       <PostDetailClient initialPost={renderedPost} initialLanguage={activeLang} />
+      {relatedPosts.length > 0 && (
+        <div className="max-w-4xl mx-auto px-4 pb-12">
+          <InternalPostLinks title={`More posts tagged #${firstTag}`} posts={relatedPosts} />
+        </div>
+      )}
     </>
   );
 }

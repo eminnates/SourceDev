@@ -20,8 +20,8 @@ function CreatePostContent() {
   const editPostId = searchParams.get('edit');
 
   const [translations, setTranslations] = useState({
-    tr: { title: '', content: '' },
-    en: { title: '', content: '' }
+    tr: { title: '', content: '', excerpt: '' },
+    en: { title: '', content: '', excerpt: '' }
   });
   const [activeLang, setActiveLang] = useState('en');
   
@@ -585,6 +585,28 @@ function CreatePostContent() {
                       )}
                   </div>
                 )}
+
+                {/* SEO Description */}
+                <div className="mb-2">
+                  <label className="block text-xs font-semibold text-brand-muted uppercase tracking-wide mb-1">
+                    SEO Description
+                    <span className="normal-case font-normal ml-1 text-brand-muted/70">— shown in Google search results (150–160 chars)</span>
+                  </label>
+                  <textarea
+                    value={translations[activeLang].excerpt || ''}
+                    onChange={e => setTranslations(prev => ({
+                      ...prev,
+                      [activeLang]: { ...prev[activeLang], excerpt: e.target.value }
+                    }))}
+                    maxLength={160}
+                    rows={2}
+                    placeholder="Write a compelling 1–2 sentence description for search results…"
+                    className="w-full border border-brand-muted/30 rounded-lg px-3 py-2 text-sm text-brand-dark placeholder-gray-400 focus:outline-none focus:border-brand-primary resize-none"
+                  />
+                  <p className={`text-xs mt-0.5 ${(translations[activeLang].excerpt || '').length > 155 ? 'text-orange-500' : 'text-brand-muted'}`}>
+                    {(translations[activeLang].excerpt || '').length}/160
+                  </p>
+                </div>
 
                 {/* Markdown Editor */}
                 <div className="markdown-editor" onFocus={() => setActiveSection('content')}>

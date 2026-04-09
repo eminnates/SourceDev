@@ -58,21 +58,23 @@ export default function MarkdownContent({ content }) {
           <li className="text-lg text-brand-dark" {...props} />
         ),
         
-        // Code blocks
-        code: ({ node, inline, ...props }) => {
-          if (inline) {
+        // Code blocks — react-markdown v8: no `inline` prop; detect by className (fenced blocks get language-* class)
+        code: ({ node, className, children, ...props }) => {
+          const isBlock = Boolean(className);
+          if (!isBlock) {
             return (
-              <code 
-                className="bg-gray-100 text-red-600 px-1.5 py-0.5 rounded text-sm font-mono" 
-                {...props} 
-              />
+              <code
+                className="bg-gray-100 text-red-600 px-1.5 py-0.5 rounded text-sm font-mono"
+                {...props}
+              >
+                {children}
+              </code>
             );
           }
           return (
-            <code 
-              className="block bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm font-mono mb-4" 
-              {...props} 
-            />
+            <code className={className} {...props}>
+              {children}
+            </code>
           );
         },
         pre: ({ node, ...props }) => (
