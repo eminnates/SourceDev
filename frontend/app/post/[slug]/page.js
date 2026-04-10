@@ -5,6 +5,21 @@ import InternalPostLinks from '@/components/SEO/InternalPostLinks';
 
 const SITE_URL = 'https://sourcedev.tr';
 
+function cleanMarkdown(text) {
+  const raw = (text || '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/#{1,6}\s+/g, '')
+    .replace(/\*{1,3}([^*\n]+)\*{1,3}/g, '$1')
+    .replace(/`[^`\n]+`/g, '')
+    .replace(/!\[.*?\]\(.*?\)/g, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/[_~|>]/g, '')
+    .replace(/\n+/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+  return raw.length > 157 ? raw.substring(0, 157) + '…' : raw;
+}
+
 // Generate static params for popular posts (improves SEO crawling)
 export async function generateStaticParams() {
   try {
@@ -37,21 +52,6 @@ export async function generateMetadata({ params, searchParams }) {
 
     // Pick the active translation's content for metadata
     let title = post.title;
-
-    function cleanMarkdown(text) {
-      const raw = (text || '')
-        .replace(/<[^>]*>/g, '')
-        .replace(/#{1,6}\s+/g, '')
-        .replace(/\*{1,3}([^*\n]+)\*{1,3}/g, '$1')
-        .replace(/`[^`\n]+`/g, '')
-        .replace(/!\[.*?\]\(.*?\)/g, '')
-        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-        .replace(/[_~|>]/g, '')
-        .replace(/\n+/g, ' ')
-        .replace(/\s{2,}/g, ' ')
-        .trim();
-      return raw.length > 157 ? raw.substring(0, 157) + '…' : raw;
-    }
 
     let description = post.excerpt
       ? cleanMarkdown(post.excerpt)
