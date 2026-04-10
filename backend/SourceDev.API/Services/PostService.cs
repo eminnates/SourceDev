@@ -682,6 +682,12 @@ namespace SourceDev.API.Services
 
             slug = slug.Trim('-');
 
+            // Truncate to 70 chars (SEO best practice) and trim any trailing hyphen
+            if (slug.Length > 70)
+            {
+                slug = slug.Substring(0, 70).TrimEnd('-');
+            }
+
             return slug;
         }
 
