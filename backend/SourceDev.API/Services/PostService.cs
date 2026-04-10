@@ -81,7 +81,8 @@ namespace SourceDev.API.Services
                     language_code = transDto.LanguageCode,
                     title = transDto.Title,
                     content_markdown = transDto.Content,
-                    slug = slug
+                    slug = slug,
+                    excerpt = transDto.Excerpt
                 });
             }
             
@@ -512,12 +513,16 @@ namespace SourceDev.API.Services
                         {
                             translation.content_markdown = transDto.Content;
                         }
+                        if (transDto.Excerpt != null)
+                        {
+                            translation.excerpt = transDto.Excerpt;
+                        }
                     }
                     else
                     {
                         // Add new translation
                         if (string.IsNullOrWhiteSpace(transDto.Title)) continue;
-                        
+
                         var slug = GenerateSlug(transDto.Title);
                         var existingPost = await _unitOfWork.Posts.GetBySlugAsync(slug);
                         if (existingPost != null && existingPost.post_id != id)
@@ -537,7 +542,8 @@ namespace SourceDev.API.Services
                             language_code = transDto.LanguageCode,
                             title = transDto.Title,
                             content_markdown = transDto.Content,
-                            slug = slug
+                            slug = slug,
+                            excerpt = transDto.Excerpt
                         });
                     }
                 }

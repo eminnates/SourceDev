@@ -77,7 +77,8 @@ namespace SourceDev.API.Repositories
                     LanguageCode = t.language_code,
                     Title = t.title,
                     Slug = t.slug,
-                    ContentMarkdown = t.content_markdown
+                    ContentMarkdown = t.content_markdown,
+                    Excerpt = t.excerpt
                 }).ToList(),
                 ReactionTypes = new Dictionary<string, int>(),
                 UserReactions = new List<string>(),
@@ -131,7 +132,8 @@ namespace SourceDev.API.Repositories
                     LanguageCode = t.language_code,
                     Title = t.title,
                     Slug = t.slug,
-                    ContentMarkdown = t.content_markdown
+                    ContentMarkdown = t.content_markdown,
+                    Excerpt = t.excerpt
                 }).ToList(),
                 ReactionTypes = new Dictionary<string, int>(),
                 UserReactions = new List<string>(),

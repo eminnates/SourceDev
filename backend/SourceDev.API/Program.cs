@@ -59,6 +59,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     {
         sqlOptions.CommandTimeout(60);
         sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+        sqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 3,
+            maxRetryDelay: TimeSpan.FromSeconds(5),
+            errorCodesToAdd: null);
     });
     options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
     

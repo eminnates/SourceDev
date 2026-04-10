@@ -30,5 +30,8 @@ namespace SourceDev.API.Models.Entities
         [Required]
         [MaxLength(100)]
         public string slug { get; set; } = string.Empty;
+
+        [MaxLength(300)]
+        public string? excerpt { get; set; }
     }
 }
