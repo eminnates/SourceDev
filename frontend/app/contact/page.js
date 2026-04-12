@@ -1,6 +1,6 @@
 export const metadata = {
-  title: "Contact - SourceDev",
-  description: "Get in touch with the SourceDev team",
+  title: "Contact",
+  description: "Get in touch with the SourceDev team. Reach out with your questions, feedback, or suggestions.",
 };
 
 const teamMembers = [

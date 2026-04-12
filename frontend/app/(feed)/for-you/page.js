@@ -6,8 +6,8 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export const metadata = {
-  title: 'For You | SourceDev',
-  description: 'Personalized posts based on your interests',
+  title: 'For You',
+  description: 'Personalized posts based on your interests. SourceDev curates the most relevant developer content just for you.',
 };
 
 export default async function ForYouPage() {

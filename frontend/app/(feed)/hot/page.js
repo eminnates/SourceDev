@@ -6,8 +6,8 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export const metadata = {
-  title: 'Hot Posts | SourceDev',
-  description: 'Discover the hottest posts right now',
+  title: 'Hot Posts',
+  description: 'Discover the hottest and most popular posts on SourceDev right now. Trending articles from the developer community.',
 };
 
 export default async function HotPage() {

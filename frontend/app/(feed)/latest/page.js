@@ -7,8 +7,8 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export const metadata = {
-  title: "Latest Posts - SourceDev",
-  description: "Discover the latest posts from the SourceDev community",
+  title: "Latest Posts",
+  description: "Discover the latest posts from the SourceDev community. Fresh articles on software, tech, and developer experiences.",
 };
 
 export default async function LatestPage() {

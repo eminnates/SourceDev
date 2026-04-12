@@ -21,6 +21,7 @@ export default function SocialLinks() {
             key={index}
             href={link.href}
             target={link.external ? "_blank" : undefined}
+            rel={link.external ? "noopener noreferrer" : undefined}
             className="p-2 rounded-md text-brand-dark hover:bg-brand-primary/10 hover:text-brand-primary transition-colors"
           >
             <Icon className="w-5 h-5" />

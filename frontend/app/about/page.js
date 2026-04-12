@@ -1,8 +1,8 @@
 export const metadata = {
-  title: "Hakkımızda - SourceDev",
+  title: "About",
   description: "SourceDev hakkında daha fazla bilgi edinin. Yazılımcılar için oluşturulmuş bilgi paylaşım platformu.",
   openGraph: {
-    title: "Hakkımızda - SourceDev",
+    title: "About | SourceDev",
     description: "SourceDev hakkında daha fazla bilgi edinin. Yazılımcılar için oluşturulmuş bilgi paylaşım platformu.",
   },
   alternates: {

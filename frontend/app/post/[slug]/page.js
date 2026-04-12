@@ -17,7 +17,7 @@ function cleanMarkdown(text) {
     .replace(/\n+/g, ' ')
     .replace(/\s{2,}/g, ' ')
     .trim();
-  return raw.length > 157 ? raw.substring(0, 157) + '…' : raw;
+  return raw.length > 155 ? raw.substring(0, 155) + '…' : raw;
 }
 
 // Generate static params for popular posts (improves SEO crawling)
@@ -78,6 +78,8 @@ export async function generateMetadata({ params, searchParams }) {
           ? `${SITE_URL}/post/${slug}`
           : `${SITE_URL}/post/${slug}?lang=${t.languageCode}`;
       });
+      // x-default points to the canonical English version
+      languages['x-default'] = `${SITE_URL}/post/${slug}`;
     }
 
     const canonicalUrl = activeLang === 'en'

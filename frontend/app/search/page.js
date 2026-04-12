@@ -1,8 +1,8 @@
 import SearchClient from './SearchClient';
 
 export const metadata = {
-  title: 'Arama',
-  description: 'SourceDev\'de yazı, etiket ve kullanıcı ara.',
+  title: 'Search Posts, Tags and Users',
+  description: 'Search for posts, tags, and developers on SourceDev. Find the software content and people you are looking for.',
   robots: { index: false, follow: false },
 };
 
