@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import apiClient from '../apiClient';
 
 /**
@@ -36,7 +35,6 @@ export const createPost = async (postData) => {
       message: 'Post created successfully!'
     };
   } catch (error) {
-    console.error('Create post error:', error);
     return {
       success: false,
       message: error.message || 'An error occurred while creating the post',
@@ -67,7 +65,6 @@ export const updatePost = async (postId, postData) => {
       message: 'Post updated successfully!'
     };
   } catch (error) {
-    console.error('Update post error:', error);
     return {
       success: false,
       message: error.message || 'An error occurred while updating the post'
@@ -89,7 +86,6 @@ export const deletePost = async (postId) => {
       message: 'Post deleted successfully!'
     };
   } catch (error) {
-    console.error('Delete post error:', error);
     return {
       success: false,
       message: error.message || 'An error occurred while deleting the post'
@@ -114,7 +110,6 @@ const transformPostData = (backendPost) => {
       });
     }
   } catch (e) {
-    console.error('Date parsing error:', e);
   }
 
   // Preserve translations array from backend
@@ -170,12 +165,6 @@ export const getPostById = async (postId) => {
       data: transformPostData(response.data)
     };
   } catch (error) {
-    console.error('Get post error:', error);
-    console.error('Error details:', {
-      message: error.message,
-      stack: error.stack,
-      response: error.response
-    });
     return {
       success: false,
       message: error.message || 'Failed to fetch post'
@@ -201,11 +190,10 @@ export const getPostForEdit = async (postId) => {
       data: transformPostData(response.data)
     };
   } catch (error) {
-    console.error('Get post for edit error:', error);
     return {
       success: false,
       message: error.message || 'Failed to fetch post for editing',
-      status: error.response?.status
+      status: error.status
     };
   }
 };
@@ -224,7 +212,6 @@ export const getPostBySlug = async (slug) => {
       data: transformPostData(response.data)
     };
   } catch (error) {
-    console.error('Get post by slug error:', error);
     return {
       success: false,
       message: error.message || 'Failed to fetch post'
@@ -249,7 +236,6 @@ export const getLatestPosts = async (page = 1, pageSize = 10) => {
       data: response.data
     };
   } catch (error) {
-    console.error('Get latest posts error:', error);
     return {
       success: false,
       message: error.message || 'Failed to fetch posts'
@@ -274,7 +260,6 @@ export const getTopPosts = async (take = 20, period = 'month') => {
       data: response.data
     };
   } catch (error) {
-    console.error('Get top posts error:', error);
     return {
       success: false,
       message: error.message || 'Failed to fetch posts'
@@ -299,7 +284,6 @@ export const getTrendingPosts = async (page = 1, pageSize = 20) => {
       data: response.data
     };
   } catch (error) {
-    console.error('Get trending posts error:', error);
     return {
       success: false,
       message: error.message || 'Failed to fetch trending posts'
@@ -324,7 +308,6 @@ export const getHotPosts = async (page = 1, pageSize = 20) => {
       data: response.data
     };
   } catch (error) {
-    console.error('Get hot posts error:', error);
     return {
       success: false,
       message: error.message || 'Failed to fetch hot posts'
@@ -349,7 +332,6 @@ export const getForYouPosts = async (page = 1, pageSize = 20) => {
       data: response.data
     };
   } catch (error) {
-    console.error('Get for-you posts error:', error);
     return {
       success: false,
       message: error.message || 'Failed to fetch personalized posts'
@@ -377,10 +359,9 @@ export const toggleReaction = async (postId, reactionType) => {
       message: response.data?.message || 'Reaction toggled successfully'
     };
   } catch (error) {
-    console.error('Toggle reaction error:', error);
     return {
       success: false,
-      message: error.response?.data?.message || error.message || 'Failed to toggle reaction'
+      message: error.message || 'Failed to toggle reaction'
     };
   }
 };
@@ -402,7 +383,6 @@ export const getBookmarkedPosts = async (page = 1, pageSize = 20) => {
       data: response.data
     };
   } catch (error) {
-    console.error('Get bookmarked posts error:', error);
     return {
       success: false,
       message: error.message || 'Failed to fetch bookmarked posts'
@@ -428,7 +408,6 @@ export const getComments = async (postId, page = 1, pageSize = 50) => {
       data: response.data
     };
   } catch (error) {
-    console.error('Get comments error:', error);
     return {
       success: false,
       message: error.message || 'Failed to fetch comments'
@@ -455,10 +434,9 @@ export const addComment = async (postId, content, parentCommentId = null) => {
       data: response.data
     };
   } catch (error) {
-    console.error('Add comment error:', error);
     return {
       success: false,
-      message: error.response?.data?.message || error.message || 'Failed to add comment'
+      message: error.message || 'Failed to add comment'
     };
   }
 };
@@ -478,10 +456,9 @@ export const deleteComment = async (commentId) => {
       message: response.data?.message || 'Comment deleted successfully'
     };
   } catch (error) {
-    console.error('Delete comment error:', error);
     return {
       success: false,
-      message: error.response?.data?.message || error.message || 'Failed to delete comment'
+      message: error.message || 'Failed to delete comment'
     };
   }
 };
@@ -504,7 +481,6 @@ export const getRelevantPosts = async (page = 1, pageSize = 10) => {
       data: response.data
     };
   } catch (error) {
-    console.error('Get relevant posts error:', error);
     return {
       success: false,
       message: error.message || 'Failed to fetch posts'
@@ -530,7 +506,6 @@ export const getPostsByUser = async (userId, page = 1, pageSize = 20) => {
       data: response.data
     };
   } catch (error) {
-    console.error('Get posts by user error:', error);
     return {
       success: false,
       message: error.message || 'Failed to fetch posts'
@@ -555,7 +530,6 @@ export const getUserDrafts = async (page = 1, pageSize = 20) => {
       data: response.data
     };
   } catch (error) {
-    console.error('Get user drafts error:', error);
     return {
       success: false,
       message: error.message || 'Failed to fetch drafts'
@@ -581,7 +555,6 @@ export const getPostsByTag = async (tagSlug, page = 1, pageSize = 20) => {
       data: response.data
     };
   } catch (error) {
-    console.error('Get posts by tag error:', error);
     return {
       success: false,
       message: error.message || 'Failed to fetch posts'
@@ -607,7 +580,6 @@ export const searchPosts = async (query, page = 1, pageSize = 20) => {
       data: response.data
     };
   } catch (error) {
-    console.error('Search posts error:', error);
     return {
       success: false,
       message: error.message || 'Failed to search posts'
@@ -629,7 +601,6 @@ export const toggleLike = async (postId) => {
       message: 'Like toggled successfully!'
     };
   } catch (error) {
-    console.error('Toggle like error:', error);
     return {
       success: false,
       message: error.message || 'Failed to toggle like'
@@ -651,7 +622,6 @@ export const toggleBookmark = async (postId) => {
       message: 'Bookmark toggled successfully!'
     };
   } catch (error) {
-    console.error('Toggle bookmark error:', error);
     return {
       success: false,
       message: error.message || 'Failed to toggle bookmark'
@@ -673,7 +643,6 @@ export const publishPost = async (postId) => {
       message: 'Post published successfully!'
     };
   } catch (error) {
-    console.error('Publish post error:', error);
     return {
       success: false,
       message: error.message || 'Failed to publish post'
@@ -695,7 +664,6 @@ export const unpublishPost = async (postId) => {
       message: 'Post unpublished successfully!'
     };
   } catch (error) {
-    console.error('Unpublish post error:', error);
     return {
       success: false,
       message: error.message || 'Failed to unpublish post'
@@ -722,7 +690,6 @@ export const addTagToPost = async (postId, tagName) => {
       message: 'Tag added successfully!'
     };
   } catch (error) {
-    console.error('Add tag error:', error);
     return {
       success: false,
       message: error.message || 'Failed to add tag'
@@ -745,7 +712,6 @@ export const removeTagFromPost = async (postId, tagId) => {
       message: 'Tag removed successfully!'
     };
   } catch (error) {
-    console.error('Remove tag error:', error);
     return {
       success: false,
       message: error.message || 'Failed to remove tag'

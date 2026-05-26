@@ -1,4 +1,5 @@
 import UserProfileClient from './UserProfileClient';
+import { buildLocalizedMetadata, resolveLang } from '@/utils/seo';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://sourcedev-production.up.railway.app/api';
 const SITE_URL = 'https://sourcedev.tr';
@@ -31,43 +32,40 @@ async function getUser(username) {
   return null;
 }
 
-export async function generateMetadata({ params }) {
+export async function generateMetadata({ params, searchParams }) {
   const { username } = await params;
   const user = await getUser(username);
+  const lang = await resolveLang(searchParams);
   
   if (!user) {
     return {
-      title: 'Kullanıcı Bulunamadı',
-      description: 'Aradığınız kullanıcı bulunamadı.',
+      title: lang === 'tr' ? 'Kullanıcı bulunamadı' : 'User not found',
+      description: lang === 'tr' ? 'Aradığınız kullanıcı bulunamadı.' : 'The user you are looking for could not be found.',
     };
   }
 
   const displayName = user.displayName || user.username;
-  const bio = user.bio || `${displayName} - SourceDev üyesi`;
+  const bio = user.bio || (lang === 'tr'
+    ? `${displayName}, SourceDev üzerinde yazı paylaşan ve topluluk tartışmalarına katkı sunan bir üye.`
+    : `${displayName} is a SourceDev member who shares posts and contributes to community discussions.`);
 
-  return {
-    title: `${displayName} (@${user.username})`,
-    description: bio,
-    openGraph: {
-      title: `${displayName} (@${user.username}) | SourceDev`,
-      description: bio,
-      url: `${SITE_URL}/user/${user.username}`,
-      type: 'profile',
-      images: user.profilePictureUrl ? [user.profilePictureUrl] : [],
-      profile: {
-        username: user.username,
+  return buildLocalizedMetadata({
+    searchParams,
+    pathname: `/user/${user.username}`,
+    titleEn: `${displayName} (@${user.username}) profile`,
+    titleTr: `${displayName} (@${user.username}) profil sayfası`,
+    descriptionEn: bio,
+    descriptionTr: bio,
+    type: 'profile',
+    images: user.profilePictureUrl ? [{ url: user.profilePictureUrl, alt: displayName }] : [],
+    extra: {
+      openGraph: {
+        profile: {
+          username: user.username,
+        },
       },
     },
-    twitter: {
-      card: 'summary',
-      title: `${displayName} (@${user.username})`,
-      description: bio,
-      images: user.profilePictureUrl ? [user.profilePictureUrl] : [],
-    },
-    alternates: {
-      canonical: `${SITE_URL}/user/${user.username}`,
-    },
-  };
+  });
 }
 
 // JSON-LD Structured Data for Person

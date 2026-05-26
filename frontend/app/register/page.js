@@ -1,10 +1,17 @@
 import RegisterForm from "@/components/Auth/RegisterForm";
+import { buildLocalizedMetadata } from '@/utils/seo';
 
-export const metadata = {
-  title: "Register - SourceDev",
-  description: "Create your SourceDev account",
-  robots: { index: false, follow: false },
-};
+export function generateMetadata({ searchParams }) {
+  return buildLocalizedMetadata({
+    searchParams,
+    pathname: '/register',
+    titleEn: 'Create account',
+    titleTr: 'Kayıt ol',
+    descriptionEn: 'Create a SourceDev account to share posts and join the developer community.',
+    descriptionTr: 'Gönderi paylaşmak ve geliştirici topluluğuna katılmak için bir SourceDev hesabı oluşturun.',
+    noindex: true,
+  });
+}
 
 export default function RegisterPage() {
   return (

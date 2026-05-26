@@ -7,11 +7,14 @@ import { usePathname } from 'next/navigation';
 import MarkdownContent from './MarkdownContent';
 import { searchUsers, getUserById } from '@/utils/api/userApi';
 import { getUsernameFromDisplayName } from '@/utils/userUtils';
+import { useLanguage } from '@/context/LanguageContext';
+import { buildLocalizedHref } from '@/utils/seo';
 
 export default function PostContent({ post, activeLanguage, onLanguageChange }) {
   const [authorProfileImage, setAuthorProfileImage] = useState(null);
   const [authorUsername, setAuthorUsername] = useState(null);
   const pathname = usePathname();
+  const { lang } = useLanguage();
 
   // Get author initials safely
   const getAuthorInitials = (authorName) => {
@@ -98,7 +101,7 @@ export default function PostContent({ post, activeLanguage, onLanguageChange }) 
         {/* Author, Date and Language Switcher */}
         <div className="flex items-center justify-between gap-3 mb-6">
           <div className="flex items-center gap-3">
-            <Link href={authorUsername ? `/user/${authorUsername}` : '#'}>
+            <Link href={authorUsername ? buildLocalizedHref(`/user/${authorUsername}`, lang) : '#'}>
               {authorProfileImage ? (
                 <Image
                   src={authorProfileImage}
@@ -115,7 +118,7 @@ export default function PostContent({ post, activeLanguage, onLanguageChange }) 
             </Link>
             <div>
               <Link
-                href={authorUsername ? `/user/${authorUsername}` : '#'}
+                href={authorUsername ? buildLocalizedHref(`/user/${authorUsername}`, lang) : '#'}
                 className="font-bold text-brand-dark hover:text-brand-primary transition-colors"
               >
                 {post.author}
@@ -167,7 +170,7 @@ export default function PostContent({ post, activeLanguage, onLanguageChange }) 
             return (
               <Link
                 key={idx}
-                href={`/tag/${tag}`}
+                href={buildLocalizedHref(`/tag/${tag}`, lang)}
                 className={`px-3 py-1.5 ${colors.bg} ${colors.text} ${colors.hover} text-sm rounded-lg cursor-pointer transition-all font-medium`}
               >
                 #{tag}

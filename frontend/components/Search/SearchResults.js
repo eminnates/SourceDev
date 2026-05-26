@@ -2,11 +2,14 @@
 
 import Link from 'next/link';
 import PostCard from '@/components/Post/PostCard';
+import { useLanguage } from '@/context/LanguageContext';
+import { buildLocalizedHref } from '@/utils/seo';
 
 export default function SearchResults({ results, sortBy, onSortChange, category }) {
+  const { lang, t } = useLanguage();
   const sortOptions = [
-    { id: 'newest', label: 'Newest' },
-    { id: 'oldest', label: 'Oldest' },
+    { id: 'newest', label: t('search.newest') },
+    { id: 'oldest', label: t('search.oldest') },
   ];
 
   const isPostCategory = category === 'posts';
@@ -42,12 +45,12 @@ export default function SearchResults({ results, sortBy, onSortChange, category 
             results.map((tag) => (
               <Link
                 key={tag.id}
-                href={`/tag/${tag.name}`}
+                href={buildLocalizedHref(`/tag/${tag.name}`, lang)}
                 className="block bg-white rounded-lg border border-brand-muted/20 px-4 py-3 hover:border-brand-primary hover:bg-brand-primary/5 transition-colors"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-base font-semibold text-brand-dark">#{tag.name}</span>
-                  <span className="text-sm text-brand-muted">{tag.postCount} posts</span>
+                  <span className="text-sm text-brand-muted">{t('search.postCount', { count: tag.postCount })}</span>
                 </div>
               </Link>
             ))
@@ -55,7 +58,7 @@ export default function SearchResults({ results, sortBy, onSortChange, category 
             results.map((comment) => (
               <Link
                 key={comment.id}
-                href={`/post/${comment.postId}#comments`}
+                href={`${buildLocalizedHref(`/post/${comment.postId}`, lang)}#comments`}
                 className="block bg-white rounded-lg border border-brand-muted/20 px-4 py-3 hover:border-brand-primary hover:bg-brand-primary/5 transition-colors"
               >
                 <p className="text-sm text-brand-muted mb-1">
@@ -79,7 +82,7 @@ export default function SearchResults({ results, sortBy, onSortChange, category 
               return (
                 <Link
                   key={user.id}
-                  href={`/user/${user.username}`}
+                  href={buildLocalizedHref(`/user/${user.username}`, lang)}
                   className="block bg-white rounded-lg border border-brand-muted/20 px-4 py-3 hover:border-brand-primary hover:bg-brand-primary/5 transition-colors"
                 >
                   <div className="flex items-center gap-3">
@@ -112,12 +115,13 @@ export default function SearchResults({ results, sortBy, onSortChange, category 
             })
           ) : (
             <div className="bg-white rounded-lg border border-brand-muted/20 p-12 text-center">
-              <p className="text-brand-muted text-lg">No results for this category yet</p>
+              <p className="text-brand-muted text-lg">{t('search.noResultsCategory')}</p>
             </div>
           )
         ) : (
           <div className="bg-white rounded-lg border border-brand-muted/20 p-12 text-center">
-            <p className="text-brand-muted text-lg">No results found</p>
+            <p className="text-brand-muted text-lg">{t('search.noResults')}</p>
+            <p className="text-brand-muted text-sm mt-2">{t('search.publishWarning')}</p>
           </div>
         )}
       </div>

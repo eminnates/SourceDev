@@ -11,6 +11,7 @@ import { searchUsers } from '@/utils/api/userApi';
 import { isAuthenticated } from '@/utils/auth';
 import { getUsernameFromDisplayName } from '@/utils/userUtils';
 import { useLanguage } from '@/context/LanguageContext';
+import { buildLocalizedHref } from '@/utils/seo';
 
 export default function PostCard({ post, showCover = false, priority = false, onBookmarkToggle }) {
     const [commentCount, setCommentCount] = useState(0);
@@ -19,10 +20,11 @@ export default function PostCard({ post, showCover = false, priority = false, on
     const [formattedDate, setFormattedDate] = useState('');
 
     const { t } = useLanguage();
+    const { lang } = useLanguage();
     const author = post.authorDisplayName;
     const isBookmarked = post.bookmarkedByCurrentUser || false;
     const coverImage = post.coverImageUrl;
-    const postUrl = `/post/${post.slug || post.id}`; // Prefer slug for SEO, fallback to ID
+    const postUrl = buildLocalizedHref(`/post/${post.slug || post.id}`, lang); // Prefer slug for SEO, fallback to ID
     const readTime = post.readingTimeMinutes || post.readTime || 5;
     const tags = post.tags || [];
 
@@ -129,7 +131,7 @@ export default function PostCard({ post, showCover = false, priority = false, on
 
             <div className="p-3 sm:p-4 md:p-5">
                 <div className="flex gap-2">
-                        <Link href={authorUsername ? `/user/${authorUsername}` : '#'}>
+                        <Link href={authorUsername ? buildLocalizedHref(`/user/${authorUsername}`, lang) : '#'}>
                             {authorProfileImage ? (
                                 <Image
                                     src={authorProfileImage}
@@ -147,8 +149,8 @@ export default function PostCard({ post, showCover = false, priority = false, on
                     {/* Content Area */}
                     <div className="flex-1 min-w-0">
                         <div className="mb-2">
-                            <Link 
-                                href={authorUsername ? `/user/${authorUsername}` : '#'}
+                            <Link
+                                href={authorUsername ? buildLocalizedHref(`/user/${authorUsername}`, lang) : '#'}
                                 className="text-sm font-medium text-brand-dark hover:text-brand-primary transition-colors px-2 py-1 rounded"
                             >
                                 {author}
@@ -178,7 +180,7 @@ export default function PostCard({ post, showCover = false, priority = false, on
                                 return (
                                     <Link
                                         key={idx}
-                                        href={`/tag/${tag}`}
+                                        href={buildLocalizedHref(`/tag/${tag}`, lang)}
                                         className={`px-2 py-1 border border-transparent bg-transparent ${colors.text} ${colors.hover} ${colors.border} text-xs rounded cursor-pointer transition-all`}
                                     >
                                         #<span className='text-black'>{tag}</span>
@@ -241,7 +243,7 @@ export default function PostCard({ post, showCover = false, priority = false, on
 
                                         if (!isAuthenticated()) {
                                             // Redirect to login if not authenticated
-                                            window.location.href = '/login';
+                                            window.location.href = buildLocalizedHref('/login', lang);
                                             return;
                                         }
                                         if (onBookmarkToggle) {

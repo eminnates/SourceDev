@@ -13,16 +13,16 @@ export const followUser = async (userId) => {
       message: response.data.message
     };
   } catch (error) {
-    console.error('Follow user error:', error);
     return {
       success: false,
-      message: error.response?.data?.message || error.message || 'Failed to follow user'
+      message: error.message || 'Failed to follow user'
     };
   }
 };
 
 /**
  * Unfollow a user
+
  * @param {number} userId - User ID to unfollow
  * @returns {Promise<Object>} API response
  */
@@ -34,10 +34,9 @@ export const unfollowUser = async (userId) => {
       message: response.data.message
     };
   } catch (error) {
-    console.error('Unfollow user error:', error);
     return {
       success: false,
-      message: error.response?.data?.message || error.message || 'Failed to unfollow user'
+      message: error.message || 'Failed to unfollow user'
     };
   }
 };
@@ -55,7 +54,6 @@ export const checkIfFollowing = async (userId) => {
       isFollowing: response.data.isFollowing
     };
   } catch (error) {
-    console.error('Check following error:', error);
     return {
       success: false,
       isFollowing: false,
@@ -77,7 +75,6 @@ export const getFollowersCount = async (userId) => {
       count: response.data.count || 0
     };
   } catch (error) {
-    console.error('Get followers count error:', error);
     return {
       success: false,
       count: 0,
@@ -99,7 +96,6 @@ export const getFollowingCount = async (userId) => {
       count: response.data.count || 0
     };
   } catch (error) {
-    console.error('Get following count error:', error);
     return {
       success: false,
       count: 0,

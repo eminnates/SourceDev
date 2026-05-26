@@ -1,9 +1,17 @@
 import ForgotPasswordForm from "@/components/Auth/ForgotPasswordForm";
+import { buildLocalizedMetadata } from '@/utils/seo';
 
-export const metadata = {
-  title: "Forgot Password - SourceDev",
-  description: "Reset your SourceDev account password",
-};
+export function generateMetadata({ searchParams }) {
+  return buildLocalizedMetadata({
+    searchParams,
+    pathname: '/forgot-password',
+    titleEn: 'Reset password',
+    titleTr: 'Parola sıfırla',
+    descriptionEn: 'Request a password reset for your SourceDev account.',
+    descriptionTr: 'SourceDev hesabınız için parola sıfırlama bağlantısı isteyin.',
+    noindex: true,
+  });
+}
 
 export default function ForgotPasswordPage() {
   return (

@@ -5,12 +5,14 @@ import { useRouter } from 'next/navigation';
 import { updateProfile } from '@/utils/api/authApi';
 import { getUserById } from '@/utils/api/userApi';
 import { getUser } from '@/utils/auth';
+import { useLanguage } from '@/context/LanguageContext';
 
 const getFallbackAvatar = (seed = 'User') =>
     `https://ui-avatars.com/api/?name=${encodeURIComponent(seed)}&background=1ABC9C&color=fff&bold=true`;
 
 export default function SettingsPage() {
     const router = useRouter();
+    const { t } = useLanguage();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -155,11 +157,11 @@ export default function SettingsPage() {
     return (
         <div className="min-h-screen bg-brand-background py-8 px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl mx-auto">
-                <h1 className="text-3xl font-bold text-brand-dark mb-8">Settings</h1>
+                <h1 className="text-3xl font-bold text-brand-dark mb-8">{t('settings.title')}</h1>
 
                 <div className="bg-white shadow rounded-lg overflow-hidden">
                     <div className="p-6">
-                        <h2 className="text-xl font-semibold text-brand-dark mb-6">User Profile</h2>
+                        <h2 className="text-xl font-semibold text-brand-dark mb-6">{t('settings.userProfile')}</h2>
 
                         {message.text && (
                             <div className={`mb-6 p-4 rounded-md ${message.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
@@ -172,7 +174,7 @@ export default function SettingsPage() {
                                 {/* Image Preview */}
                                 <div>
                                     <label className="block text-sm font-medium text-brand-dark mb-2">
-                                        Profile Image
+                                        {t('settings.profileImage')}
                                     </label>
                                     <div className="flex flex-wrap gap-6 items-center">
                                         <div className="flex flex-col items-center gap-2">
@@ -184,7 +186,7 @@ export default function SettingsPage() {
                                                 />
                                             </div>
                                             <span className="text-xs text-brand-muted">
-                                                {previewImage ? 'Preview' : 'Current'}
+                                                {previewImage ? t('settings.preview') : t('settings.current')}
                                             </span>
                                         </div>
                                         <div className="flex flex-col gap-3 flex-1 min-w-[220px]">
@@ -198,7 +200,7 @@ export default function SettingsPage() {
                                                 placeholder="https://example.com/avatar.png"
                                             />
                                             <p className="text-sm text-brand-muted">
-                                                Enter the profile image URL.
+                                                {t('settings.profileImageUrlHint')}
                                             </p>
                                         </div>
                                     </div>
@@ -206,7 +208,7 @@ export default function SettingsPage() {
 
                                 <div>
                                     <label htmlFor="bio" className="block text-sm font-medium text-brand-dark mb-1">
-                                        Bio
+                                        {t('settings.bio')}
                                     </label>
                                     <textarea
                                         id="bio"
@@ -215,10 +217,10 @@ export default function SettingsPage() {
                                         value={formData.bio}
                                         onChange={handleChange}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-primary focus:border-brand-primary resize-none"
-                                        placeholder="Tell us a little bit about yourself..."
+                                        placeholder={t('settings.bioPlaceholder')}
                                     />
                                     <p className="mt-2 text-sm text-brand-muted">
-                                        Brief description for your profile. URLs are hyperlinked.
+                                        {t('settings.bioHint')}
                                     </p>
                                 </div>
                             </div>
@@ -229,7 +231,7 @@ export default function SettingsPage() {
                                     className={`px-6 py-2.5 bg-brand-primary text-white font-medium rounded-md shadow-sm hover:bg-brand-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-colors ${saving ? 'opacity-70 cursor-not-allowed' : ''
                                         }`}
                                 >
-                                    {saving ? 'Saving...' : 'Save Changes'}
+                                    {saving ? t('settings.saving') : t('settings.saveChanges')}
                                 </button>
                             </div>
                         </form>
@@ -239,14 +241,14 @@ export default function SettingsPage() {
                 {/* Security Section */}
                 <div className="bg-white shadow rounded-lg overflow-hidden mt-6">
                     <div className="p-6">
-                        <h2 className="text-xl font-semibold text-brand-dark mb-6">Security</h2>
+                        <h2 className="text-xl font-semibold text-brand-dark mb-6">{t('settings.security')}</h2>
                         
                         <div className="border-t border-gray-200 pt-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h3 className="text-lg font-medium text-brand-dark">Password</h3>
+                                    <h3 className="text-lg font-medium text-brand-dark">{t('settings.password')}</h3>
                                     <p className="text-sm text-brand-muted mt-1">
-                                        Change your password to keep your account secure
+                                        {t('settings.changePasswordHint')}
                                     </p>
                                 </div>
                                 <button
@@ -254,7 +256,7 @@ export default function SettingsPage() {
                                     onClick={() => router.push('/change-password')}
                                     className="px-6 py-2.5 bg-brand-primary text-white font-medium rounded-md shadow-sm hover:bg-brand-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-colors"
                                 >
-                                    Change Password
+                                    {t('settings.changePassword')}
                                 </button>
                             </div>
                         </div>

@@ -1,14 +1,21 @@
 import PostFeed from '@/components/PostFeed/PostFeed';
 import { getHotPosts } from '@/utils/api/postApi';
+import { buildLocalizedMetadata } from '@/utils/seo';
 
 // Disable caching - always fetch fresh data
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export const metadata = {
-  title: 'Hot Posts',
-  description: 'Discover the hottest and most popular posts on SourceDev right now. Trending articles from the developer community.',
-};
+export function generateMetadata({ searchParams }) {
+  return buildLocalizedMetadata({
+    searchParams,
+    pathname: '/hot',
+    titleEn: 'Hot posts',
+    titleTr: 'Popüler yazılar',
+    descriptionEn: 'Discover the most discussed and trending software posts on SourceDev right now.',
+    descriptionTr: 'SourceDev üzerinde şu anda en çok konuşulan ve trend olan yazılım yazılarını keşfedin.',
+  });
+}
 
 export default async function HotPage() {
   let initialPosts = null;

@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import apiClient from '../apiClient';
 
 /**
@@ -18,7 +17,6 @@ export const getAllTags = async () => {
       data: response.data
     };
   } catch (error) {
-    console.error('Get all tags error:', error);
     return {
       success: false,
       message: error.message || 'Failed to fetch tags'
@@ -42,7 +40,6 @@ export const getPopularTags = async (limit = 20) => {
       data: response.data
     };
   } catch (error) {
-    console.error('Get popular tags error:', error);
     return {
       success: false,
       message: error.message || 'Failed to fetch popular tags'
@@ -77,7 +74,6 @@ export const searchTags = async (query, limit = 10) => {
       data: response.data
     };
   } catch (error) {
-    console.error('Search tags error:', error);
     return {
       success: false,
       message: error.message || 'Failed to search tags'
@@ -99,7 +95,6 @@ export const getTagById = async (tagId) => {
       data: response.data
     };
   } catch (error) {
-    console.error('Get tag by ID error:', error);
     return {
       success: false,
       message: error.message || 'Failed to fetch tag'
@@ -121,7 +116,6 @@ export const getTagByName = async (name) => {
       data: response.data
     };
   } catch (error) {
-    console.error('Get tag by name error:', error);
     return {
       success: false,
       message: error.message || 'Failed to fetch tag'

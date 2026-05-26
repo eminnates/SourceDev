@@ -3,13 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 
 export default function Navbar() {
     const router = useRouter();
     const pathname = usePathname();
+    const searchParams = useSearchParams();
     const { user, isLoggedIn, logout, loading } = useAuth();
     const { lang, setLanguage, t } = useLanguage();
     const [searchFocused, setSearchFocused] = useState(false);
@@ -42,13 +43,27 @@ export default function Navbar() {
         setShowDropdown(false);
     };
 
+    const withLang = (href, extraParams = {}) => {
+        const params = new URLSearchParams();
+        if (lang === 'tr') params.set('lang', 'tr');
+
+        Object.entries(extraParams).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== '') {
+                params.set(key, String(value));
+            }
+        });
+
+        const query = params.toString();
+        return query ? `${href}?${query}` : href;
+    };
+
     return (
         <nav className="sticky top-0 z-50 bg-white border-b border-brand-muted/30">
             <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-10">
                 <div className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:gap-4">
                     {/* Logo */}
                     <div className="flex items-center justify-center sm:justify-between text-center sm:text-left">
-                        <Link href="/" className="text-2xl font-bold text-brand-dark hover:text-brand-primary transition-colors">
+                        <Link href={withLang('/')} className="text-2xl font-bold text-brand-dark hover:text-brand-primary transition-colors">
                             SourceDev
                         </Link>
                     </div>
@@ -73,7 +88,7 @@ export default function Navbar() {
                                         if (e.key === 'Enter') {
                                             const trimmed = searchQuery.trim();
                                             if (trimmed.length === 0) return;
-                                            router.push(`/search?q=${encodeURIComponent(trimmed)}&category=posts`);
+                                            router.push(withLang('/search', { q: trimmed, category: 'posts' }));
                                         }
                                     }}
                                 />
@@ -88,7 +103,7 @@ export default function Navbar() {
                                 <>
                                     {/* Create Post Button */}
                                     <Link
-                                        href="/create-post"
+                                        href={withLang('/create-post')}
                                         className="hidden sm:block px-4 py-2 text-base font-medium text-brand-primary border-2 border-brand-primary hover:bg-brand-primary hover:text-white rounded-md transition-colors whitespace-nowrap"
                                     >
                                         {t('nav.createPost')}
@@ -112,42 +127,42 @@ export default function Navbar() {
                                         {showDropdown && (
                                             <div className="absolute right-0 mt-2 w-56 px-2 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
                                                 <div className="px-4 py-2 rounded-md hover:bg-brand-primary/20 hover:text-brand-primary transition-colors mb-1 cursor-pointer">
-                                                    <Link href={`/user/${user.username}`}>
+                                                    <Link href={withLang(`/user/${user.username}`)}>
                                                         <p className="text-base font-semibold text-brand-dark">{user.displayName}</p>
                                                         <p className="text-sm text-brand-muted">@{user.username}</p>
                                                     </Link>
                                                 </div>
                                                 <hr className="border-gray-200 mb-2" />
                                                 <div className="py-1">
-                                                    <Link href="/create-post"
+                                                    <Link href={withLang('/create-post')}
                                                     className="flex items-center px-4 py-2 text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary transition-colors rounded-md sm:hidden"
                                                     onClick={() => setShowDropdown(false)}
                                                     >
                                                         {t('nav.createPost')}
                                                     </Link>
                                                     <Link
-                                                        href="/dashboard"
+                                                        href={withLang('/dashboard')}
                                                         className="flex items-center px-4 py-2 text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary transition-colors rounded-md"
                                                         onClick={() => setShowDropdown(false)}
                                                     >
                                                         {t('nav.dashboard')}
                                                     </Link>
                                                     <Link
-                                                        href="/drafts"
+                                                        href={withLang('/drafts')}
                                                         className="flex items-center px-4 py-2 text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary transition-colors rounded-md"
                                                         onClick={() => setShowDropdown(false)}
                                                     >
                                                         {t('nav.drafts')}
                                                     </Link>
                                                     <Link
-                                                        href="/reading-list"
+                                                        href={withLang('/reading-list')}
                                                         className="flex items-center px-4 py-2 text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary transition-colors rounded-md"
                                                         onClick={() => setShowDropdown(false)}
                                                     >
                                                         {t('nav.readingList')}
                                                     </Link>
                                                     <Link
-                                                        href="/settings"
+                                                        href={withLang('/settings')}
                                                         className="flex items-center px-4 py-2 text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary transition-colors rounded-md"
                                                         onClick={() => setShowDropdown(false)}
                                                     >
@@ -201,10 +216,10 @@ export default function Navbar() {
                                             TR
                                         </button>
                                     </div>
-                                    <Link href="/login" className="px-3 py-1.5 text-sm sm:text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary rounded-md transition-colors mr-1">
+                                    <Link href={withLang('/login')} className="px-3 py-1.5 text-sm sm:text-base text-brand-dark hover:bg-brand-primary/20 hover:text-brand-primary rounded-md transition-colors mr-1">
                                         {t('nav.login')}
                                     </Link>
-                                    <Link href="/register" className="flex-1 sm:flex-none text-center px-3 py-1.5 text-sm sm:text-base font-medium text-brand-primary border border-brand-primary hover:bg-brand-primary hover:text-white rounded-md transition-colors whitespace-nowrap">
+                                    <Link href={withLang('/register')} className="flex-1 sm:flex-none text-center px-3 py-1.5 text-sm sm:text-base font-medium text-brand-primary border border-brand-primary hover:bg-brand-primary hover:text-white rounded-md transition-colors whitespace-nowrap">
                                         {t('nav.createAccount')}
                                     </Link>
                                 </>

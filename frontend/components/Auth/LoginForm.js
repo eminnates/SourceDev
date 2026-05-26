@@ -10,10 +10,13 @@ import { login as apiLogin } from "@/utils/api/authApi";
 import { isAuthenticated } from "@/utils/auth";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
+import { useLanguage } from '@/context/LanguageContext';
+import { buildLocalizedHref } from '@/utils/seo';
 
 export default function LoginForm() {
   const router = useRouter();
   const { login } = useAuth();
+  const { lang } = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
@@ -23,9 +26,9 @@ export default function LoginForm() {
 
   useEffect(() => {
     if (isAuthenticated()) {
-      router.push('/');
+      router.push(buildLocalizedHref('/', lang));
     }
-  }, [router]);
+  }, [router, lang]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -53,7 +56,7 @@ export default function LoginForm() {
 
         // Redirect to home
         setTimeout(() => {
-          router.push('/');
+          router.push(buildLocalizedHref('/', lang));
         }, 300);
       } else {
         // Hata mesajını göster - eğer mesaj yoksa varsayılan mesaj kullan
@@ -72,7 +75,7 @@ export default function LoginForm() {
 
   const handleSocialLogin = (provider) => {
     if (provider === "GitHub") {
-      const redirect = encodeURIComponent('/');
+      const redirect = encodeURIComponent(buildLocalizedHref('/', lang));
       window.location.href = `/api/oauth/github?redirect=${redirect}`;
       return;
     }
@@ -84,7 +87,7 @@ export default function LoginForm() {
     <div className="w-full max-w-[520px] mx-auto">
       {/* Header */}
       <div className="text-center mb-8">
-        <Link href="/">
+        <Link href={buildLocalizedHref('/', lang)}>
         <div className="inline-block bg-black text-white px-6 py-3 rounded-lg mb-6">
           <span className="text-3xl font-bold">SourceDev</span>
         </div>
@@ -155,7 +158,7 @@ export default function LoginForm() {
             onChange={(e) => setRememberMe(e.target.checked)}
           />
           <a
-            href="/forgot-password"
+            href={buildLocalizedHref('/forgot-password', lang)}
             className="text-brand-primary hover:text-primary_dark font-medium text-base transition-colors"
           >
             Forgot password?
@@ -179,7 +182,7 @@ export default function LoginForm() {
         <p className="text-brand-dark text-base">
           New to SourceDev Community?{" "}
           <a
-            href="/register"
+            href={buildLocalizedHref('/register', lang)}
             className="text-brand-primary hover:text-brand-primary-dark font-medium transition-colors"
           >
             Create account

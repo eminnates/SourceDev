@@ -1,10 +1,15 @@
+"use client";
+
 import Link from 'next/link';
+import { useLanguage } from '@/context/LanguageContext';
+import { buildLocalizedHref } from '@/utils/seo';
 
 export default function InternalPostLinks({
   title = 'Öne çıkan yazılar',
   posts = [],
   maxLinks = 10,
 }) {
+  const { lang } = useLanguage();
   const safePosts = Array.isArray(posts) ? posts : [];
 
   const unique = [];
@@ -25,7 +30,7 @@ export default function InternalPostLinks({
       <h2 className="text-base font-semibold text-brand-dark mb-3">{title}</h2>
       <ul className="space-y-2">
         {unique.map((post) => {
-          const href = `/post/${post.slug || post.id}`;
+          const href = buildLocalizedHref(`/post/${post.slug || post.id}`, lang);
           return (
             <li key={post.id || post.slug}>
               <Link

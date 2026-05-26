@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getPostBySlug, getPostById, getLatestPosts, getPostsByTag } from '@/utils/api/postApi';
 import PostDetailClient from './PostDetailClient';
 import InternalPostLinks from '@/components/SEO/InternalPostLinks';
+import { buildLocalizedUrl, resolveLang } from '@/utils/seo';
 
 const SITE_URL = 'https://sourcedev.tr';
 
@@ -40,8 +41,6 @@ export async function generateStaticParams() {
 // Generate metadata for SEO
 export async function generateMetadata({ params, searchParams }) {
   const { slug } = await params;
-  const { lang } = await searchParams || {};
-  const activeLang = lang || 'en';
 
   if (!slug) return { title: 'Post Not Found' };
 
@@ -49,6 +48,7 @@ export async function generateMetadata({ params, searchParams }) {
 
   if (result.success && result.data) {
     const post = result.data;
+    const activeLang = await resolveLang(searchParams, post.defaultLanguageCode || 'en');
 
     // Pick the active translation's content for metadata
     let title = post.title;
@@ -70,29 +70,22 @@ export async function generateMetadata({ params, searchParams }) {
       }
     }
 
-    // hreflang alternates — EN has no param, others get ?lang=XX
+    const canonicalUrl = buildLocalizedUrl(`/post/${slug}`, activeLang);
     const languages = {};
     if (post.translations?.length > 0) {
       post.translations.forEach(t => {
-        languages[t.languageCode] = t.languageCode === 'en'
-          ? `${SITE_URL}/post/${slug}`
-          : `${SITE_URL}/post/${slug}?lang=${t.languageCode}`;
+        languages[t.languageCode] = buildLocalizedUrl(`/post/${slug}`, t.languageCode);
       });
-      // x-default points to the canonical English version
-      languages['x-default'] = `${SITE_URL}/post/${slug}`;
     }
-
-    const canonicalUrl = activeLang === 'en'
-      ? `${SITE_URL}/post/${slug}`
-      : `${SITE_URL}/post/${slug}?lang=${activeLang}`;
+    languages['x-default'] = buildLocalizedUrl(`/post/${slug}`, post.defaultLanguageCode || 'en');
 
     const ogLocale = activeLang === 'en' ? 'en_US' : 'tr_TR';
 
     return {
-      title,
+      title: activeLang === 'tr' ? `${title} | SourceDev yazısı` : `${title} | SourceDev post`,
       description,
       openGraph: {
-        title,
+        title: activeLang === 'tr' ? `${title} | SourceDev yazısı` : `${title} | SourceDev post`,
         description,
         url: canonicalUrl,
         locale: ogLocale,
@@ -174,8 +167,6 @@ function generateBreadcrumbJsonLd(post) {
 
 export default async function PostDetailPage({ params, searchParams }) {
   const { slug } = await params;
-  const { lang } = await searchParams || {};
-  const activeLang = lang || 'en';
 
   if (!slug) {
     return (
@@ -212,6 +203,7 @@ export default async function PostDetailPage({ params, searchParams }) {
   }
 
   const post = result.data;
+  const activeLang = await resolveLang(searchParams, post.defaultLanguageCode || 'en');
 
   // Apply translation server-side so Google sees the correct language content
   let renderedPost = post;

@@ -1,8 +1,11 @@
 "use client";
 
 import Link from 'next/link';
+import { useLanguage } from '@/context/LanguageContext';
+import { buildLocalizedHref } from '@/utils/seo';
 
 export default function ProfilePosts({ posts }) {
+  const { lang } = useLanguage();
   return (
     <div className="space-y-4">
       {posts.map((post) => (
@@ -28,7 +31,7 @@ export default function ProfilePosts({ posts }) {
           </div>
 
           {/* Title */}
-          <Link href={`/post/${post.slug || post.id}`}>
+          <Link href={buildLocalizedHref(`/post/${post.slug || post.id}`, lang)}>
             <h2 className="text-2xl font-bold text-brand-dark hover:text-brand-primary transition-colors mb-3 cursor-pointer">
               {post.title}
             </h2>
@@ -39,7 +42,7 @@ export default function ProfilePosts({ posts }) {
             {post.tags.map((tag, idx) => (
               <Link
                 key={idx}
-                href={`/tag/${tag}`}
+                href={buildLocalizedHref(`/tag/${tag}`, lang)}
                 className="text-brand-muted hover:text-brand-primary text-sm transition-colors"
               >
                 #{tag}

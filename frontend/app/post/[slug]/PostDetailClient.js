@@ -105,8 +105,8 @@ export default function PostDetailClient({ initialPost, initialLanguage = 'en' }
   return (
     <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-6 max-w-7xl mx-auto px-4 py-6">
       {/* Left Sidebar - Reactions & Actions */}
-      <div className="hidden md:block">
-        <PostDetailSidebar 
+      <div className="hidden md:block sticky top-20 self-start">
+        <PostDetailSidebar
           reactions={Object.values(post.reactionTypes || {}).reduce((a, b) => a + b, 0)}
           comments={post.commentsCount}
           userReactions={userReactions}

@@ -1,10 +1,17 @@
 import LoginForm from "@/components/Auth/LoginForm";
+import { buildLocalizedMetadata } from '@/utils/seo';
 
-export const metadata = {
-  title: "Login - SourceDev",
-  description: "Login to your SourceDev account",
-  robots: { index: false, follow: false },
-};
+export function generateMetadata({ searchParams }) {
+  return buildLocalizedMetadata({
+    searchParams,
+    pathname: '/login',
+    titleEn: 'Log in',
+    titleTr: 'Giriş yap',
+    descriptionEn: 'Log in to your SourceDev account to manage posts, drafts, and your reading list.',
+    descriptionTr: 'Gönderilerinizi, taslaklarınızı ve okuma listenizi yönetmek için SourceDev hesabınıza giriş yapın.',
+    noindex: true,
+  });
+}
 
 export default function LoginPage() {
   return (

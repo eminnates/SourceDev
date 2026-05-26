@@ -55,51 +55,45 @@ apiClient.interceptors.response.use(
 
     // Rate limiting (429 Too Many Requests)
     if (error.response?.status === 429) {
-      return Promise.reject({
-        message: 'Çok fazla istek gönderdiniz. Lütfen bir dakika bekleyin.',
-        status: 429,
-        data: error.response?.data,
-        response: error.response
-      });
+      const rateLimitError = new Error('Çok fazla istek gönderdiniz. Lütfen bir dakika bekleyin.');
+      rateLimitError.status = 429;
+      rateLimitError.data = error.response?.data;
+      return Promise.reject(rateLimitError);
     }
 
     // Hata mesajını çeşitli kaynaklardan al
     let errorMessage = 'An error occurred';
-    
+
     if (error.response?.data) {
       const data = error.response.data;
-      
+
       // Backend'den dönen hata mesajı (camelCase veya PascalCase)
-      errorMessage = data.message || 
-                     data.Message || 
+      errorMessage = data.message ||
+                     data.Message ||
                      data.error ||
                      data.Error;
-      
+
       // ModelState veya validation hataları için
-      if (!errorMessage && data.errors) {
+      if (!errorMessage && data.errors && !Array.isArray(data.errors)) {
         const errorMessages = Object.values(data.errors).flat();
-        errorMessage = errorMessages.length > 0 
-          ? errorMessages.join(', ') 
-          : errorMessage;
+        errorMessage = errorMessages.length > 0 ? errorMessages.join(', ') : undefined;
       }
-      
+
       // FluentValidation hataları için
       if (!errorMessage && Array.isArray(data.errors)) {
         errorMessage = data.errors.map(e => e.message || e).join(', ');
       }
     }
-    
+
     // Eğer hala mesaj yoksa, axios'un varsayılan mesajını kullan
     if (!errorMessage || errorMessage === 'An error occurred') {
       errorMessage = error.message || errorMessage;
     }
 
-    return Promise.reject({
-      message: errorMessage,
-      status: error.response?.status,
-      data: error.response?.data,
-      response: error.response
-    });
+    const apiError = new Error(errorMessage);
+    apiError.status = error.response?.status;
+    apiError.data = error.response?.data;
+    return Promise.reject(apiError);
   }
 );
 

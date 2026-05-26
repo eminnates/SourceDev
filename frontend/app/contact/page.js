@@ -1,7 +1,15 @@
-export const metadata = {
-  title: "Contact",
-  description: "Get in touch with the SourceDev team. Reach out with your questions, feedback, or suggestions.",
-};
+import { buildLocalizedMetadata } from '@/utils/seo';
+
+export function generateMetadata({ searchParams }) {
+  return buildLocalizedMetadata({
+    searchParams,
+    pathname: '/contact',
+    titleEn: 'Contact SourceDev',
+    titleTr: 'SourceDev ile iletişim',
+    descriptionEn: 'Get in touch with the SourceDev team for questions, feedback, or collaboration ideas.',
+    descriptionTr: 'Sorularınız, geri bildirimleriniz veya iş birliği fikirleriniz için SourceDev ekibiyle iletişime geçin.',
+  });
+}
 
 const teamMembers = [
   {

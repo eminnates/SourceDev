@@ -1,5 +1,6 @@
 import TagPageClient from './TagPageClient';
 import InternalPostLinks from '@/components/SEO/InternalPostLinks';
+import { buildLocalizedMetadata, resolveLang } from '@/utils/seo';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://sourcedev-production.up.railway.app/api';
 const SITE_URL = 'https://sourcedev.tr';
@@ -37,31 +38,25 @@ async function getTagPosts(tagname, page = 1, pageSize = 20) {
   }
 }
 
-export async function generateMetadata({ params }) {
+export async function generateMetadata({ params, searchParams }) {
   const { tagname } = await params;
   const tag = await getTag(tagname);
+  const lang = await resolveLang(searchParams);
   
   const displayName = tag?.name || tagname;
-  const description = tag?.description || `#${displayName} etiketli yazılım makaleleri ve tartışmaları`;
+  const description = tag?.description || (lang === 'tr'
+    ? `#${displayName} etiketindeki yazılım makalelerini, kaynakları ve topluluk tartışmalarını keşfedin.`
+    : `Explore the software articles, resources, and community discussions tagged #${displayName}.`);
 
-  return {
-    title: `#${displayName}`,
-    description: description,
-    openGraph: {
-      title: `#${displayName} | SourceDev`,
-      description: description,
-      url: `${SITE_URL}/tag/${tagname}`,
-      type: 'website',
-    },
-    twitter: {
-      card: 'summary',
-      title: `#${displayName} | SourceDev`,
-      description: description,
-    },
-    alternates: {
-      canonical: `${SITE_URL}/tag/${tagname}`,
-    },
-  };
+  return buildLocalizedMetadata({
+    searchParams,
+    pathname: `/tag/${tagname}`,
+    titleEn: `#${displayName} posts and resources`,
+    titleTr: `#${displayName} yazıları ve kaynakları`,
+    descriptionEn: description,
+    descriptionTr: description,
+    canonicalParams: {},
+  });
 }
 
 export default async function TagPage({ params }) {
@@ -70,12 +65,12 @@ export default async function TagPage({ params }) {
   const tagPosts = await getTagPosts(tagname, 1, 20);
 
   const displayName = initialTag?.name || tagname;
-  const description = initialTag?.description || `#${displayName} etiketli yazılım makaleleri ve tartışmaları`;
+  const description = initialTag?.description || `#${displayName} etiketindeki yazılım makalelerini, kaynakları ve topluluk tartışmalarını keşfedin.`;
 
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
-    name: `#${displayName} makaleleri`,
+    name: `#${displayName} yazıları ve kaynakları`,
     description: description,
     url: `${SITE_URL}/tag/${tagname}`,
     isPartOf: { '@id': SITE_URL },

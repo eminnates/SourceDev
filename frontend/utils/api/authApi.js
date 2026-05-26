@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import apiClient from '../apiClient';
 import { setToken, setUser, removeToken, removeUser } from '../auth';
 
@@ -142,7 +141,6 @@ export const getProfile = async () => {
       raw: rawData
     };
   } catch (error) {
-    console.error('Get profile error:', error);
 
     return {
       success: false,
@@ -170,7 +168,6 @@ export const updateProfile = async (updateData) => {
       message: response.data.message || 'Profile updated successfully!'
     };
   } catch (error) {
-    console.error('Update profile error:', error);
     if (error.status === 401) {
       errorMessage = "Invalid token";
     } else if (error.status === 500) {
@@ -202,28 +199,16 @@ export const changePassword = async (passwordData) => {
       message: response.data.message || 'Password changed successfully!'
     };
   } catch (error) {
-    let errorMessage = 'An error occurred while changing password';
-    
-    // Backend'den gelen hata mesajını al
-    if (error.response?.data) {
-      errorMessage = error.response.data.message || 
-                     error.response.data.Message || 
-                     error.response.data.error ||
-                     errorMessage;
-    } else if (error.message) {
-      errorMessage = error.message;
-    }
-    
+    // error.message is already extracted by the apiClient interceptor
+    let errorMessage = error.message || 'An error occurred while changing password';
+
     // Status code'a göre özel mesajlar
-    if (error.status === 401 || error.response?.status === 401) {
-      errorMessage = errorMessage || "Invalid token. Please log in again.";
-    } else if (error.status === 400 || error.response?.status === 400) {
-      // Backend'den gelen mesajı kullan, yoksa varsayılan
-      if (!error.response?.data?.message && !error.response?.data?.Message) {
-        errorMessage = "Invalid password or password requirements not met.";
-      }
+    if (error.status === 401) {
+      errorMessage = errorMessage || 'Invalid token. Please log in again.';
+    } else if (error.status === 400 && !error.message) {
+      errorMessage = 'Invalid password or password requirements not met.';
     }
-    
+
     return {
       success: false,
       message: errorMessage

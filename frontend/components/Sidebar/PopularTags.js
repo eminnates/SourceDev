@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import TagLink from './TagLink';
 import { getAllTags } from '@/utils/api/tagApi';
 import { useLanguage } from '@/context/LanguageContext';
+import { buildLocalizedHref } from '@/utils/seo';
 
 export default function PopularTags() {
   const { t } = useLanguage();
@@ -76,7 +77,7 @@ export default function PopularTags() {
             <TagLink
               key={tag.id}
               name={tag.displayName || tag.name}
-              href={`/tag/${tag.name}`}
+                href={buildLocalizedHref(`/tag/${tag.name}`, lang)}
             />
           ))}
         </div>

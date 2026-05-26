@@ -1,14 +1,15 @@
-export const metadata = {
-  title: "About",
-  description: "SourceDev hakkında daha fazla bilgi edinin. Yazılımcılar için oluşturulmuş bilgi paylaşım platformu.",
-  openGraph: {
-    title: "About | SourceDev",
-    description: "SourceDev hakkında daha fazla bilgi edinin. Yazılımcılar için oluşturulmuş bilgi paylaşım platformu.",
-  },
-  alternates: {
-    canonical: 'https://sourcedev.tr/about',
-  },
-};
+import { buildLocalizedMetadata } from '@/utils/seo';
+
+export function generateMetadata({ searchParams }) {
+  return buildLocalizedMetadata({
+    searchParams,
+    pathname: '/about',
+    titleEn: 'About SourceDev',
+    titleTr: 'SourceDev hakkında',
+    descriptionEn: 'Learn more about SourceDev, our community goals, and how we help developers share knowledge.',
+    descriptionTr: 'SourceDev’in amacı, topluluk yapısı ve geliştiriciler için bilgi paylaşım yaklaşımı hakkında daha fazla bilgi edinin.',
+  });
+}
 
 const teamMembers = [
   {

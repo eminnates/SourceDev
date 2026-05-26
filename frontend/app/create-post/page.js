@@ -10,6 +10,7 @@ import { MdClose } from 'react-icons/md';
 import { isAuthenticated } from '@/utils/auth';
 import { createPost, updatePost, getPostForEdit, publishPost, deletePost } from '@/utils/api/postApi';
 import { searchTags, getPopularTags } from '@/utils/api/tagApi';
+import { useLanguage } from '@/context/LanguageContext';
 import 'easymde/dist/easymde.min.css';
 
 const SimpleMDE = dynamic(() => import('react-simplemde-editor'), { ssr: false });
@@ -17,6 +18,7 @@ const SimpleMDE = dynamic(() => import('react-simplemde-editor'), { ssr: false }
 function CreatePostContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useLanguage();
   const editPostId = searchParams.get('edit');
 
   const [translations, setTranslations] = useState({
@@ -408,7 +410,7 @@ function CreatePostContent() {
               </Link>
               <span className="text-brand-muted">|</span>
               <h1 className="text-base font-semibold text-brand-dark">
-                {isEditMode ? 'Edit Draft' : 'Create Post'}
+                {isEditMode ? t('create.editDraft') : t('create.createPost')}
               </h1>
             </div>
 
@@ -417,13 +419,13 @@ function CreatePostContent() {
                 onClick={() => setIsPreview(false)}
                 className={`px-4 py-2 text-base font-medium rounded-md transition-colors ${!isPreview ? 'text-brand-primary bg-brand-primary/10' : 'text-brand-dark hover:bg-gray-100'}`}
               >
-                Edit
+                {t('create.edit')}
               </button>
               <button
                 onClick={() => setIsPreview(true)}
                 className={`px-4 py-2 text-base font-medium rounded-md transition-colors ${isPreview ? 'text-brand-primary bg-brand-primary/10' : 'text-brand-dark hover:bg-gray-100'}`}
               >
-                Preview
+                {t('create.preview')}
               </button>
               <button
                 onClick={() => router.push('/')}
@@ -445,7 +447,7 @@ function CreatePostContent() {
               <div className="space-y-6">
                 {/* Cover Image */}
                 <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium text-brand-dark">Cover Image URL</label>
+                  <label className="text-sm font-medium text-brand-dark">{t('create.coverUrl')}</label>
                   <input
                     type="text"
                     placeholder="https://example.com/cover.jpg"
@@ -478,7 +480,7 @@ function CreatePostContent() {
                   >
                     🇬🇧 English
                     <span className={`text-xs px-1.5 py-0.5 rounded font-semibold ${activeLang === 'en' ? 'bg-white/20 text-white' : 'bg-brand-primary/10 text-brand-primary'}`}>
-                      required
+                      {t('create.langRequired')}
                     </span>
                     {translations.en.title && <span className="text-green-400">✓</span>}
                   </button>
@@ -490,7 +492,7 @@ function CreatePostContent() {
                   >
                     🇹🇷 Turkish
                     <span className={`text-xs px-1.5 py-0.5 rounded font-semibold ${activeLang === 'tr' ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-500'}`}>
-                      optional
+                      {t('create.langOptional')}
                     </span>
                     {translations.tr.title && <span className="text-green-400">✓</span>}
                   </button>
@@ -537,13 +539,13 @@ function CreatePostContent() {
                       }}
                       onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
                       onKeyDown={handleTagInputKeyDown}
-                      placeholder={selectedTags.length === 0 ? "Add up to 4 tags..." : "Add another tag..."}
+                      placeholder={selectedTags.length === 0 ? t('create.addTags') : t('create.addAnotherTag')}
                       className="w-full text-base text-brand-dark placeholder-gray-400 border-none outline-none mb-2"
                     />
                   )}
 
                   {selectedTags.length >= 4 && (
-                    <p className="text-sm text-green-600 font-medium">✓ All 4 tags added</p>
+                    <p className="text-sm text-green-600 font-medium">{t('create.allTagsAdded')}</p>
                   )}
                 </div>
 
@@ -579,7 +581,7 @@ function CreatePostContent() {
                           className="w-full text-left px-4 py-2 hover:bg-brand-primary/10 transition-colors border-t border-gray-200"
                         >
                           <span className="text-brand-primary font-medium">
-                            Create new: <span className="font-bold">#{tagInput.trim()}</span>
+                            {t('create.createNewTag')} <span className="font-bold">#{tagInput.trim()}</span>
                           </span>
                         </button>
                       )}
@@ -589,8 +591,8 @@ function CreatePostContent() {
                 {/* SEO Description */}
                 <div className="mb-2">
                   <label className="block text-xs font-semibold text-brand-muted uppercase tracking-wide mb-1">
-                    SEO Description
-                    <span className="normal-case font-normal ml-1 text-brand-muted/70">— shown in Google search results (150–160 chars)</span>
+                    {t('create.seoDescription')}
+                    <span className="normal-case font-normal ml-1 text-brand-muted/70">{t('create.seoDescriptionHint')}</span>
                   </label>
                   <textarea
                     value={translations[activeLang].excerpt || ''}
@@ -600,7 +602,7 @@ function CreatePostContent() {
                     }))}
                     maxLength={160}
                     rows={2}
-                    placeholder="Write a compelling 1–2 sentence description for search results…"
+                    placeholder={t('create.seoDescriptionPlaceholder')}
                     className="w-full border border-brand-muted/30 rounded-lg px-3 py-2 text-sm text-brand-dark placeholder-gray-400 focus:outline-none focus:border-brand-primary resize-none"
                   />
                   <p className={`text-xs mt-0.5 ${(translations[activeLang].excerpt || '').length > 155 ? 'text-orange-500' : 'text-brand-muted'}`}>
@@ -649,7 +651,7 @@ function CreatePostContent() {
                       {translations[activeLang].content}
                     </ReactMarkdown>
                   ) : (
-                    <p className="text-gray-400">Write your content...</p>
+                    <p className="text-gray-400">{t('create.writeContent')}</p>
                   )}
                 </div>
               </div>
@@ -675,7 +677,7 @@ function CreatePostContent() {
               </div>
             ) : (
               <p className="text-sm text-brand-dark text-center">
-                Click on any field to see helpful tips
+                {t('create.clickForTips')}
               </p>
             )}
           </div>
@@ -688,13 +690,13 @@ function CreatePostContent() {
               disabled={isLoading}
               className={`w-full px-6 py-3 bg-brand-primary hover:bg-brand-primary-dark text-white font-bold rounded-lg transition-colors mb-3 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              {isLoading ? (isEditMode ? 'Updating...' : 'Publishing...') : (isEditMode ? 'Update & Publish' : 'Publish')}
+              {isLoading ? (isEditMode ? t('create.updating') : t('create.publishing')) : (isEditMode ? t('create.updatePublish') : t('create.publish'))}
             </button>
             <button
               onClick={handleSaveDraft}
               className="w-full px-6 py-3 bg-white border border-gray-200 text-brand-dark hover:bg-gray-100 font-medium rounded-lg transition-colors"
             >
-              Save draft
+              {t('create.saveDraft')}
             </button>
 
             {isEditMode && (
@@ -703,7 +705,7 @@ function CreatePostContent() {
                 disabled={isLoading}
                 className={`w-full px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-colors mt-3 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                {isLoading ? 'Deleting...' : 'Delete Post'}
+                {isLoading ? t('create.deleting') : t('create.deletePost')}
               </button>
             )}
           </div>
@@ -713,22 +715,22 @@ function CreatePostContent() {
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-bold text-brand-dark mb-4">Delete Post</h3>
+            <h3 className="text-lg font-bold text-brand-dark mb-4">{t('create.deleteConfirmTitle')}</h3>
             <p className="text-brand-muted mb-6">
-              Are you sure? This action cannot be undone.
+              {t('create.deleteConfirmMessage')}
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowDeleteModal(false)}
                 className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-brand-dark font-medium rounded-lg transition-colors"
               >
-                Cancel
+                {t('create.cancel')}
               </button>
               <button
                 onClick={confirmDelete}
                 className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-colors"
               >
-                Delete
+                {t('create.delete')}
               </button>
             </div>
           </div>

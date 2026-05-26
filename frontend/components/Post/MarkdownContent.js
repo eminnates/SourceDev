@@ -38,14 +38,18 @@ export default function MarkdownContent({ content }) {
         ),
         
         // Links
-        a: ({ node, ...props }) => (
-          <a 
-            className="text-brand-primary hover:text-brand-primary-dark underline transition-colors" 
-            target="_blank"
-            rel="noopener noreferrer"
-            {...props} 
-          />
-        ),
+        a: ({ node, href, ...props }) => {
+          const isExternal = typeof href === 'string' && /^https?:\/\//i.test(href);
+          return (
+            <a
+              href={href}
+              className="text-brand-primary hover:text-brand-primary-dark underline transition-colors"
+              target={isExternal ? '_blank' : undefined}
+              rel={isExternal ? 'noopener noreferrer' : undefined}
+              {...props}
+            />
+          );
+        },
         
         // Lists
         ul: ({ node, ...props }) => (
@@ -94,9 +98,10 @@ export default function MarkdownContent({ content }) {
         ),
         
         // Images
-        img: ({ node, ...props }) => (
+        img: ({ node, alt, ...props }) => (
           <img 
             className="rounded-lg my-4 max-w-full h-auto" 
+            alt={alt || ''}
             {...props} 
           />
         ),

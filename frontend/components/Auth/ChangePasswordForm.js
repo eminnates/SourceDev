@@ -6,12 +6,15 @@ import InputField from "./InputField";
 import { changePassword } from "@/utils/api/authApi";
 import { getUser, removeToken, removeUser } from "@/utils/auth";
 import { getUserById } from "@/utils/api/userApi";
+import { useLanguage } from '@/context/LanguageContext';
+import { buildLocalizedHref } from '@/utils/seo';
 
 const getFallbackAvatar = (seed = 'User') =>
   `https://ui-avatars.com/api/?name=${encodeURIComponent(seed)}&background=1ABC9C&color=fff&bold=true`;
 
 export default function ChangePasswordForm() {
   const router = useRouter();
+  const { lang, t } = useLanguage();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -42,7 +45,7 @@ export default function ChangePasswordForm() {
     try {
       const currentUser = getUser();
       if (!currentUser || !currentUser.id) {
-        router.push('/login');
+        router.push(buildLocalizedHref('/login', lang));
         return;
       }
 
@@ -66,42 +69,42 @@ export default function ChangePasswordForm() {
 
     // Validation
     if (!currentPassword) {
-      setError("Current password is required");
+      setError(t('auth.currentPasswordRequired'));
       return;
     }
 
     if (!newPassword) {
-      setError("New password is required");
+      setError(t('auth.newPasswordRequired'));
       return;
     }
 
     if (newPassword.length < 6) {
-      setError("New password must be at least 6 characters");
+      setError(t('auth.newPasswordMinLength'));
       return;
     }
 
     if (!/[A-Z]/.test(newPassword)) {
-      setError("New password must contain at least one uppercase letter");
+      setError(t('auth.newPasswordUppercase'));
       return;
     }
 
     if (!/[a-z]/.test(newPassword)) {
-      setError("New password must contain at least one lowercase letter");
+      setError(t('auth.newPasswordLowercase'));
       return;
     }
 
     if (!/[0-9]/.test(newPassword)) {
-      setError("New password must contain at least one number");
+      setError(t('auth.newPasswordNumber'));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError("New passwords do not match");
+      setError(t('auth.newPasswordsDoNotMatch'));
       return;
     }
 
     if (currentPassword === newPassword) {
-      setError("New password must be different from current password");
+      setError(t('auth.newPasswordSameAsCurrent'));
       return;
     }
 
@@ -115,7 +118,7 @@ export default function ChangePasswordForm() {
       });
       
       if (result.success) {
-        setSuccessMessage("Password changed successfully! Please log in again with your new password.");
+        setSuccessMessage(t('auth.changePasswordSuccess'));
         // Clear form
         setCurrentPassword("");
         setNewPassword("");
@@ -127,7 +130,7 @@ export default function ChangePasswordForm() {
         
         // Redirect to login after 2 seconds
         setTimeout(() => {
-          router.push('/login');
+          router.push(buildLocalizedHref('/login', lang));
         }, 2000);
       } else {
         setError(result.message || "Failed to change password. Please try again.");
@@ -159,10 +162,10 @@ export default function ChangePasswordForm() {
       {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-brand-dark text-3xl font-bold mb-3">
-          Change Password
+          {t('auth.changePassword')}
         </h1>
         <p className="text-brand-muted text-base">
-          Update your account password
+          {t('auth.updatePasswordSubtitle')}
         </p>
       </div>
 
@@ -194,7 +197,7 @@ export default function ChangePasswordForm() {
       {/* Password Form */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         <InputField
-          label="Current Password"
+          label={t('auth.currentPassword')}
           type="password"
           value={currentPassword}
           onChange={(e) => {
@@ -206,7 +209,7 @@ export default function ChangePasswordForm() {
 
         <div>
           <InputField
-            label="New Password"
+            label={t('auth.newPassword')}
             type="password"
             value={newPassword}
             onChange={(e) => {
@@ -214,14 +217,14 @@ export default function ChangePasswordForm() {
               setError(null);
             }}
             onFocus={() => setNewPasswordFocused(true)}
-            placeholder="At least 6 characters"
+            placeholder={t('auth.newPasswordPlaceholder')}
             required
           />
-          
+
           {/* Password Requirements */}
           {(newPasswordFocused || newPassword.length > 0) && (
             <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-              <p className="text-xs font-medium text-gray-700 mb-2">Password requirements:</p>
+              <p className="text-xs font-medium text-gray-700 mb-2">{t('auth.passwordRequirements')}</p>
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   {passwordRequirements.minLength ? (
@@ -230,7 +233,7 @@ export default function ChangePasswordForm() {
                     <span className="text-gray-400 text-sm">○</span>
                   )}
                   <span className={`text-xs ${passwordRequirements.minLength ? 'text-green-600' : 'text-gray-600'}`}>
-                    At least 6 characters
+                    {t('auth.reqMinLength')}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -240,7 +243,7 @@ export default function ChangePasswordForm() {
                     <span className="text-gray-400 text-sm">○</span>
                   )}
                   <span className={`text-xs ${passwordRequirements.hasUpperCase ? 'text-green-600' : 'text-gray-600'}`}>
-                    One uppercase letter (A-Z)
+                    {t('auth.reqUppercase')}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -250,7 +253,7 @@ export default function ChangePasswordForm() {
                     <span className="text-gray-400 text-sm">○</span>
                   )}
                   <span className={`text-xs ${passwordRequirements.hasLowerCase ? 'text-green-600' : 'text-gray-600'}`}>
-                    One lowercase letter (a-z)
+                    {t('auth.reqLowercase')}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -260,7 +263,7 @@ export default function ChangePasswordForm() {
                     <span className="text-gray-400 text-sm">○</span>
                   )}
                   <span className={`text-xs ${passwordRequirements.hasNumber ? 'text-green-600' : 'text-gray-600'}`}>
-                    One number (0-9)
+                    {t('auth.reqNumber')}
                   </span>
                 </div>
               </div>
@@ -270,7 +273,7 @@ export default function ChangePasswordForm() {
 
         <div>
           <InputField
-            label="Confirm New Password"
+            label={t('auth.confirmNewPassword')}
             type="password"
             value={confirmPassword}
             onChange={(e) => {
@@ -278,7 +281,7 @@ export default function ChangePasswordForm() {
               setError(null);
             }}
             onFocus={() => setConfirmPasswordFocused(true)}
-            placeholder="Re-enter your new password"
+            placeholder={t('auth.confirmPasswordPlaceholder')}
             required
           />
           
@@ -289,12 +292,12 @@ export default function ChangePasswordForm() {
                 {passwordsMatch ? (
                   <>
                     <span className="text-green-500 text-sm">✓</span>
-                    <span className="text-xs text-green-600">Passwords match</span>
+                    <span className="text-xs text-green-600">{t('auth.passwordsMatch')}</span>
                   </>
                 ) : (
                   <>
                     <span className="text-red-500 text-sm">✗</span>
-                    <span className="text-xs text-red-600">Passwords do not match</span>
+                    <span className="text-xs text-red-600">{t('auth.passwordsNotMatch')}</span>
                   </>
                 )}
               </div>
@@ -310,17 +313,17 @@ export default function ChangePasswordForm() {
             isLoading ? 'opacity-50 cursor-not-allowed' : ''
           }`}
         >
-          {isLoading ? 'Changing Password...' : 'Change Password'}
+          {isLoading ? t('auth.changingPassword') : t('auth.changePassword')}
         </button>
       </form>
 
       {/* Back to Settings Link */}
       <div className="text-center mt-6">
         <a
-          href="/settings"
+          href={buildLocalizedHref('/settings', lang)}
           className="text-brand-primary hover:text-brand-primary-dark font-medium text-base transition-colors"
         >
-          Back to Settings
+          {t('auth.backToSettings')}
         </a>
       </div>
     </div>

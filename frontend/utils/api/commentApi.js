@@ -13,7 +13,6 @@ export const getCommentCount = async (postId) => {
       count: response.data.count || 0
     };
   } catch (error) {
-    console.error('Get comment count error:', error);
     return {
       success: false,
       count: 0,
@@ -39,7 +38,6 @@ export const getComments = async (postId, page = 1, pageSize = 50) => {
       comments: response.data || []
     };
   } catch (error) {
-    console.error('Get comments error:', error);
     return {
       success: false,
       comments: [],
@@ -68,10 +66,9 @@ export const addComment = async (postId, content, parentCommentId = null) => {
       comment: response.data
     };
   } catch (error) {
-    console.error('Add comment error:', error);
     return {
       success: false,
-      message: error.response?.data?.message || error.message || 'Failed to add comment'
+      message: error.message || 'Failed to add comment'
     };
   }
 };
@@ -88,10 +85,9 @@ export const deleteComment = async (commentId) => {
       success: true
     };
   } catch (error) {
-    console.error('Delete comment error:', error);
     return {
       success: false,
-      message: error.response?.data?.message || error.message || 'Failed to delete comment'
+      message: error.message || 'Failed to delete comment'
     };
   }
 };
@@ -118,7 +114,6 @@ export const searchComments = async (query, page = 1, pageSize = 10) => {
       data: response.data || []
     };
   } catch (error) {
-    console.error('Search comments error:', error);
     return {
       success: false,
       message: error.message || 'Failed to search comments'

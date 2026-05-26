@@ -9,9 +9,12 @@ import TextArea from "./TextArea";
 import { register } from "@/utils/api/authApi";
 import { isAuthenticated } from "@/utils/auth";
 import Link from "next/link";
+import { useLanguage } from '@/context/LanguageContext';
+import { buildLocalizedHref } from '@/utils/seo';
 
 export default function RegisterForm() {
   const router = useRouter();
+  const { lang } = useLanguage();
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -30,9 +33,9 @@ export default function RegisterForm() {
 
   useEffect(() => {
     if (isAuthenticated()) {
-      router.push('/');
+      router.push(buildLocalizedHref('/', lang));
     }
-  }, [router]);
+  }, [router, lang]);
 
   // Check password requirements
   const passwordRequirements = {
@@ -176,7 +179,7 @@ export default function RegisterForm() {
 
   const handleSocialLogin = (provider) => {
     if (provider === "GitHub") {
-      const redirect = encodeURIComponent('/');
+      const redirect = encodeURIComponent(buildLocalizedHref('/', lang));
       window.location.href = `/api/oauth/github?redirect=${redirect}`;
       return;
     }
@@ -188,7 +191,7 @@ export default function RegisterForm() {
     <div className="w-full max-w-[520px] mx-auto">
       {/* Header */}
       <div className="text-center mb-8">
-        <Link href="/">
+        <Link href={buildLocalizedHref('/', lang)}>
         <div className="inline-block bg-black text-white px-6 py-3 rounded-lg mb-6">
           <span className="text-3xl font-bold">SourceDev</span>
         </div>
@@ -396,11 +399,11 @@ export default function RegisterForm() {
       <div className="text-center mt-4">
         <p className="text-brand-muted text-sm">
           By creating an account, you agree to our{" "}
-          <a href="/terms" className="text-brand-primary hover:text-brand-primary-dark transition-colors">
+          <a href={buildLocalizedHref('/terms', lang)} className="text-brand-primary hover:text-brand-primary-dark transition-colors">
             Terms of Use
           </a>{" "}
           and{" "}
-          <a href="/privacy" className="text-brand-primary hover:text-brand-primary-dark transition-colors">
+          <a href={buildLocalizedHref('/privacy', lang)} className="text-brand-primary hover:text-brand-primary-dark transition-colors">
             Privacy Policy
           </a>
         </p>
@@ -411,7 +414,7 @@ export default function RegisterForm() {
         <p className="text-brand-dark text-base">
           Already have an account?{" "}
           <a
-            href="/login"
+            href={buildLocalizedHref('/login', lang)}
             className="text-brand-primary hover:text-brand-primary-dark font-medium transition-colors"
           >
             Log in

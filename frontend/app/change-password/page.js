@@ -1,9 +1,17 @@
 import ChangePasswordForm from "@/components/Auth/ChangePasswordForm";
+import { buildLocalizedMetadata } from '@/utils/seo';
 
-export const metadata = {
-  title: "Change Password - SourceDev",
-  description: "Change your SourceDev account password",
-};
+export function generateMetadata({ searchParams }) {
+  return buildLocalizedMetadata({
+    searchParams,
+    pathname: '/change-password',
+    titleEn: 'Change password',
+    titleTr: 'Parola değiştir',
+    descriptionEn: 'Securely update your SourceDev account password.',
+    descriptionTr: 'SourceDev hesabınızın parolasını güvenli şekilde güncelleyin.',
+    noindex: true,
+  });
+}
 
 export default function ChangePasswordPage() {
   return (

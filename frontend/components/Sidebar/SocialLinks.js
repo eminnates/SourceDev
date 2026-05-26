@@ -1,6 +1,5 @@
 "use client";
 
-import Link from 'next/link';
 import { BsTwitter, BsFacebook, BsGithub, BsInstagram } from 'react-icons/bs';
 import { FaRss } from 'react-icons/fa';
 
@@ -17,15 +16,16 @@ export default function SocialLinks() {
       {socialLinks.map((link, index) => {
         const Icon = link.icon;
         return (
-          <Link
+          <a
             key={index}
             href={link.href}
-            target={link.external ? "_blank" : undefined}
-            rel={link.external ? "noopener noreferrer" : undefined}
+            target={link.external ? '_blank' : undefined}
+            rel={link.external ? 'noopener noreferrer' : undefined}
+            aria-label={link.href}
             className="p-2 rounded-md text-brand-dark hover:bg-brand-primary/10 hover:text-brand-primary transition-colors"
           >
             <Icon className="w-5 h-5" />
-          </Link>
+          </a>
         );
       })}
     </div>

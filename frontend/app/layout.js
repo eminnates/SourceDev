@@ -2,17 +2,18 @@ import "@/styles/globals.css";
 import NavbarWrapper from "@/components/Navbar/NavbarWrapper";
 import { AuthProvider } from "@/context/AuthContext";
 import { LanguageProvider } from "@/context/LanguageContext";
+import { Suspense } from 'react';
 
 const SITE_URL = 'https://sourcedev.tr';
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'SourceDev - Yazılımcı Topluluğu',
+    default: 'SourceDev Community',
     template: '%s | SourceDev',
   },
-  description: 'Yazılımcılar için bilgi paylaşım ve networking platformu. Makaleler yaz, projelerini paylaş, topluluğa katıl.',
-authors: [{ name: 'SourceDev Team' }],
+  description: 'A developer community for sharing posts, projects, discussions, and resources. Switch between English and Turkish content with a URL language parameter.',
+  authors: [{ name: 'SourceDev Team' }],
   creator: 'SourceDev',
   publisher: 'SourceDev',
   robots: {
@@ -28,11 +29,11 @@ authors: [{ name: 'SourceDev Team' }],
   },
   openGraph: {
     type: 'website',
-    locale: 'tr_TR',
+    locale: 'en_US',
     url: SITE_URL,
     siteName: 'SourceDev',
-    title: 'SourceDev - Yazılımcı Topluluğu',
-    description: 'Yazılımcılar için bilgi paylaşım ve networking platformu.',
+    title: 'SourceDev Community',
+    description: 'A developer community for sharing posts, projects, discussions, and resources.',
     images: [
       {
         url: '/og-image.png',
@@ -44,8 +45,8 @@ authors: [{ name: 'SourceDev Team' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'SourceDev - Yazılımcı Topluluğu',
-    description: 'Yazılımcılar için bilgi paylaşım ve networking platformu.',
+    title: 'SourceDev Community',
+    description: 'A developer community for sharing posts, projects, discussions, and resources.',
     images: ['/og-image.png'],
     creator: '@sourcedev',
   },
@@ -62,7 +63,6 @@ authors: [{ name: 'SourceDev Team' }],
   },
   manifest: '/manifest.json',
   verification: {
-
     google: 'verification-code',
   },
 };
@@ -110,7 +110,7 @@ const organizationJsonLd = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" dir="ltr">
       <head>
         <link rel="preconnect" href="https://sourcedev-production.up.railway.app" />
         <link rel="dns-prefetch" href="https://sourcedev-production.up.railway.app" />
@@ -125,12 +125,14 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className={`antialiased bg-brand-background`}>
-        <LanguageProvider>
-          <AuthProvider>
-            <NavbarWrapper />
-            {children}
-          </AuthProvider>
-        </LanguageProvider>
+        <Suspense fallback={null}>
+          <LanguageProvider>
+            <AuthProvider>
+              <NavbarWrapper />
+              {children}
+            </AuthProvider>
+          </LanguageProvider>
+        </Suspense>
       </body>
     </html>
   );

@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import apiClient from '../apiClient';
 
 /**
@@ -29,7 +28,7 @@ export const getUserById = async (userId) => {
   } catch (error) {
     return {
       success: false,
-      message: error.response?.data?.message || error.message || 'Failed to fetch user profile'
+      message: error.message || 'Failed to fetch user profile'
     };
   }
 };
@@ -57,7 +56,6 @@ export const searchUsers = async (query) => {
       data: response.data
     };
   } catch (error) {
-    console.error('Search users error:', error);
     return {
       success: false,
       message: error.message || 'Failed to search users'
@@ -78,7 +76,6 @@ export const getAllUsers = async () => {
       data: response.data
     };
   } catch (error) {
-    console.error('Get all users error:', error);
     return {
       success: false,
       message: error.message || 'Failed to fetch users'
@@ -99,7 +96,6 @@ export const getCurrentUserProfile = async () => {
       data: response.data
     };
   } catch (error) {
-    console.error('Get current user profile error:', error);
     return {
       success: false,
       message: error.message || 'Failed to fetch profile'
@@ -121,7 +117,6 @@ export const getUserPosts = async (userId) => {
       data: response.data
     };
   } catch (error) {
-    console.error('Get user posts error:', error);
     return {
       success: false,
       message: error.message || 'Failed to fetch user posts'
@@ -143,7 +138,6 @@ export const toggleFollowUser = async (userId) => {
       data: response.data
     };
   } catch (error) {
-    console.error('Toggle follow user error:', error);
     return {
       success: false,
       message: error.message || 'Failed to follow/unfollow user'

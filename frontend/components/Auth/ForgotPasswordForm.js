@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import InputField from "./InputField";
+import { useLanguage } from '@/context/LanguageContext';
+import { buildLocalizedHref } from '@/utils/seo';
 
 export default function ForgotPasswordForm() {
+  const { lang } = useLanguage();
   const [email, setEmail] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState("");
@@ -45,7 +48,7 @@ export default function ForgotPasswordForm() {
 
         <div className="text-center">
           <a
-            href="/login"
+            href={buildLocalizedHref('/login', lang)}
             className="text-brand-primary hover:text-brand-primary-dark font-medium text-base transition-colors"
           >
             Go back to login
@@ -95,8 +98,8 @@ export default function ForgotPasswordForm() {
       </form>
 
       <div className="text-center mt-6">
-        <a
-          href="/login"
+          <a
+            href={buildLocalizedHref('/login', lang)}
           className="text-brand-primary hover:text-brand-primary-dark font-medium text-base transition-colors"
         >
           Go back

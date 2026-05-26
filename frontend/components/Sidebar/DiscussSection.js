@@ -5,8 +5,11 @@ import Link from 'next/link';
 import DiscussionItem from './DiscussionItem';
 import { getPostsByTag } from '@/utils/api/postApi';
 import { getCommentCount } from '@/utils/api/commentApi';
+import { useLanguage } from '@/context/LanguageContext';
+import { buildLocalizedHref } from '@/utils/seo';
 
 export default function DiscussSection() {
+  const { lang } = useLanguage();
   const [discussions, setDiscussions] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -110,7 +113,7 @@ export default function DiscussSection() {
 
           {/* See all link */}
           <Link
-            href="/tag/discuss"
+            href={buildLocalizedHref('/tag/discuss', lang)}
             className="block mt-4 text-center text-sm font-medium text-brand-primary hover:text-brand-primary-dark hover:underline"
           >
             See all discussions
