@@ -7,7 +7,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { buildLocalizedHref } from '@/utils/seo';
 
 export default function PopularTags() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [isScrolling, setIsScrolling] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const [tags, setTags] = useState([]);
